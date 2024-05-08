@@ -17,6 +17,7 @@ public final class Util {
     private Util() {
     }
 
+
     /**
      * {@code double} data format in memory (bit level):<br>
      * seee eeee eeee (1.)mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm<br>

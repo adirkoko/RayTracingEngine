@@ -66,9 +66,9 @@ public class Vector extends Point {
      * @return A new vector perpendicular to both this and rhs vectors
      */
     public Vector crossProduct(Vector other) {
-        double x = this.xyz.d2 * rhs.xyz.d3 - this.xyz.d3 * rhs.xyz.d2;
-        double y = this.xyz.d3 * rhs.xyz.d1 - this.xyz.d1 * rhs.xyz.d3;
-        double z = this.xyz.d1 * rhs.xyz.d2 - this.xyz.d2 * rhs.xyz.d1;
+        double x = this.xyz.d2 * other.xyz.d3 - this.xyz.d3 * other.xyz.d2;
+        double y = this.xyz.d3 * other.xyz.d1 - this.xyz.d1 * other.xyz.d3;
+        double z = this.xyz.d1 * other.xyz.d2 - this.xyz.d2 * other.xyz.d1;
         return new Vector(x, y, z);
     }
 
