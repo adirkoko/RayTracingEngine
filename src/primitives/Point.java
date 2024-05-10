@@ -1,8 +1,11 @@
 package primitives;
 
+import static primitives.Util.isZero;
+
 public class Point {
 
     protected Double3 xyz;
+    public static final Point ZERO = new Point(0, 0, 0);
 
     /**
      * Constructs a new Point given three double values.
@@ -65,5 +68,17 @@ public class Point {
      */
     public double distance(Point other) {
         return Math.sqrt(distanceSquared(other));
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        return (obj instanceof Point other)
+                && this.xyz.equals(other.xyz);
+    }
+
+    @Override
+    public String toString() {
+        return xyz.toString();
     }
 }

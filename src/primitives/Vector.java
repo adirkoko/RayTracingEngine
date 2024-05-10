@@ -21,7 +21,7 @@ public class Vector extends Point {
      *
      * @param xyz Coordinates object
      */
-    Vector(Double3 xyz) {
+    public Vector(Double3 xyz) {
         super(xyz);
         if (xyz.equals(Double3.ZERO)) {
             throw new IllegalArgumentException("Vector cannot be zero vector");
@@ -74,6 +74,7 @@ public class Vector extends Point {
 
     /**
      * Calculates the squared length of this vector.
+     *
      * @return The squared length of the vector
      */
     public double lengthSquared() {
@@ -82,6 +83,7 @@ public class Vector extends Point {
 
     /**
      * Calculates the length of this vector.
+     *
      * @return The length of the vector
      */
     public double length() {
@@ -90,10 +92,23 @@ public class Vector extends Point {
 
     /**
      * Normalizes this vector to a unit vector.
+     *
      * @return A new vector that is a normalized version of this vector
      */
     public Vector normalize() {
         double len = length();
         return new Vector(this.xyz.d1 / len, this.xyz.d2 / len, this.xyz.d3 / len);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        return (obj instanceof Vector other)
+                && this.xyz.equals(other.xyz);
+    }
+
+    @Override
+    public String toString() {
+        return super.toString();
     }
 }

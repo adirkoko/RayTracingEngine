@@ -19,7 +19,7 @@ public class Plane implements Geometry {
      */
     public Plane(Point p1, Point p2, Point p3) {
         this.q = p1;
-        this.normal = null;  // Normal calculation will be implemented in the next stage
+        this.normal = null;  // Will be implemented later
     }
 
     /**
@@ -41,6 +41,15 @@ public class Plane implements Geometry {
      */
     @Override
     public Vector getNormal(Point point) {
+        return this.normal;
+    }
+
+    /**
+     * Gets the normal of the plane.
+     *
+     * @return the normal vector
+     */
+    public Vector getNormal() {
         return this.normal;
     }
 }
