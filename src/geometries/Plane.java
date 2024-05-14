@@ -5,6 +5,8 @@ import primitives.Vector;
 
 /**
  * Represents a Plane in 3D space.
+ *
+ * @author Adir and Meir.
  */
 public class Plane implements Geometry {
     private final Point q;

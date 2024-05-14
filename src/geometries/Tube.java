@@ -5,7 +5,9 @@ import primitives.Ray;
 import primitives.Vector;
 
 /**
- * Represents a tube in 3D space, defined by a radius and a central axis ray.
+ * Reepresents a tube in 3D space, dfined by a radius and a central axis ray.
+ *
+ * @author Adir and Meir.
  */
 public class Tube extends RadialGeometry {
     protected final Ray axisRay;

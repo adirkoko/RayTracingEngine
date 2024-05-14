@@ -1,11 +1,9 @@
 package geometries;
 
-import primitives.Point;
-import primitives.Vector;
-
 /**
- * Abstract class representing radial geometries.
- * Radial geometries are defined by a radius.
+ * Abstract class representing radial geometries, defined by a radius.
+ *
+ * @author Adir and Meir.
  */
 public abstract class RadialGeometry implements Geometry {
     protected final double radius;

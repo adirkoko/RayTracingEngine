@@ -5,12 +5,15 @@ import primitives.Vector;
 
 /**
  * Represents a sphere in 3D space.
+ *
+ * @author Adir and Meir.
  */
 public class Sphere extends RadialGeometry {
     private final Point center;
 
     /**
      * Constructor for Sphere.
+     *
      * @param center The center point of the sphere.
      * @param radius The radius of the sphere.
      */

@@ -1,5 +1,11 @@
 package primitives;
 
+
+/**
+ * Represents a vector in three-dimensional space, extending the functionality of a point with additional vector operations.
+ *
+ * @author Adir and Meir.
+ */
 public class Vector extends Point {
 
     /**

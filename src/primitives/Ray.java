@@ -1,6 +1,13 @@
 package primitives;
 
+/**
+ * Represents a ray in three-dimensional space defined by a starting point (head) and a direction vector.
+ * The direction vector is always normalized.
+ *
+ * @author Adir and Meir.
+ */
 public class Ray {
+
     private Point head;
     private Vector direction;
 

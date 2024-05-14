@@ -4,7 +4,9 @@ import primitives.Point;
 import primitives.Vector;
 
 /**
- * Interface for geometric bodies
+ * Interface for geometric bodies.
+ *
+ * @author Adir and Meir.
  */
 public interface Geometry {
 
