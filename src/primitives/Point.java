@@ -8,7 +8,7 @@ package primitives;
  */
 public class Point {
 
-    protected Double3 xyz;
+    protected final Double3 xyz;
     public static final Point ZERO = new Point(0, 0, 0);
 
     /**

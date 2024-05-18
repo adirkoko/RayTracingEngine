@@ -8,8 +8,8 @@ package primitives;
  */
 public class Ray {
 
-    private Point head;
-    private Vector direction;
+    private final Point head;
+    private final Vector direction;
 
     /**
      * Constructor for Ray that accepts a starting point and a direction vector.
@@ -20,14 +20,6 @@ public class Ray {
     public Ray(Point head, Vector direction) {
         this.head = head;
         this.direction = direction.normalize();
-    }
-
-    public Point getOrigin() {
-        return head;
-    }
-
-    public Vector getDirection() {
-        return direction;
     }
 
     @Override
