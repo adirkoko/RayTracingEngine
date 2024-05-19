@@ -5,13 +5,11 @@ out/
 
 ### Eclipse ###
 .apt_generated
-.classpath
 .factorypath
-.project
-.settings
 .springBeans
 .sts4-cache
 bin/
+doc/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 
