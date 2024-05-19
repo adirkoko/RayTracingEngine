@@ -4,7 +4,7 @@ import primitives.Point;
 import primitives.Vector;
 
 /**
- * Represents a Plane in 3D space.
+ * Represents a Plane in 3D space
  *
  * @author Adir and Meir.
  */
