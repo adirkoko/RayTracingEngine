@@ -5,7 +5,7 @@ import primitives.Ray;
 import primitives.Vector;
 
 /**
- * Reepresents a tube in 3D space, dfined by a radius and a central axis ray.
+ * Represents a tube in 3D space, defined by a radius and a central axis ray.
  *
  * @author Adir and Meir.
  */

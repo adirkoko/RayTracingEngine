@@ -8,6 +8,7 @@ package primitives;
  */
 public class Point {
 
+	/** TODO */
     protected final Double3 xyz;
     public static final Point ZERO = new Point(0, 0, 0);
 
@@ -83,6 +84,6 @@ public class Point {
 
     @Override
     public String toString() {
-        return xyz.toString();
+        return "" + xyz;
     }
 }
