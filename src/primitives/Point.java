@@ -4,7 +4,7 @@ package primitives;
  * Represents a point in 3D space using three coordinates.
  * This class provides methods for geometric operations such as addition, subtraction, and distance calculations between points, crucial for various 3D applications.
  *
- * @author Adir and Meir.
+ * @author Adir and Meir
  */
 public class Point {
 
