@@ -8,7 +8,14 @@ package primitives;
  */
 public class Ray {
 
+    /**
+     * The starting point of the Ray.
+     */
     private final Point head;
+
+    /**
+     * The direction of the Ray.
+     */
     private final Vector direction;
 
     /**

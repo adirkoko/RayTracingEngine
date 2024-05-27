@@ -10,6 +10,10 @@ import primitives.Vector;
  * @author Adir and Meir.
  */
 public class Tube extends RadialGeometry {
+
+    /**
+     * The Ray in the center of the tube.
+     */
     protected final Ray axisRay;
 
     /**
