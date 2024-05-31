@@ -1,8 +1,5 @@
 package geometries;
-
-import primitives.Point;
-import primitives.Ray;
-import primitives.Vector;
+import primitives.*;
 
 /**
  * Represents a cylinder in 3D space.
@@ -28,6 +25,25 @@ public class Cylinder extends Tube {
 
     @Override
     public Vector getNormal(Point point) {
-        return null; // Will be implemented later
+        Point head = axisRay.getHead();
+        Vector direction = axisRay.getDirection();
+
+        // Calculate the projection of the point onto the axis ray
+        double projectionLength = Util.alignZero(direction.dotProduct(point.subtract(head)));
+
+        // If the point is on the bottom base
+        if (Util.isZero(projectionLength)) {
+            // Normal is opposite to the direction of the axis
+            return direction.scale(-1);
+        }
+
+        // If the point is on the top base
+        if (Util.isZero(projectionLength - height)) {
+            // Normal is the same as the direction of the axis
+            return direction;
+        }
+
+        // Calculate the vector from the closest point on the axis to the given point, then normalize it.
+        return point.subtract(head.add(direction.scale(projectionLength))).normalize();
     }
 }
