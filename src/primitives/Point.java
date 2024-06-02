@@ -8,8 +8,13 @@ package primitives;
  */
 public class Point {
 
-	/** TODO */
+    /**
+     * Represents a point in 3D space.
+     */
     protected final Double3 xyz;
+    /**
+     * Represents the zero point (the center of the axes) in 3D space.
+     */
     public static final Point ZERO = new Point(0, 0, 0);
 
     /**

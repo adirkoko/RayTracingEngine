@@ -1,8 +1,5 @@
 package geometries;
-
-import primitives.Point;
-import primitives.Ray;
-import primitives.Vector;
+import primitives.*;
 
 /**
  * Represents a tube in 3D space, defined by a radius and a central axis ray.
@@ -10,6 +7,10 @@ import primitives.Vector;
  * @author Adir and Meir.
  */
 public class Tube extends RadialGeometry {
+
+    /**
+     * The Ray in the center of the tube.
+     */
     protected final Ray axisRay;
 
     /**
@@ -22,8 +23,23 @@ public class Tube extends RadialGeometry {
         this.axisRay = axisRay;
     }
 
+    /**
+     * Returns the normal vector to the Tube object at the specified point.
+     *
+     * @param point The point on the Tube object.
+     * @return The normal vector to the Tube object at the specified point.
+     */
     @Override
     public Vector getNormal(Point point) {
-        return null; // Will be implemented later
+        Point head = axisRay.getHead();
+        Vector direction = axisRay.getDirection();
+
+        // Calculate the projection of the point onto the axis ray.
+        // That is, how far along the direction vector from the starting point head one must go to reach the closest point to the given point.
+        // alignZero(double) in order to avoid negligible computational errors with small numbers.
+        double projectionLength = Util.alignZero(direction.dotProduct(point.subtract(head)));
+
+        // Calculates the vector from the closest point on the axis to the given point, normalizes it, and returns it as a vector normal to the given point on the surface of the Tube.
+        return point.subtract(projectionLength == 0 ? head : head.add(direction.scale(projectionLength))).normalize();
     }
 }

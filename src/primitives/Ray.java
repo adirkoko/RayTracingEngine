@@ -8,7 +8,14 @@ package primitives;
  */
 public class Ray {
 
+    /**
+     * The starting point of the Ray.
+     */
     private final Point head;
+
+    /**
+     * The direction of the Ray.
+     */
     private final Vector direction;
 
     /**
@@ -20,6 +27,24 @@ public class Ray {
     public Ray(Point head, Vector direction) {
         this.head = head;
         this.direction = direction.normalize();
+    }
+
+    /**
+     * Returns the starting point of the ray.
+     *
+     * @return starting point of ray.
+     */
+    public Point getHead() {
+        return head;
+    }
+
+    /**
+     * Returns the directional vector of the ray.
+     *
+     * @return directional vector of ray.
+     */
+    public Vector getDirection() {
+        return direction;
     }
 
     @Override
