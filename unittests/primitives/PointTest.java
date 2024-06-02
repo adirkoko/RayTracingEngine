@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for primitives.Point class
+ * Unit tests for {@link primitives.Point} class
  *
  * @author Adir and Meir
  */
@@ -44,7 +44,6 @@ class PointTest {
                 new Point(3, 2, 1).add(new Vector(1, 2, 3)), //
                 "add() wrong result");
     }
-
 
     /**
      * Test method for {@link primitives.Point#distanceSquared(Point)}.

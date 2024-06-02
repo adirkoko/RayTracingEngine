@@ -28,8 +28,14 @@ public class Cylinder extends Tube {
         Point head = axisRay.getHead();
         Vector direction = axisRay.getDirection();
 
+        // If the point is in the center of the bottom base
+        if (point.equals(head)) {
+            // Normal is opposite to the direction of the axis
+            return direction.scale(-1);
+        }
+
         // Calculate the projection of the point onto the axis ray
-        double projectionLength = Util.alignZero(direction.dotProduct(point.subtract(head)));
+        double projectionLength = direction.dotProduct(point.subtract(head));
 
         // If the point is on the bottom base
         if (Util.isZero(projectionLength)) {
