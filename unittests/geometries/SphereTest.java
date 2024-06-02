@@ -20,7 +20,7 @@ public class SphereTest {
         Sphere sphere = new Sphere(new Point(0, 0, 0), 4);
         Vector normal;
 
-        // TC01: Test normal on positive X-axis
+        // TC01: Test normal on positive X-axis.
         normal = sphere.getNormal(new Point(4, 0, 0));
         assertEquals(new Vector(1, 0, 0), normal, "getNormal() wrong normal vector");
         assertEquals(1, normal.length(), DELTA, "getNormal() normal vector is not a unit vector");
