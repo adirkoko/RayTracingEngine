@@ -11,7 +11,7 @@ public class Vector extends Point {
     /**
      * Public constructor to initialize vector with three doubles.
      *
-     * @param x X-coordinate hi
+     * @param x X-coordinate
      * @param y Y-coordinate
      * @param z Z-coordinate
      */
