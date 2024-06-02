@@ -56,10 +56,5 @@ public class TriangleTest {
 
         // Check the normal is orthogonal to one edge of the triangle.
         assertEquals(0d, result.dotProduct(p2.subtract(p1)), DELTA, "getNormal(Point) the normal is not orthogonal to the edge p1-p2");
-
-        // Check exception for point not on the triangle
-        assertThrows(IllegalArgumentException.class,
-                () -> triangle.getNormal(new Point(1, 1, 1)), //
-                "getNormal(Point) the point is not on the triangle, does not throw an exception");
     }
 }

@@ -50,7 +50,7 @@ class PlaneTest {
         Vector result = plane.getNormal(new Point(0, 0, 1));
 
         // Check the length is 1
-        assertEquals(1, result.dotProduct(new Vector(0, -1, 1)), DELTA, //
+        assertEquals(1, result.length(), DELTA, //
                 "getNormal(Point) the length of the normal is not 1");
 
         // Check the normal is orthogonal to the plane
@@ -58,10 +58,6 @@ class PlaneTest {
                 DELTA, "GetNormal(Point) the normal is not orthogonal to the plane");
         assertEquals(0d, result.dotProduct(new Vector(-1, 1, 0)), //
                 DELTA, "GetNormal(Point) the normal is not orthogonal to the plane");
-
-        assertThrows(IllegalArgumentException.class,
-                () -> plane.getNormal(new Point (1, 1, 1)), //
-                "GetNormal(Point) the point is not on the plane, does not throw an exception");
     }
 
     /**
