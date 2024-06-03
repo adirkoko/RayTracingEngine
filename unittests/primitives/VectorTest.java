@@ -84,7 +84,7 @@ class VectorTest {
     @Test
     void lengthSquared() {
         // ============ Equivalence Partitions Tests ==============
-        // TC01: Checks if calculating the squared length of the vector yields the correct result.
+        // TC01: Checks if calculating the squared length of the vector yields the correct result
         assertEquals(14d, new Vector(1, 2, 3).lengthSquared(), DELTA, "lengthSquared() wrong result");
     }
 
