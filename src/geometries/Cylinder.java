@@ -31,16 +31,16 @@ public class Cylinder extends Tube {
         Vector direction = axisRay.getDirection();
 
         // If the point is in the center of the bottom base.
-        if (point.equals(head)) return direction.scale(-1); // Normal is opposite to the direction of the axis
+        if (point.equals(head)) return direction.scale(-1); // Normal is opposite to the direction of the axis.
 
         // Calculate the projection of the point onto the axis ray
         double projectionLength = direction.dotProduct(point.subtract(head));
 
         // If the point is on the bottom base
-        if (Util.isZero(projectionLength)) return direction.scale(-1); // Normal is opposite to the direction of the axis
+        if (Util.isZero(projectionLength)) return direction.scale(-1); // Normal is opposite to the direction of the axis.
 
         // If the point is on the top base
-        if (Util.isZero(projectionLength - height)) return direction; // Normal is the same as the direction of the axis
+        if (Util.isZero(projectionLength - height)) return direction; // Normal is the same as the direction of the axis.
 
         // Calculate the vector from the closest point on the axis to the given point, then normalize it.
         return point.subtract(head.add(direction.scale(projectionLength))).normalize();
