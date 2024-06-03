@@ -1,5 +1,6 @@
 package geometries;
 import primitives.*;
+import java.util.List;
 
 /**
  * Represents a tube in 3D space, defined by a radius and a central axis ray.
@@ -41,5 +42,10 @@ public class Tube extends RadialGeometry {
 
         // Calculates the vector from the closest point on the axis to the given point, normalizes it, and returns it as a vector normal to the given point on the surface of the Tube.
         return point.subtract(projectionLength == 0 ? head : head.add(direction.scale(projectionLength))).normalize();
+    }
+
+    @Override
+    public List<Point> findIntersections(Ray ray) {
+        return null; //TODO
     }
 }

@@ -1,5 +1,6 @@
 package geometries;
 import primitives.*;
+import java.util.List;
 
 /**
  * Represents a cylinder in 3D space.
@@ -44,5 +45,10 @@ public class Cylinder extends Tube {
 
         // Calculate the vector from the closest point on the axis to the given point, then normalize it.
         return point.subtract(head.add(direction.scale(projectionLength))).normalize();
+    }
+
+    @Override
+    public List<Point> findIntersections(Ray ray) {
+        return null; //TODO
     }
 }

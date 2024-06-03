@@ -59,4 +59,15 @@ public class Ray {
     public String toString() {
         return head + "->" + direction;
     }
+
+    /**
+     * Calculates a point on the ray at a given distance from the ray's origin.
+     *
+     * @param t the distance from the origin along the direction vector
+     * @return the point at the distance t from the origin
+     */
+    public Point getPoint(double t) {
+        return head.add(direction.scale(t));
+    }
+
 }

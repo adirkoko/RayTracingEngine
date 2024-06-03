@@ -1,14 +1,12 @@
 package geometries;
-
-import primitives.Point;
-import primitives.Vector;
+import primitives.*;
 
 /**
  * Interface for geometric bodies.
  *
  * @author Adir and Meir.
  */
-public interface Geometry {
+public interface Geometry extends Intersectable{
 
     /**
      * Calculates the normal vector to the geometry at the specified point.
