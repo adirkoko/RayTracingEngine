@@ -1,9 +1,12 @@
 package primitives;
-
 import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for {@link primitives.Vector} class
+ *
+ * @author Adir and Meir
+ */
 class VectorTest {
 
     /**
@@ -23,7 +26,23 @@ class VectorTest {
         // =============== Boundary Values Tests ==================
         // TC11: Checks whether adding two vectors in different directions, throws an exception because zero vectors are not allowed.
         assertThrows(IllegalArgumentException.class, () -> new Vector(1, 2, 3).add(new Vector(-1, -2, -3)),
-                "scale() adding two vectors in different directions, does not throw an exception");
+                "add() adding two vectors in different directions, does not throw an exception");
+    }
+
+    /**
+     * Test method for {@link primitives.Vector#subtract(primitives.Point)}.
+     */
+    @Test
+    void testSubtract() {
+        Vector v1 = new Vector(1, 2, 3);
+        // ============ Equivalence Partitions Tests ==============
+        // TC01: Checks whether the result of the subtraction is the correct result.
+        assertEquals(v1.subtract(new Vector(-2, -4, -6)), new Vector(3, 6, 9), "subtract() wrong result");
+
+        // =============== Boundary Values Tests ==================
+        // TC11 Checks whether subtraction of a vector from itself, throws an exception because zero vectors are not allowed.
+        assertThrows(IllegalArgumentException.class, () -> v1.subtract(v1),
+                "subtract() subtraction of a vector from itself, does not throw an exception");
     }
 
     /**
@@ -52,9 +71,11 @@ class VectorTest {
         // TC01: Checks a scalar product between two vectors when the result is positive.
         assertEquals(32d, new Vector(1, 2, -3).dotProduct(new Vector(4, 5, -6)), DELTA, "dotProduct() wrong result");
         // TC02: Checks a scalar product between two vectors when the result is negative.
-        assertEquals(-32d, new Vector(-1, -2, -3).dotProduct(new Vector(4, 5, 6)), DELTA, "dotProduct() wrong result");
-        // TC03: Checks a scalar product between two vectors when the result is negative.
         assertEquals(-4d, new Vector(1, 2, -3).dotProduct(new Vector(4, 5, 6)), DELTA, "dotProduct() wrong result");
+
+        // =============== Boundary Values Tests ==================
+        // TC11: Checks a scalar product between two orthogonal vectors.
+        assertEquals(0d, new Vector(1, 0, 0).dotProduct(new Vector(0, 1, 0)), DELTA, "dotProduct() wrong result for orthogonal vectors");
     }
 
     /**
@@ -84,7 +105,7 @@ class VectorTest {
     @Test
     void lengthSquared() {
         // ============ Equivalence Partitions Tests ==============
-        // TC01: Checks if calculating the squared length of the vector yields the correct result
+        // TC01: Checks if calculating the squared length of the vector yields the correct result.
         assertEquals(14d, new Vector(1, 2, 3).lengthSquared(), DELTA, "lengthSquared() wrong result");
     }
 
@@ -98,6 +119,9 @@ class VectorTest {
         assertEquals(5d, new Vector(0, 3, 4).length(), DELTA, "length() wrong result");
     }
 
+    /**
+     * Test method for {@link primitives.Vector#normalize()}.
+     */
     @Test
     void normalize() {
         // ============ Equivalence Partitions Tests ==============

@@ -1,10 +1,13 @@
 package geometries;
-
 import primitives.*;
 import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for {@link geometries.Triangle} class
+ *
+ * @author Adir and Meir
+ */
 public class TriangleTest {
 
     /**
@@ -56,5 +59,6 @@ public class TriangleTest {
 
         // Check the normal is orthogonal to one edge of the triangle.
         assertEquals(0d, result.dotProduct(p2.subtract(p1)), DELTA, "getNormal(Point) the normal is not orthogonal to the edge p1-p2");
+        assertEquals(0d, result.dotProduct(p3.subtract(p2)), DELTA, "getNormal(Point) the normal is not orthogonal to the edge p2-p3");
     }
 }

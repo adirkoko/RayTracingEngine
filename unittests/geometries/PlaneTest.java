@@ -3,6 +3,11 @@ import primitives.*;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for {@link geometries.Plane} class
+ *
+ * @author Adir and Meir
+ */
 class PlaneTest {
 
     /**
@@ -33,6 +38,11 @@ class PlaneTest {
         assertThrows(IllegalArgumentException.class,
                 () -> new Plane(p1, new Point(2, 0, 0), new Point(3, 0, 0)), //
                 "Plane(Point, Point, Point) When all points are on the same vector, does not throw an exception");
+
+        // TC13: Checks if an exception is thrown when two points are coincident.
+        assertThrows(IllegalArgumentException.class,
+                () -> new Plane(p1, new Point(1, 0, 0), p3), //
+                "Plane(Point, Point, Point) When two points are coincident, does not throw an exception");
     }
 
     /**
@@ -79,6 +89,5 @@ class PlaneTest {
         // Check the normal is orthogonal to the vectors of the plane
         assertEquals(0d, result.dotProduct(p2.subtract(p1)), DELTA, "GetNormal() the normal is not orthogonal to the plane");
         assertEquals(0d, result.dotProduct(p3.subtract(p1)), DELTA, "GetNormal() the normal is not orthogonal to the plane");
-        assertEquals(0d, result.dotProduct(p3.subtract(p2)), DELTA, "GetNormal() the normal is not orthogonal to the plane");
     }
 }

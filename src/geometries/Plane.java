@@ -1,5 +1,4 @@
 package geometries;
-
 import primitives.Point;
 import primitives.Vector;
 
@@ -9,7 +8,15 @@ import primitives.Vector;
  * @author Adir and Meir.
  */
 public class Plane implements Geometry {
+
+    /**
+     * The base point of the plane.
+     */
     private final Point q;
+
+    /**
+     * The normal vector of the plane.
+     */
     private final Vector normal;
 
     /**

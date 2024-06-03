@@ -1,15 +1,11 @@
 package geometries;
-
 import static org.junit.jupiter.api.Assertions.*;
-
 import org.junit.jupiter.api.Test;
-
-import geometries.Polygon;
 import primitives.Point;
 import primitives.Vector;
 
 /**
- * Testing Polygons
+ * Unit tests for {@link geometries.Polygon} class
  *
  * @author Dan
  */

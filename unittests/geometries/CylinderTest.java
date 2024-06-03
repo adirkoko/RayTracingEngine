@@ -3,6 +3,11 @@ import primitives.*;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for {@link geometries.Cylinder} class
+ *
+ * @author Adir and Meir
+ */
 class CylinderTest {
 
     /**
@@ -10,7 +15,7 @@ class CylinderTest {
      */
     @Test
     void testGetNormal() {
-        Cylinder c1 = new Cylinder(new Ray(new Point(0, 0, 0), new Vector(0, 0, 1)), 1, 5);
+        Cylinder c1 = new Cylinder(new Ray(Point.ZERO, new Vector(0, 0, 1)), 1, 5);
 
         // ============ Equivalence Partitions Tests ==============
         // TC01: Checks that the normal is correct on the side surface
@@ -24,7 +29,7 @@ class CylinderTest {
 
         // =============== Boundary Values Tests ==================
         // TC11: Checks that the normal is correct at the center of the bottom base
-        assertEquals(new Vector(0, 0, -1), c1.getNormal(new Point(0, 0, 0)), "getNormal(Point) Wrong normal to center of bottom base");
+        assertEquals(new Vector(0, 0, -1), c1.getNormal(Point.ZERO), "getNormal(Point) Wrong normal to center of bottom base");
 
         // TC12: Checks that the normal is correct at the center of the top base
         assertEquals(new Vector(0, 0, 1), c1.getNormal(new Point(0, 0, 5)), "getNormal(Point) Wrong normal to center of top base");
