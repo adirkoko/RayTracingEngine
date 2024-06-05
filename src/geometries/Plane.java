@@ -70,6 +70,7 @@ public class Plane implements Geometry {
         Point p0 = ray.getHead();
         Vector v = ray.getDirection();
 
+
         // Check if the ray starts at the reference point of the plane
         if (q.equals(p0)) {
             return null;

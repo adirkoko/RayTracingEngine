@@ -80,8 +80,8 @@ public class SphereTest {
         assertEquals(1, result2.size(), "Wrong number of points");
         assertEquals(List.of(new Point(1, -1, 0)), result2, "Ray from sphere inside");
 
-        // TC12: Ray starts at sphere and goes outside (0 points)
-        assertNull(sphere.findIntersections(new Ray(p100, new Vector(0, 1, 0))),
+        // TC12: Ray starts at sphere and goes outside (1 point)
+        assertEquals(List.of(new Point(1,1,0)),sphere.findIntersections(new Ray(p100, new Vector(0, 1, 0))),
                 "Ray's line out of sphere");
 
         // **** Group: Ray's line goes through the center

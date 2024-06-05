@@ -1,6 +1,9 @@
 package geometries;
 import primitives.*;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -60,5 +63,40 @@ public class TriangleTest {
         // Check the normal is orthogonal to one edge of the triangle.
         assertEquals(0d, result.dotProduct(p2.subtract(p1)), DELTA, "getNormal(Point) the normal is not orthogonal to the edge p1-p2");
         assertEquals(0d, result.dotProduct(p3.subtract(p2)), DELTA, "getNormal(Point) the normal is not orthogonal to the edge p2-p3");
+    }
+
+    /**
+     * Test method for {@link geometries.Triangle#findIntersections(primitives.Ray)}.
+     */
+    @Test
+    public void testFindIntersections() {
+        Triangle tr = new Triangle(new Point(1, 0, 0), new Point(0, 1, 0), new Point(0, 0, 1));
+
+        // ============ Equivalence Partitions Tests ============
+        // TC01: Inside triangle
+        List<Point> result = tr.findIntersections(new Ray(new Point(-1, -1, -1), new Vector(2, 2, 2)));
+        assertEquals(1, result.size(), "TC01: Wrong number of points");
+        assertEquals(new Point(0.25, 0.25, 0.25), result.get(0), "TC01: Ray crosses triangle once");
+
+        // TC02: Outside against edge
+        assertNull(tr.findIntersections(new Ray(new Point(-1, -1, -1), new Vector(2, 1, 1))),
+                "TC02: Ray's crosses outside the triangle");
+
+        // TC03: Outside against vertex
+        assertNull(tr.findIntersections(new Ray(new Point(-1, -1, -1), new Vector(1, 1, 2))),
+                "TC03: Ray's crosses outside the triangle");
+
+        // =============== Boundary Values Tests ==================
+        // TC04: On vertex
+        assertNull(tr.findIntersections(new Ray(new Point(-1, -1, -1), new Vector(2, 2, 2))),
+                "TC04: Ray's crosses the triangle's vertex");
+
+        // TC05: On edge
+        assertNull(tr.findIntersections(new Ray(new Point(-1, -1, -1), new Vector(2, 0, 2))),
+                "TC05: Ray's crosses the triangle's edge");
+
+        // TC06: On edge's continuation
+        assertNull(tr.findIntersections(new Ray(new Point(-1, -1, -1), new Vector(0, 2, 3))),
+                "TC06: Ray's crosses the triangle's edge");
     }
 }
