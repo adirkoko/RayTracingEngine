@@ -73,7 +73,7 @@ public class TriangleTest {
         Triangle tr = new Triangle(new Point(1, 0, 0), new Point(0, 1, 0), new Point(0, 0, 1));
 
         // ============ Equivalence Partitions Tests ============
-        // TC01: Inside triangle
+        // TC01: Inside triangle.
         List<Point> result = tr.findIntersections(new Ray(new Point(-1, -1, -1), new Vector(2, 2, 2)));
         assertEquals(1, result.size(), "TC01: Wrong number of points");
         assertEquals(new Point(0.25, 0.25, 0.25), result.get(0), "TC01: Ray crosses triangle once");
