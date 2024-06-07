@@ -1,8 +1,7 @@
 package geometries;
-
 import primitives.*;
-
 import java.util.List;
+import static java.lang.Math.sqrt;
 
 /**
  * Represents a sphere in 3D space.
@@ -34,47 +33,49 @@ public class Sphere extends RadialGeometry {
 
     @Override
     public List<Point> findIntersections(Ray ray) {
-        Point p0 = ray.getHead();
-        Vector dir = ray.getDirection();
 
-        // Handle case where ray starts at the center of the sphere
-        if (center.equals(p0))
+        // Check if the ray starts at the sphere's center
+        if (center.equals(ray.getHead())) {
             return List.of(ray.getPoint(radius));
+        }
 
-        // Calculate the vector from the ray's starting point to the sphere's center
-        Vector u = center.subtract(p0);
-        double tm = dir.dotProduct(u);
+        // Calculate the vector from the ray's origin to the sphere's center
+        Vector toCenter = center.subtract(ray.getHead());
 
-        //The point of the ray head is in such a position that the direction of the ray is farther from the center of the sphere.
-        //That is, any potential intersection point will be behind the ray head, and therefore will not count as an intersection.
-        if (tm < 0) {
+        // Project toCenter onto the ray's direction to find tm
+        double projectionLength = ray.getDirection().dotProduct(toCenter);
+
+        // Calculate the distance from the sphere's center to the ray
+        double distanceToRay = sqrt(toCenter.lengthSquared() - projectionLength * projectionLength);
+
+        // If the distance is greater than or equal to the radius, there are no intersections
+        if (distanceToRay >= radius) {
             return null;
         }
 
-        double dSquared = u.lengthSquared() - tm * tm;
+        // Calculate th, the distance from the projection to the intersection points
+        double offset = sqrt(radius * radius - distanceToRay * distanceToRay);
 
-        // If the distance from the sphere's center to the ray is greater than the radius, there's no intersection
-        if (dSquared >= radius * radius)
-            return null;
+        // Calculate the distances to the intersection points
+        double t1 = projectionLength - offset;
+        double t2 = projectionLength + offset;
 
-        double th = Math.sqrt(radius * radius - dSquared);
-        double t1 = tm - th;
-        double t2 = tm + th;
-
-        // If both intersection points are behind the ray's origin, return null
-        if (Util.alignZero(t1) <= 0 && Util.alignZero(t2) <= 0)
-            return null;
-
-        // If only t2 is positive, return the point corresponding to t2
-        if (Util.alignZero(t1) <= 0)
-            return List.of(ray.getPoint(t2));
-
-        // If only t1 is positive, return the point corresponding to t1
-        if (Util.alignZero(t2) <= 0)
-            return List.of(ray.getPoint(t1));
-
-        // If both t1 and t2 are positive, return both points
-        return List.of(ray.getPoint(t1), ray.getPoint(t2));
+        // Check the intersection points and return them
+        if (Util.alignZero(t1) > 0 && Util.alignZero(t2) > 0) {
+            Point intersection1 = ray.getPoint(t1);
+            Point intersection2 = ray.getPoint(t2);
+            return List.of(intersection1, intersection2);
+        }
+        if (Util.alignZero(t1) > 0) {
+            Point intersection1 = ray.getPoint(t1);
+            return List.of(intersection1);
+        }
+        if (Util.alignZero(t2) > 0) {
+            Point intersection2 = ray.getPoint(t2);
+            return List.of(intersection2);
+        }
+        return null;
     }
+
 
 }
