@@ -1,4 +1,5 @@
 package geometries;
+
 import primitives.*;
 import org.junit.jupiter.api.Test;
 
@@ -74,9 +75,9 @@ public class TriangleTest {
 
         // ============ Equivalence Partitions Tests ============
         // TC01: Inside triangle
-        List<Point> result = tr.findIntersections(new Ray(new Point(-1, -1, -1), new Vector(2, 2, 2)));
+        List<Point> result = tr.findIntersections(new Ray(new Point(-1, -2, -1), new Vector(1, 2, 1)));
         assertEquals(1, result.size(), "TC01: Wrong number of points");
-        assertEquals(new Point(0.25, 0.25, 0.25), result.get(0), "TC01: Ray crosses triangle once");
+        assertEquals(new Point(0.25, 0.5, 0.25), result.getFirst(), "TC01: Ray crosses triangle once");
 
         // TC02: Outside against edge
         assertNull(tr.findIntersections(new Ray(new Point(-1, -1, -1), new Vector(2, 1, 1))),
@@ -88,11 +89,11 @@ public class TriangleTest {
 
         // =============== Boundary Values Tests ==================
         // TC04: On vertex
-        assertNull(tr.findIntersections(new Ray(new Point(-1, -1, -1), new Vector(2, 2, 2))),
+        assertNull(tr.findIntersections(new Ray(new Point(-1, -2, -1), new Vector(1, 2, 2))),
                 "TC04: Ray's crosses the triangle's vertex");
 
         // TC05: On edge
-        assertNull(tr.findIntersections(new Ray(new Point(-1, -1, -1), new Vector(2, 0, 2))),
+        assertNull(tr.findIntersections(new Ray(new Point(-1, -2, -1), new Vector(1.5, 2, 1.5))),
                 "TC05: Ray's crosses the triangle's edge");
 
         // TC06: On edge's continuation

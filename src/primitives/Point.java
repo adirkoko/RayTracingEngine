@@ -17,6 +17,18 @@ public class Point {
      */
     public static final Point ZERO = new Point(0, 0, 0);
 
+    public double getX() {
+        return xyz.d1;
+    }
+
+    public double getY() {
+        return xyz.d2;
+    }
+
+    public double getZ() {
+        return xyz.d3;
+    }
+
     /**
      * Constructs a new Point given three double values.
      *

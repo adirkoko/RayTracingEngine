@@ -24,49 +24,40 @@ public class Triangle extends Polygon {
 
     @Override
     public List<Point> findIntersections(Ray ray) {
-        // Step 1: Find intersections with the plane
-        // First, we find where the ray intersects with the plane of the triangle.
-        List<Point> intersections = plane.findIntersections(ray);
-        if (intersections == null) {
-            return null; // If there's no intersection with the plane, there's no intersection with the triangle.
+        // Find intersections with the plane containing the triangle
+        List<Point> planeIntersections = plane.findIntersections(ray);
+        if (planeIntersections == null) {
+            return null; // No intersection with the plane, therefore no intersection with the triangle
         }
 
-        // Step 2: Get the intersection point with the plane
-        // If there is an intersection, get the intersection point.
-        Point intersection = intersections.get(0);
+        // Get the intersection point with the plane
+        Point intersectionPoint = planeIntersections.getFirst();
 
-        // Step 3: Check if the intersection point is inside the triangle using barycentric coordinates
-        // Get the vertices of the triangle.
-        Point a = vertices.get(0);
-        Point b = vertices.get(1);
-        Point c = vertices.get(2);
+        // Calculate vectors from the ray's origin to the triangle's vertices
+        Point p0 = ray.getHead();
+        Vector vectorToVertex1 = vertices.get(0).subtract(p0);
+        Vector vectorToVertex2 = vertices.get(1).subtract(p0);
+        Vector vectorToVertex3 = vertices.get(2).subtract(p0);
 
-        // Create vectors for the edges of the triangle and the vector from vertex a to the intersection point.
-        Vector v0 = b.subtract(a);
-        Vector v1 = c.subtract(a);
-        Vector v2 = intersection.subtract(a);
+        // Calculate normal vectors for the planes formed by the ray and the triangle's edges
+        Vector normal1 = vectorToVertex1.crossProduct(vectorToVertex2).normalize();
+        Vector normal2 = vectorToVertex2.crossProduct(vectorToVertex3).normalize();
+        Vector normal3 = vectorToVertex3.crossProduct(vectorToVertex1).normalize();
 
-        // Step 4: Calculate dot products for barycentric coordinates
-        // Compute dot products of the edge vectors and the vector to the intersection point.
-        double d00 = v0.dotProduct(v0);
-        double d01 = v0.dotProduct(v1);
-        double d11 = v1.dotProduct(v1);
-        double d20 = v2.dotProduct(v0);
-        double d21 = v2.dotProduct(v1);
+        // Get the direction vector of the ray
+        Vector rayDirection = ray.getDirection();
 
-        // Step 5: Calculate barycentric coordinates
-        // Calculate the barycentric coordinates (u, v, w) for the intersection point.
-        double denom = d00 * d11 - d01 * d01;
-        double v = (d11 * d20 - d01 * d21) / denom;
-        double w = (d00 * d21 - d01 * d20) / denom;
-        double u = 1.0 - v - w;
+        // Check if the intersection point is inside the triangle
+        double dotProduct1 = rayDirection.dotProduct(normal1);
+        double dotProduct2 = rayDirection.dotProduct(normal2);
+        double dotProduct3 = rayDirection.dotProduct(normal3);
 
-        // Step 6: Check if the intersection point is inside the triangle
-        // If all barycentric coordinates are between 0 and 1, the intersection point is inside the triangle.
-        if (u >= 0 && v >= 0 && w >= 0) {
-            return List.of(intersection); // Return the intersection point as a list.
+        if ((Util.alignZero(dotProduct1) > 0 && Util.alignZero(dotProduct2) > 0 && Util.alignZero(dotProduct3) > 0) ||
+                (Util.alignZero(dotProduct1) < 0 && Util.alignZero(dotProduct2) < 0 && Util.alignZero(dotProduct3) < 0)) {
+            return List.of(intersectionPoint); // The intersection point is inside the triangle
         }
 
-        return null; // If the intersection point is not inside the triangle, return null.
+        return null; // The intersection point is outside the triangle
     }
+
 }

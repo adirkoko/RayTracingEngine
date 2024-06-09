@@ -62,12 +62,11 @@ public class Ray {
 
     /**
      * Calculates a point on the ray at a given distance from the ray's origin.
-     *
-     * @param t the distance from the origin along the direction vector
-     * @return the point at the distance t from the origin
+     * @param t the distance from the ray's origin
+     * @return the point on the ray at distance t
      */
     public Point getPoint(double t) {
-        return head.add(direction.scale(t));
+        return Util.isZero(t) ? head : head.add(direction.scale(t));
     }
 
 }

@@ -1,8 +1,13 @@
 package geometries;
+
 import static org.junit.jupiter.api.Assertions.*;
+
 import org.junit.jupiter.api.Test;
 import primitives.Point;
+import primitives.Ray;
 import primitives.Vector;
+
+import java.util.List;
 
 /**
  * Unit tests for {@link geometries.Polygon} class
@@ -85,6 +90,42 @@ public class PolygonTests {
         for (int i = 0; i < 3; ++i)
             assertEquals(0d, result.dotProduct(pts[i].subtract(pts[i == 0 ? 3 : i - 1])), DELTA,
                     "Polygon's normal is not orthogonal to one of the edges");
+    }
+
+    /**
+     * Test method for {@link geometries.Polygon#findIntersections(primitives.Ray)}.
+     */
+    @Test
+    void testFindIntersections() {
+        Polygon tr = new Polygon(new Point(1, 0, 0), new Point(0, 1, 0), new Point(0, 0, 1));
+        // It is important to remember that a triangle is also a polygon.
+
+        // ============ Equivalence Partitions Tests ============
+        // TC01: Inside polygon
+        List<Point> result = tr.findIntersections(new Ray(new Point(-1, -2, -1), new Vector(1, 2, 1)));
+        assertEquals(1, result.size(), "TC01: Wrong number of points");
+        assertEquals(new Point(0.25, 0.5, 0.25), result.getFirst(), "TC01: Ray crosses polygon once");
+
+        // TC02: Outside against edge
+        assertNull(tr.findIntersections(new Ray(new Point(-1, -1, -1), new Vector(2, 1, 1))),
+                "TC02: Ray's crosses outside the polygon");
+
+        // TC03: Outside against vertex
+        assertNull(tr.findIntersections(new Ray(new Point(-1, -1, -1), new Vector(1, 1, 2))),
+                "TC03: Ray's crosses outside the polygon");
+
+        // =============== Boundary Values Tests ==================
+        // TC04: On vertex
+        assertNull(tr.findIntersections(new Ray(new Point(-1, -2, -1), new Vector(1, 2, 2))),
+                "TC04: Ray's crosses the polygon's vertex");
+
+        // TC05: On edge
+        assertNull(tr.findIntersections(new Ray(new Point(-1, -2, -1), new Vector(1.5, 2, 1.5))),
+                "TC05: Ray's crosses the polygon's edge");
+
+        // TC06: On edge's continuation
+        assertNull(tr.findIntersections(new Ray(new Point(-1, -1, -1), new Vector(0, 2, 3))),
+                "TC06: Ray's crosses the polygon's edge");
     }
 
 }
