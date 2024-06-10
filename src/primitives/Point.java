@@ -17,14 +17,26 @@ public class Point {
      */
     public static final Point ZERO = new Point(0, 0, 0);
 
+    /**
+     * Get the X coordinate inside the point.
+     * @return the X coordinate inside the point.
+     */
     public double getX() {
         return xyz.d1;
     }
 
+    /**
+     * Get the Y coordinate inside the point.
+     * @return the Y coordinate inside the point.
+     */
     public double getY() {
         return xyz.d2;
     }
 
+    /**
+     * Get the Z coordinate inside the point.
+     * @return the Z coordinate inside the point.
+     */
     public double getZ() {
         return xyz.d3;
     }

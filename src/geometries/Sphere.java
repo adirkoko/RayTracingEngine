@@ -34,31 +34,35 @@ public class Sphere extends RadialGeometry {
 
     @Override
     public List<Point> findIntersections(Ray ray) {
-        // Check if the ray starts at the sphere's center
-        if (center.equals(ray.getHead()))
+        // Check if the ray starts at the center of the sphere
+        if (center.equals(ray.getHead())) {
+            // The intersection point is on the surface of the sphere
             return List.of(ray.getPoint(radius));
+        }
 
-        // Calculate the vector from the ray's origin to the sphere's center
+        // Calculate the vector from the ray's head to the center of the sphere
         Vector toCenter = center.subtract(ray.getHead());
-        // Project toCenter onto the ray's direction to find tm
         double projectionLength = ray.getDirection().dotProduct(toCenter);
-        // Calculate the distance from the sphere's center to the ray
+
+        // Calculate the squared distance from the center of the sphere to the ray
         double squaredDistanceToRay = toCenter.lengthSquared() - projectionLength * projectionLength;
         double squaredOffset = radiusSquared - squaredDistanceToRay;
-        // If the distance is greater than or equal to the radius, there are no intersections
-        if (alignZero(squaredOffset) <= 0)
-            return null;
+        if (alignZero(squaredOffset) <= 0) return null; // No intersection if the distance is greater than the radius
 
-        // Calculate th, the distance from the projection to the intersection points.
+        // Calculate the distance from the projection point to the intersection points
         double offset = sqrt(squaredOffset);
-        // Calculate the distances to the intersection points: always t1 < t2
-        double t2 = projectionLength + offset;
-        if (alignZero(t2) <= 0) return null;
 
+        // Calculate the parameter t for the second intersection point
+        double t2 = projectionLength + offset;
+        if (alignZero(t2) <= 0) return null; // Both intersection points are behind the ray's origin
+
+        // Calculate the parameter t for the first intersection point
         double t1 = projectionLength - offset;
+
+        // Return the intersection points
         return alignZero(t1) <= 0
-                ? List.of(ray.getPoint(t2))
-                : List.of(ray.getPoint(t1), ray.getPoint(t2));
+                ? List.of(ray.getPoint(t2)) // Only the second intersection point is valid
+                : List.of(ray.getPoint(t1), ray.getPoint(t2)); // Both intersection points are valid
     }
 
 }
