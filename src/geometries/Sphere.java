@@ -49,7 +49,7 @@ public class Sphere extends RadialGeometry {
         if (alignZero(squaredOffset) <= 0)
             return null;
 
-        // Calculate th, the distance from the projection to the intersection points
+        // Calculate th, the distance from the projection to the intersection points.
         double offset = sqrt(squaredOffset);
         // Calculate the distances to the intersection points: always t1 < t2
         double t2 = projectionLength + offset;
