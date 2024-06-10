@@ -1,10 +1,11 @@
 package geometries;
 import java.util.ArrayList;
 import java.util.List;
+
+import static primitives.Util.alignZero;
 import static primitives.Util.isZero;
 import primitives.Point;
 import primitives.Ray;
-import primitives.Util;
 import primitives.Vector;
 
 /**
@@ -100,9 +101,6 @@ public class Polygon implements Geometry {
             return null; // No intersection with the plane, thus no intersection with the polygon
         }
 
-        // Get the intersection point with the plane
-        Point intersectionPoint = planeIntersections.getFirst();
-
         // Calculate vectors from the ray's origin to the polygon's vertices
         Point p0 = ray.getHead();
         Vector rayDirection = ray.getDirection();
@@ -114,19 +112,19 @@ public class Polygon implements Geometry {
 
         // Check if the intersection point is inside the polygon using the cross product method
         int size = edgeVectors.size();
-        double crossProductSign = Util.alignZero(rayDirection.dotProduct(edgeVectors.get(size - 1).crossProduct(edgeVectors.get(0))));
-        if (isZero(crossProductSign)) return null;
+        double crossProductSign = alignZero(rayDirection.dotProduct(edgeVectors.get(size - 1).crossProduct(edgeVectors.getFirst())));
+        if (crossProductSign == 0) return null;
         boolean sign = crossProductSign > 0;
 
         for (int i = 0; i < size - 1; i++) {
-            crossProductSign = Util.alignZero(rayDirection.dotProduct(edgeVectors.get(i).crossProduct(edgeVectors.get(i + 1))));
-            if (isZero(crossProductSign) || sign != (crossProductSign > 0)) {
+            crossProductSign = alignZero(rayDirection.dotProduct(edgeVectors.get(i).crossProduct(edgeVectors.get(i + 1))));
+            if (crossProductSign == 0 || sign != (crossProductSign > 0)) {
                 return null; // The intersection point is outside the polygon
             }
         }
 
         // The intersection point is inside the polygon
-        return List.of(intersectionPoint);
+        return planeIntersections;
     }
 
 }

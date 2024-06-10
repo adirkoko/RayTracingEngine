@@ -134,14 +134,12 @@ class PlaneTest {
         // TC07: Ray is orthogonal to the plane and starts after the plane
         assertNull(plane.findIntersections(new Ray(new Point(0.5, 0.5, 1), new Vector(0, 0, 1))), "BVA TC07: Ray is orthogonal and starts after the plane");
 
-
         // Group: Ray is neither orthogonal nor parallel to the plane
         // TC08: Ray starts in the plane
         assertNull(plane.findIntersections(new Ray(new Point(1,1,-1), new Vector(1, 2, 3))), "BVA TC08: Ray starts in the plane");
 
         // TC09: Ray starts at the reference point of the plane
         assertNull(plane.findIntersections(new Ray(new Point(0, 0, 1), new Vector(1, 2, 3))), "BVA TC09: Ray starts at the reference point of the plane");
-
 
         // Group: Special cases
         // TC10: Ray is orthogonal to the plane and starts outside the plane

@@ -1,7 +1,8 @@
 package geometries;
-import java.util.ArrayList;
+
 import java.util.LinkedList;
 import java.util.List;
+
 import primitives.Point;
 import primitives.Ray;
 
@@ -37,9 +38,7 @@ public class Geometries implements Intersectable {
      * @param geometries the geometric objects to add
      */
     public void add(Intersectable... geometries) {
-        for (Intersectable geometry : geometries) {
-            this.geometries.add(geometry);
-        }
+        this.geometries.addAll(List.of(geometries));
     }
 
     @Override
@@ -49,10 +48,10 @@ public class Geometries implements Intersectable {
         for (Intersectable geo : geometries) {
             List<Point> tempIntersections = geo.findIntersections(ray);
             if (tempIntersections != null) {
-                if (intersections == null) {
-                    intersections = new LinkedList<>();
-                }
-                intersections.addAll(tempIntersections);
+                if (intersections == null)
+                    intersections = new LinkedList<>(tempIntersections);
+                else
+                    intersections.addAll(tempIntersections);
             }
         }
 
