@@ -1,5 +1,5 @@
 package primitives;
-
+//דורון לוי
 /**
  * Represents a point in 3D space using three coordinates.
  * This class provides methods for geometric operations such as addition, subtraction, and distance calculations between points, crucial for various 3D applications.
