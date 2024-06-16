@@ -7,6 +7,7 @@ import primitives.Vector;
 import java.util.MissingResourceException;
 
 import static primitives.Util.alignZero;
+import static primitives.Util.isZero;
 
 /**
  * represents a camera in a 3D space with the ability to construct rays.
@@ -130,7 +131,29 @@ public class Camera implements Cloneable {
      * @return the constructed Ray
      */
     public Ray constructRay(int nX, int nY, int j, int i) {
-        return null; // TODO
+        // Find the center of the view plane
+        Point center = position.add(toward.scale(viewPlaneDistance));
+
+        // Calculate the pixel size
+        double pixelWidth = viewPlaneWidth / nX;
+        double pixelHeight = viewPlaneHeight / nY;
+
+        // Calculate the offset of the pixel from the center
+        double xOffset = (j - (nX - 1) / 2.0) * pixelWidth;
+        double yOffset = (i - (nY - 1) / 2.0) * pixelHeight;
+
+        // Calculate the point on the view plane
+        Point pIJ = center;
+        if (!isZero(xOffset)) {
+            pIJ = pIJ.add(right.scale(xOffset));
+        }
+        if (!isZero(yOffset)) {
+            // Minus because up is positive direction
+            pIJ = pIJ.add(up.scale(-yOffset));
+        }
+
+        // Return the ray from the camera position through the pixel
+        return new Ray(position, pIJ.subtract(position));
     }
 
     /**
@@ -214,9 +237,8 @@ public class Camera implements Cloneable {
          * Builds and returns the Camera object.
          *
          * @return the constructed Camera object
-         * @throws CloneNotSupportedException if cloning the camera fails
          */
-        public Camera build() throws CloneNotSupportedException {
+        public Camera build() {
             if (camera.position == null || camera.toward == null || camera.up == null || camera.viewPlaneHeight == 0 || camera.viewPlaneWidth == 0 || camera.viewPlaneDistance == 0) {
                 throw new MissingResourceException("Missing rendering data", Camera.class.getName(), "Camera fields");
             }
@@ -224,8 +246,13 @@ public class Camera implements Cloneable {
             if (camera.right == null) {
                 camera.right = camera.toward.crossProduct(camera.up).normalize();
             }
-            return (Camera) camera.clone();
+            try {
+                return (Camera) camera.clone();
+            } catch (CloneNotSupportedException e) {
+                throw new RuntimeException("Failed to clone the camera object", e);
+            }
         }
+
 
     }
 }
