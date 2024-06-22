@@ -1,17 +1,22 @@
 package renderer;
+
 import geometries.*;
 import primitives.*;
+
 import static org.junit.jupiter.api.Assertions.*;
+
 import org.junit.jupiter.api.Test;
 
 /**
  * Integration tests between camera and geometries.
  * Tests different geometries and their intersections with rays from the camera.
  *
- * @author Jessica and Shlomit
+ * @author Adir and Meir
  */
 class IntegrationTests {
-    /** Camera builder for the tests */
+    /**
+     * Camera builder for the tests
+     */
     private final Camera.Builder cameraBuilder = Camera.getBuilder()
             .setLocation(Point.ZERO)
             .setDirection(new Vector(0, 0, -1), new Vector(0, 1, 0)) // vTo, vUp
@@ -21,10 +26,10 @@ class IntegrationTests {
      * Helper method to check intersections between the camera and geometries.
      * Counts intersections in the view plane.
      *
-     * @param camera            the camera
-     * @param geometry          the geometry to intersect with
+     * @param camera                the camera
+     * @param geometry              the geometry to intersect with
      * @param expectedIntersections the expected number of intersections
-     * @param assertMessage     the message to display if the assertion fails
+     * @param assertMessage         the message to display if the assertion fails
      * @throws CloneNotSupportedException if cloning the camera fails
      */
     private void checkGeoIntersections(Camera camera, Geometry geometry, int expectedIntersections, String assertMessage) throws CloneNotSupportedException {
