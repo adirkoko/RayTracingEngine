@@ -13,7 +13,7 @@ import static primitives.Util.isZero;
  * represents a camera in a 3D space with the ability to construct rays.
  * This class uses the Builder Design Pattern.
  *
- * @author Adir and Meir.
+ * @author Adir and Meir
  */
 public class Camera implements Cloneable {
     /**
