@@ -21,7 +21,7 @@ class CameraTest {
             .setVpDistance(10);
 
     /**
-     * Test method for {@link renderer.Camera#constructRay(int, int, int, int)}.
+     * Test method for {@link renderer.Camera#constructRay(int, int, int, int)}
      */
     @Test
     void testConstructRay() {
