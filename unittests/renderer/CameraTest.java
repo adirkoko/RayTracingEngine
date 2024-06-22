@@ -7,7 +7,7 @@ import primitives.*;
 
 
 /**
- * Testing Camera Class
+ * Unit tests for {@link renderer.Camera} class
  *
  * @author Adir and Meir
  */
