@@ -122,7 +122,7 @@ public class Camera implements Cloneable {
     }
 
     /**
-     * Constructs a ray from the camera through a pixel in the view plane.
+     * Constructs a ray from the camera through a pixel in the view plane
      *
      * @param nX number of columns (width) in the view plane
      * @param nY number of rows (height) in the view plane
