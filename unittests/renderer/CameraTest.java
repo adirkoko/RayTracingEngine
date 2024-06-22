@@ -13,7 +13,7 @@ import primitives.*;
  */
 class CameraTest {
     /**
-     * Camera builder for the tests
+     * Camera builder for the tests.
      */
     private final Camera.Builder cameraBuilder = Camera.getBuilder()
             .setLocation(Point.ZERO)
