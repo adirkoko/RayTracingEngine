@@ -26,9 +26,9 @@ class IntegrationTests {
      * Helper method to check intersections between the camera and geometries.
      * Counts intersections in the view plane.
      *
-     * @param camera                the camera
-     * @param geometry              the geometry to intersect with
-     * @param expectedIntersections the expected number of intersections
+     * @param camera                the camera.
+     * @param geometry              the geometry to intersect with.
+     * @param expectedIntersections the expected number of intersections.
      * @param assertMessage         the message to display if the assertion fails
      * @throws CloneNotSupportedException if cloning the camera fails
      */
