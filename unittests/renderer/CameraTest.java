@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 import primitives.*;
+import scene.Scene;
 
 
 /**
@@ -18,7 +19,9 @@ class CameraTest {
     private final Camera.Builder cameraBuilder = Camera.getBuilder()
             .setLocation(Point.ZERO)
             .setDirection(new Vector(0, 0, -1), new Vector(0, -1, 0))
-            .setVpDistance(10);
+            .setVpDistance(10)
+            .setImageWriter(new ImageWriter("test", 800, 800))
+            .setRayTracer(new SimpleRayTracer(new Scene("Test")));
 
     /**
      * Test method for {@link renderer.Camera#constructRay(int, int, int, int)}.

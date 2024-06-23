@@ -6,6 +6,7 @@ import primitives.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
+import scene.Scene;
 
 /**
  * Integration tests between camera and geometries.
@@ -20,7 +21,9 @@ class IntegrationTests {
     private final Camera.Builder cameraBuilder = Camera.getBuilder()
             .setLocation(Point.ZERO)
             .setDirection(new Vector(0, 0, -1), new Vector(0, 1, 0)) // vTo, vUp
-            .setVpDistance(1);
+            .setVpDistance(1)
+            .setImageWriter(new ImageWriter("test", 800, 800))
+            .setRayTracer(new SimpleRayTracer(new Scene("Test")));
 
     /**
      * Helper method to check intersections between the camera and geometries.
