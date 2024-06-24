@@ -63,7 +63,7 @@ public class RenderTests {
         // Build the scene from the XML file
         Scene scene = SceneBuilder.buildSceneFromXml("C:\\CompSc Folders\\Java Projects\\ISE5784_3000_8635\\xml\\renderTestTwoColors.xml");
 
-        // Set up the camera and render the image.
+        // Set up the camera and render the image
         camera
                 .setImageWriter(new ImageWriter("xml_render_test", 1000, 1000))
                 .setRayTracer(new SimpleRayTracer(scene))
