@@ -167,14 +167,23 @@ public class Camera implements Cloneable {
         return new Ray(position, pIJ.subtract(position));
     }
 
+    /**
+     * Writes the image to a file using the image writer.
+     */
+    public void writeToImage() {
+        imageWriter.writeToImage();
+    }
+
 
     /**
      * Prints a grid on the image with the specified interval and color.
      *
      * @param interval the interval between grid lines.
      * @param color    the color of the grid lines.
+     * @return the current Camera instance
+     * @throws IllegalArgumentException if the ImageWriter instance is missing
      */
-    public void printGrid(int interval, Color color) {
+    public Camera printGrid(int interval, Color color) {
         if (imageWriter == null) {
             throw new IllegalArgumentException("Missing ImageWriter instance");
         }
@@ -195,22 +204,18 @@ public class Camera implements Cloneable {
                 imageWriter.writePixel(j, i, color);
             }
         }
-    }
 
-    /**
-     * Writes the image to a file using the image writer.
-     */
-    public void writeToImage() {
-        imageWriter.writeToImage();
+        return this;
     }
 
     /**
      * Renders the image by casting rays through all the pixels in the view plane and calculating their color using the ray tracer.
      * This method loops over all the pixels of the ViewPlane, and for each pixel, casts a ray using the castRay method.
      *
-     * @throws UnsupportedOperationException if imageWriter or rayTracer are not initialized
+     * @return the current Camera instance
+     * @throws UnsupportedOperationException if the ImageWriter or RayTracerBase instance is missing
      */
-    public void renderImage() {
+    public Camera renderImage() {
         if (imageWriter == null || rayTracer == null) {
             throw new UnsupportedOperationException("ImageWriter or RayTracerBase instance is missing");
         }
@@ -223,7 +228,10 @@ public class Camera implements Cloneable {
                 castRay(nX, nY, j, i);
             }
         }
+
+        return this;
     }
+
 
     /**
      * Casts a ray through the center of the pixel, calculates the color using the ray tracer,
