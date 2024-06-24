@@ -1,7 +1,9 @@
 package geometries;
 
-import primitives.*;
 import org.junit.jupiter.api.Test;
+import primitives.Point;
+import primitives.Ray;
+import primitives.Vector;
 
 import java.util.Comparator;
 import java.util.List;
@@ -15,9 +17,10 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class SphereTest {
 
-    private final Point p001 = new Point(0, 0, 1);
+    /**
+     * Predefined point (1, 0, 0) used in test cases.
+     */
     private final Point p100 = new Point(1, 0, 0);
-    private final Vector v001 = new Vector(0, 0, 1);
 
     /**
      * Delta value for accuracy when comparing the numbers of type 'double' in assertEquals.
@@ -81,7 +84,7 @@ public class SphereTest {
         assertEquals(List.of(new Point(1, -1, 0)), result2, "BVA TC11: Ray from sphere inside");
 
         // TC12: Ray starts at sphere and goes outside (1 point)
-        assertEquals(List.of(new Point(1,1,0)),sphere.findIntersections(new Ray(p100, new Vector(0, 1, 0))),
+        assertEquals(List.of(new Point(1, 1, 0)), sphere.findIntersections(new Ray(p100, new Vector(0, 1, 0))),
                 "BVA TC12: Ray's line out of sphere");
 
         // **** Group: Ray's line goes through the center
@@ -100,7 +103,7 @@ public class SphereTest {
         // TC15: Ray starts inside (1 point)
         result2 = sphere.findIntersections(new Ray(new Point(1.5, 0, 0), new Vector(1, 0, 0)));
         assertEquals(1, result2.size(), "BVA TC15: Wrong number of points");
-        assertEquals(List.of(new Point(2,0,0)), result2, "BVA TC15: Ray from inside sphere");
+        assertEquals(List.of(new Point(2, 0, 0)), result2, "BVA TC15: Ray from inside sphere");
 
         // TC16: Ray starts at the center (1 point)
         result2 = sphere.findIntersections(new Ray(p100, new Vector(1, 0, 0)));
@@ -108,7 +111,7 @@ public class SphereTest {
         assertEquals(List.of(new Point(2, 0, 0)), result2, "BVA TC16: Ray from center");
 
         // TC17: Ray starts at sphere and goes outside (1 point)
-        result2 = sphere.findIntersections(new Ray(new Point(1.5,0,0), new Vector(1, 0, 0)));
+        result2 = sphere.findIntersections(new Ray(new Point(1.5, 0, 0), new Vector(1, 0, 0)));
         assertEquals(1, result2.size(), "BVA TC17: Wrong number of points");
         assertEquals(List.of(new Point(2, 0, 0)), result2, "BVA TC17: Ray from sphere outside");
 
