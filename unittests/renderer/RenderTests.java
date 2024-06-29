@@ -61,7 +61,7 @@ public class RenderTests {
     @Test
     public void basicRenderXml() {
         // Build the scene from the XML file.
-        Scene scene = SceneBuilder.buildSceneFromXml("C:\\CompSc Folders\\Java Projects\\ISE5784_3000_8635\\xml\\renderTestTwoColors.xml");
+        Scene scene = SceneBuilder.buildSceneFromXml("xml\\renderTestTwoColors.xml");
 
         // Set up the camera and render the image.
         camera
