@@ -6,6 +6,8 @@ import java.util.List;
 
 /**
  * Interface for intersectable geometric bodies.
+ *
+ * @author Adir and Meir.
  */
 public interface Intersectable {
 

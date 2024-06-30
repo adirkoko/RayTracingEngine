@@ -9,6 +9,8 @@ import primitives.Ray;
 /**
  * Represents a collection of geometric objects.
  * Implements the Intersectable interface using the Composite design pattern.
+ *
+ * @author Adir and Meir.
  */
 public class Geometries implements Intersectable {
 
