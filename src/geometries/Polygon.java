@@ -1,9 +1,11 @@
 package geometries;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import static primitives.Util.alignZero;
 import static primitives.Util.isZero;
+
 import primitives.Point;
 import primitives.Ray;
 import primitives.Vector;

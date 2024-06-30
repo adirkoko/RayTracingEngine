@@ -25,7 +25,7 @@ class GeometriesTest {
         // ============ Equivalence Partitions Tests ==============
         // TC01: Some of the geometries intersect the ray, and some don't. it intersects 2 geometries, plane and sphere.
         Geometries geometries = new Geometries(
-                new Sphere( new Point(1, 0, 0),1),
+                new Sphere(new Point(1, 0, 0), 1),
                 new Plane(new Point(0, 0, 1), new Vector(0, 0, 1)),
                 new Triangle(new Point(1, 1, 1), new Point(1, 2, 2), new Point(2, 3, 2)));
 
@@ -35,7 +35,7 @@ class GeometriesTest {
         // ================== Boundary Values Tests ==================
         // TC11: All the geometries intersect the ray. it intersects 3 geometries, plane, sphere and triangle.
         Geometries geometries2 = new Geometries(
-                new Sphere( new Point(1, 0, 0),1),
+                new Sphere(new Point(1, 0, 0), 1),
                 new Plane(new Point(0, 0, 1), new Vector(0, 0, 1)),
                 new Triangle(new Point(1, 3, 1), new Point(-3, -4, 2), new Point(4, 0, 2)));
         List<Point> result2 = geometries2.findIntersections(new Ray(new Point(0.5, 0.5, -4), new Vector(0, 0, 1)));

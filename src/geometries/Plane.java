@@ -1,5 +1,7 @@
 package geometries;
+
 import primitives.*;
+
 import java.util.List;
 
 import static primitives.Util.alignZero;
@@ -28,7 +30,6 @@ public class Plane implements Geometry {
      * @param p1 First point on the plane
      * @param p2 Second point on the plane
      * @param p3 Third point on the plane
-     *
      * @throws IllegalArgumentException when there are convergent pairs of points or the points are co-linear
      */
     public Plane(Point p1, Point p2, Point p3) {

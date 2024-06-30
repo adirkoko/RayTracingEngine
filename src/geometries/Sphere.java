@@ -1,6 +1,9 @@
 package geometries;
+
 import primitives.*;
+
 import java.util.List;
+
 import static java.lang.Math.sqrt;
 import static primitives.Util.alignZero;
 

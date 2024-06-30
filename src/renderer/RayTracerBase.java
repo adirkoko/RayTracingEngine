@@ -15,7 +15,7 @@ public abstract class RayTracerBase {
     /**
      * The scene to trace rays in.
      */
-    protected Scene scene;
+    protected final Scene scene;
 
     /**
      * Constructs a RayTracerBase with the given scene.

@@ -33,9 +33,8 @@ class IntegrationTests {
      * @param geometry              the geometry to intersect with.
      * @param expectedIntersections the expected number of intersections.
      * @param assertMessage         the message to display if the assertion fails.
-     * @throws CloneNotSupportedException if cloning the camera fails.
      */
-    private void checkGeoIntersections(Camera camera, Geometry geometry, int expectedIntersections, String assertMessage) throws CloneNotSupportedException {
+    private void checkGeoIntersections(Camera camera, Geometry geometry, int expectedIntersections, String assertMessage) {
         int count = 0;
         for (int i = 0; i < 3; i++) { // Iterate through the 3x3 view plane
             for (int j = 0; j < 3; j++) {
@@ -50,11 +49,9 @@ class IntegrationTests {
 
     /**
      * Test camera-sphere intersections in different cases.
-     *
-     * @throws CloneNotSupportedException if cloning the camera fails
      */
     @Test
-    void testCameraSphere() throws CloneNotSupportedException {
+    void testCameraSphere() {
         Camera camera = cameraBuilder.setVpSize(3, 3).setLocation(new Point(0, 0, 0.5)).build();
 
         // TC01: Unit sphere in the center of view plane
@@ -80,11 +77,9 @@ class IntegrationTests {
 
     /**
      * Test different cases of camera-plane intersections.
-     *
-     * @throws CloneNotSupportedException if cloning the camera fails
      */
     @Test
-    void testCameraPlane() throws CloneNotSupportedException {
+    void testCameraPlane() {
         Camera camera = cameraBuilder.setVpSize(3, 3).build();
 
         // TC01: Plane parallel to view plane - 9 points
@@ -106,11 +101,9 @@ class IntegrationTests {
 
     /**
      * Test different cases of camera-triangle intersections.
-     *
-     * @throws CloneNotSupportedException if cloning the camera fails
      */
     @Test
-    void testCameraTriangle() throws CloneNotSupportedException {
+    void testCameraTriangle() {
         Camera camera = cameraBuilder.setVpSize(3, 3).build();
 
         // TC01: Small triangle in front of view plane - 1 point

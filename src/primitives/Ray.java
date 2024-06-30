@@ -84,10 +84,10 @@ public class Ray {
             return null;
         }
 
-        // Initialize the closest point as the first point in the list
-        Point closestPoint = points.getFirst();
-        // Compute the distance from the ray's start to the first point
-        double closestDistance = closestPoint.distance(head);
+        // Initialize the closest point
+        Point closestPoint = null;
+        // Initialize the distance to be greater than any real distance
+        double closestDistance = Double.POSITIVE_INFINITY;
 
         // Iterate through the points in the list
         for (Point point : points) {

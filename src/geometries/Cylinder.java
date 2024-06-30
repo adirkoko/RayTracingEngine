@@ -1,5 +1,7 @@
 package geometries;
+
 import primitives.*;
+
 import java.util.List;
 
 /**
@@ -38,17 +40,14 @@ public class Cylinder extends Tube {
         double projectionLength = direction.dotProduct(point.subtract(head));
 
         // If the point is on the bottom base
-        if (Util.isZero(projectionLength)) return direction.scale(-1); // Normal is opposite to the direction of the axis.
+        if (Util.isZero(projectionLength))
+            return direction.scale(-1); // Normal is opposite to the direction of the axis.
 
         // If the point is on the top base
-        if (Util.isZero(projectionLength - height)) return direction; // Normal is the same as the direction of the axis.
+        if (Util.isZero(projectionLength - height))
+            return direction; // Normal is the same as the direction of the axis.
 
         // Calculate the vector from the closest point on the axis to the given point, then normalize it.
         return point.subtract(head.add(direction.scale(projectionLength))).normalize();
-    }
-
-    @Override
-    public List<Point> findIntersections(Ray ray) {
-        return null; //TODO
     }
 }

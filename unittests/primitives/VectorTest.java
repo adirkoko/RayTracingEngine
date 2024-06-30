@@ -1,5 +1,7 @@
 package primitives;
+
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -126,7 +128,7 @@ class VectorTest {
     void normalize() {
         // ============ Equivalence Partitions Tests ==============
         // TC01: Checks if the result of vector normalization is the correct result.
-        assertEquals(new Vector(0.6d,0.8d,0d), new Vector(3, 4, 0).normalize(), "normalize() wrong result");
+        assertEquals(new Vector(0.6d, 0.8d, 0d), new Vector(3, 4, 0).normalize(), "normalize() wrong result");
 
         // =============== Boundary Values Tests ==================
         // TC11: Checks whether normalize the zero vector, throws an exception.

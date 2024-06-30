@@ -1,4 +1,5 @@
 package primitives;
+
 /**
  * Represents a point in 3D space using three coordinates.
  * This class provides methods for geometric operations such as addition, subtraction, and distance calculations between points, crucial for various 3D applications.
@@ -18,6 +19,7 @@ public class Point {
 
     /**
      * Get the X coordinate inside the point.
+     *
      * @return the X coordinate inside the point.
      */
     public double getX() {
@@ -26,6 +28,7 @@ public class Point {
 
     /**
      * Get the Y coordinate inside the point.
+     *
      * @return the Y coordinate inside the point.
      */
     public double getY() {
@@ -34,6 +37,7 @@ public class Point {
 
     /**
      * Get the Z coordinate inside the point.
+     *
      * @return the Z coordinate inside the point.
      */
     public double getZ() {

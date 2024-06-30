@@ -79,9 +79,7 @@ public class Scene {
      * @return the current Scene object for chaining
      */
     public Scene addGeometries(Geometries... geometries) {
-        for (Geometries geo : geometries) {
-            this.geometries.add(geo);
-        }
+        this.geometries.add(geometries);
         return this;
     }
 }
