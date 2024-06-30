@@ -1,15 +1,13 @@
 package scene;
 
+import geometries.*;
 import lighting.AmbientLight;
 import org.w3c.dom.*;
 
 import javax.xml.parsers.*;
 import java.io.*;
 
-import primitives.Color;
-import primitives.Point;
-import geometries.Sphere;
-import geometries.Triangle;
+import primitives.*;
 
 /**
  * SceneBuilder is a utility class to build Scene objects from XML files.
@@ -30,10 +28,10 @@ public class SceneBuilder {
 
         try {
             // Prepare to read and parse the XML file
-            File inputFile = new File(fileName);
-            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-            Document doc = dBuilder.parse(inputFile); // Parse the XML file
+            Document doc = DocumentBuilderFactory
+                    .newInstance()
+                    .newDocumentBuilder()
+                    .parse(new File(fileName)); // Parse the XML file
             doc.getDocumentElement().normalize(); // Normalize the XML structure
 
             // Parse background color
@@ -51,7 +49,7 @@ public class SceneBuilder {
             }
 
             // Parse geometries
-            // Find the geometries element and process its child elements (sphere, triangle)
+            // Find the geometries element and process its child elements (sphere, triangle, cylinder, plane, tube, polygon)
             NodeList geometriesList = doc.getElementsByTagName("geometries");
             if (geometriesList.getLength() > 0) {
                 Element geometriesElement = (Element) geometriesList.item(0);
@@ -65,16 +63,44 @@ public class SceneBuilder {
                         switch (tagName) {
                             case "sphere":
                                 // Parse sphere attributes and create a Sphere object
-                                Point center = parsePoint(geometryElement.getAttribute("center"));
-                                double radius = Double.parseDouble(geometryElement.getAttribute("radius"));
-                                scene.geometries.add(new Sphere(center, radius));
+                                scene.geometries.add(new Sphere(
+                                        parsePoint(geometryElement.getAttribute("center")),
+                                        Double.parseDouble(geometryElement.getAttribute("radius"))));
                                 break;
                             case "triangle":
                                 // Parse triangle attributes and create a Triangle object
-                                Point p0 = parsePoint(geometryElement.getAttribute("p0"));
-                                Point p1 = parsePoint(geometryElement.getAttribute("p1"));
-                                Point p2 = parsePoint(geometryElement.getAttribute("p2"));
-                                scene.geometries.add(new Triangle(p0, p1, p2));
+                                scene.geometries.add(new Triangle(
+                                        parsePoint(geometryElement.getAttribute("p0")),
+                                        parsePoint(geometryElement.getAttribute("p1")),
+                                        parsePoint(geometryElement.getAttribute("p2"))));
+                                break;
+                            case "cylinder":
+                                // Parse cylinder attributes and create a Cylinder object
+                                scene.geometries.add(new Cylinder(
+                                        parseRay(geometryElement.getAttribute("axisRay")),
+                                        Double.parseDouble(geometryElement.getAttribute("radius")),
+                                        Double.parseDouble(geometryElement.getAttribute("height"))));
+                                break;
+                            case "plane":
+                                // Parse plane attributes and create a Plane object
+                                scene.geometries.add(new Plane(
+                                        parsePoint(geometryElement.getAttribute("point")),
+                                        parseVector(geometryElement.getAttribute("normal"))));
+                                break;
+                            case "tube":
+                                // Parse tube attributes and create a Tube object
+                                scene.geometries.add(new Tube(
+                                        parseRay(geometryElement.getAttribute("axisRay")),
+                                        Double.parseDouble(geometryElement.getAttribute("radius"))));
+                                break;
+                            case "polygon":
+                                // Parse polygon attributes and create a Polygon object
+                                NodeList points = geometryElement.getElementsByTagName("point");
+                                Point[] vertices = new Point[points.getLength()];
+                                for (int j = 0; j < points.getLength(); j++) {
+                                    vertices[j] = parsePoint(points.item(j).getTextContent());
+                                }
+                                scene.geometries.add(new Polygon(vertices));
                                 break;
                         }
                     }
@@ -107,5 +133,29 @@ public class SceneBuilder {
     private static Point parsePoint(String pointString) {
         String[] coords = pointString.split(" ");
         return new Point(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]), Double.parseDouble(coords[2]));
+    }
+
+    /**
+     * Parses a string representing a vector in the format "x y z" into a Vector object.
+     *
+     * @param vectorString the string representing the vector
+     * @return the parsed Vector object
+     */
+    private static Vector parseVector(String vectorString) {
+        String[] coords = vectorString.split(" ");
+        return new Vector(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]), Double.parseDouble(coords[2]));
+    }
+
+    /**
+     * Parses a string representing a ray in the format "px py pz dx dy dz" into a Ray object.
+     *
+     * @param rayString the string representing the ray
+     * @return the parsed Ray object
+     */
+    private static Ray parseRay(String rayString) {
+        String[] coords = rayString.split(" ");
+        Point p = new Point(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]), Double.parseDouble(coords[2]));
+        Vector v = new Vector(Double.parseDouble(coords[3]), Double.parseDouble(coords[4]), Double.parseDouble(coords[5]));
+        return new Ray(p, v);
     }
 }
