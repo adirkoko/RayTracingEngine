@@ -55,6 +55,8 @@ public class Camera implements Cloneable {
     }
 
     /**
+     * Getter for the position of the camera
+     *
      * @return the position of the camera
      */
     @SuppressWarnings("unused")
@@ -63,7 +65,7 @@ public class Camera implements Cloneable {
     }
 
     /**
-     * Getter for  the right direction vector of the camera
+     * Getter for the right direction vector of the camera
      *
      * @return the right direction vector of the camera
      */
@@ -73,6 +75,8 @@ public class Camera implements Cloneable {
     }
 
     /**
+     * Getter for the upward direction vector of the camera
+     *
      * @return the upward direction vector of the camera
      */
     @SuppressWarnings("unused")
@@ -81,6 +85,8 @@ public class Camera implements Cloneable {
     }
 
     /**
+     * Getter for the direction vector pointing towards the view plane
+     *
      * @return the direction vector pointing towards the view plane
      */
     @SuppressWarnings("unused")
@@ -89,6 +95,8 @@ public class Camera implements Cloneable {
     }
 
     /**
+     * Getter for the height of the view plane
+     *
      * @return the height of the view plane
      */
     @SuppressWarnings("unused")
@@ -97,6 +105,8 @@ public class Camera implements Cloneable {
     }
 
     /**
+     * Getter for the width of the view plane
+     *
      * @return the width of the view plane
      */
     @SuppressWarnings("unused")
@@ -105,6 +115,8 @@ public class Camera implements Cloneable {
     }
 
     /**
+     * Getter for the distance from the camera to the view plane
+     *
      * @return the distance from the camera to the view plane
      */
     @SuppressWarnings("unused")
@@ -177,7 +189,6 @@ public class Camera implements Cloneable {
      * @param interval the interval between grid lines.
      * @param color    the color of the grid lines.
      * @return the current Camera instance
-     * @throws IllegalArgumentException if the ImageWriter instance is missing
      */
     public Camera printGrid(int interval, Color color) {
         int nX = imageWriter.getNx();
@@ -205,7 +216,6 @@ public class Camera implements Cloneable {
      * This method loops over all the pixels of the ViewPlane, and for each pixel, casts a ray using the castRay method.
      *
      * @return the current Camera instance
-     * @throws UnsupportedOperationException if the ImageWriter or RayTracerBase instance is missing
      */
     public Camera renderImage() {
         int nX = imageWriter.getNx();
