@@ -154,8 +154,9 @@ public class SceneBuilder {
      */
     private static Ray parseRay(String rayString) {
         String[] coords = rayString.split(" ");
-        Point p = new Point(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]), Double.parseDouble(coords[2]));
-        Vector v = new Vector(Double.parseDouble(coords[3]), Double.parseDouble(coords[4]), Double.parseDouble(coords[5]));
-        return new Ray(p, v);
+
+        return new Ray(
+                new Point(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]), Double.parseDouble(coords[2])),
+                new Vector(Double.parseDouble(coords[3]), Double.parseDouble(coords[4]), Double.parseDouble(coords[5])));
     }
 }
