@@ -308,8 +308,8 @@ public class Camera implements Cloneable {
         /**
          * Sets the distance from the camera to the view plane.
          *
-         * @param distance the distance to set
-         * @return the Builder instance
+         * @param distance the distance to set.
+         * @return the Builder instance.
          */
         public Builder setVpDistance(double distance) {
             if (distance <= 0)
