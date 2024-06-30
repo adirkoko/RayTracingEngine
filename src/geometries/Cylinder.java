@@ -15,7 +15,7 @@ public class Cylinder extends Tube {
     private final double height;
 
     /**
-     * Constructor for Cylinder
+     * Constructor for Cylinder.
      *
      * @param axisRay The central axis of the cylinder.
      * @param radius  The radius of the cylinder.
