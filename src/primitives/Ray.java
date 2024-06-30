@@ -1,5 +1,7 @@
 package primitives;
 
+import geometries.Intersectable;
+
 import java.util.List;
 
 /**
@@ -73,34 +75,37 @@ public class Ray {
     }
 
     /**
-     * Finds the closest point to the ray's starting point from a list of points.
+     * Find the closest point to the ray's origin from a list of points.
      *
-     * @param points The list of points to find the closest point from.
-     * @return The closest point to the ray's starting point, or null if the list is empty.
+     * @param points the list of points
+     * @return the closest point
      */
     public Point findClosestPoint(List<Point> points) {
-        // Check if the list is null or empty
-        if (points == null || points.isEmpty()) {
+        return points == null || points.isEmpty() ? null : findClosestGeoPoint(points.stream().map(p -> new Intersectable.GeoPoint(null, p)).toList()).point;
+    }
+
+    /**
+     * Finds the closest GeoPoint to the ray's origin from a list of GeoPoints.
+     *
+     * @param geoPoints The list of GeoPoints to search.
+     * @return The closest GeoPoint to the ray's origin.
+     */
+    public Intersectable.GeoPoint findClosestGeoPoint(List<Intersectable.GeoPoint> geoPoints) {
+        if (geoPoints == null || geoPoints.isEmpty()) {
             return null;
         }
 
-        // Initialize the closest point
-        Point closestPoint = null;
-        // Initialize the distance to be greater than any real distance
-        double closestDistance = Double.POSITIVE_INFINITY;
+        Intersectable.GeoPoint closestGeoPoint = null;
+        double closestDistanceSquared = Double.POSITIVE_INFINITY;
 
-        // Iterate through the points in the list
-        for (Point point : points) {
-            // Compute the distance from the ray's start to the current point
-            double distance = point.distance(head);
-            // If the current point is closer, update the closest point and distance
-            if (distance < closestDistance) {
-                closestDistance = distance;
-                closestPoint = point;
+        for (Intersectable.GeoPoint geoPoint : geoPoints) {
+            double distanceSquared = geoPoint.point.distanceSquared(head);
+            if (distanceSquared < closestDistanceSquared) {
+                closestDistanceSquared = distanceSquared;
+                closestGeoPoint = geoPoint;
             }
         }
 
-        // Return the closest point found
-        return closestPoint;
+        return closestGeoPoint;
     }
 }

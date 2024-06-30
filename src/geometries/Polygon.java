@@ -16,7 +16,7 @@ import primitives.Vector;
  *
  * @author Dan
  */
-public class Polygon implements Geometry {
+public class Polygon extends Geometry {
     /**
      * List of polygon's vertices
      */
@@ -96,9 +96,9 @@ public class Polygon implements Geometry {
     }
 
     @Override
-    public List<Point> findIntersections(Ray ray) {
+    public List<GeoPoint> findGeoIntersectionsHelper(Ray ray) {
         // Find intersections with the plane containing the polygon
-        List<Point> planeIntersections = plane.findIntersections(ray);
+        List<GeoPoint> planeIntersections = plane.findGeoIntersections(ray);
         if (planeIntersections == null) {
             return null; // No intersection with the plane, thus no intersection with the polygon
         }
@@ -114,7 +114,7 @@ public class Polygon implements Geometry {
 
         // Check if the intersection point is inside the polygon using the cross product method
         int size = edgeVectors.size();
-        double crossProductSign = alignZero(rayDirection.dotProduct(edgeVectors.get(size - 1).crossProduct(edgeVectors.getFirst())));
+        double crossProductSign = alignZero(rayDirection.dotProduct(edgeVectors.get(size - 1).crossProduct(edgeVectors.get(0))));
         if (crossProductSign == 0) return null;
         boolean sign = crossProductSign > 0;
 
@@ -125,8 +125,12 @@ public class Polygon implements Geometry {
             }
         }
 
-        // The intersection point is inside the polygon
-        return planeIntersections;
+        // Create a list of GeoPoints with the intersection points from the plane
+        List<GeoPoint> geoPoints = new ArrayList<>();
+        for (GeoPoint geoPoint : planeIntersections) {
+            geoPoints.add(new GeoPoint(this, geoPoint.point));
+        }
+        return geoPoints; // The intersection point is inside the polygon
     }
 
 }

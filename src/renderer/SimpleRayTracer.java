@@ -1,7 +1,7 @@
 package renderer;
 
+import geometries.Intersectable.GeoPoint;
 import primitives.Color;
-import primitives.Point;
 import primitives.Ray;
 import scene.Scene;
 
@@ -23,17 +23,20 @@ public class SimpleRayTracer extends RayTracerBase {
 
     @Override
     public Color traceRay(Ray ray) {
-        var intersection = ray.findClosestPoint(scene.geometries.findIntersections(ray));
-        return intersection == null ? scene.background : calcColor(intersection);
+        var intersections = scene.geometries.findGeoIntersections(ray);
+        if (intersections == null) return scene.background;
+
+        GeoPoint closestPoint = ray.findClosestGeoPoint(intersections);
+        return calcColor(closestPoint);
     }
 
     /**
-     * Calculates the color of a point.
+     * Calculates the color of a GeoPoint.
      *
-     * @param point the point to calculate the color for
-     * @return the color of the point
+     * @param geoPoint the GeoPoint to calculate the color for
+     * @return the color of the GeoPoint
      */
-    private Color calcColor(Point point) {
-        return scene.ambientLight.getIntensity();
+    private Color calcColor(GeoPoint geoPoint) {
+        return geoPoint.geometry.getEmission().add(scene.ambientLight.getIntensity());
     }
 }

@@ -12,7 +12,7 @@ import static primitives.Util.isZero;
  *
  * @author Adir and Meir.
  */
-public class Plane implements Geometry {
+public class Plane extends Geometry {
 
     /**
      * The base point of the plane.
@@ -70,21 +70,21 @@ public class Plane implements Geometry {
 
 
     @Override
-    public List<Point> findIntersections(Ray ray) {
-        Point p0 = ray.getHead();
-        Vector v = ray.getDirection();
+    public List<GeoPoint> findGeoIntersectionsHelper(Ray ray) {
+        Point head = ray.getHead();
+        Vector direction = ray.getDirection();
 
-        // Check if the ray starts at the reference point of the plane
-        if (q.equals(p0)) return null;
+        // If the ray's starting point is on the plane, return null
+        if (q.equals(head)) return null;
 
-        // Calculate the dot product of the plane's normal and the ray's direction vector
-        double nv = normal.dotProduct(v);
-        // If the dot product is zero, the ray is parallel to the plane
+        double nv = normal.dotProduct(direction);
+
+        // If the ray is parallel to the plane, return null
         if (isZero(nv)) return null;
 
-        // Calculate the parameter t for the intersection point
-        double t = (q.subtract(p0)).dotProduct(normal) / nv;
-        // If t is negative or zero, the intersection point is behind the ray's origin or at the origin
-        return (alignZero(t) <= 0) ? null : List.of(ray.getPoint(t));
+        double t = normal.dotProduct(q.subtract(head)) / nv;
+
+        // Return null if the intersection is behind the ray's start, else return the intersection as a GeoPoint
+        return (alignZero(t) <= 0) ? null : List.of(new GeoPoint(this, ray.getPoint(t)));
     }
 }
