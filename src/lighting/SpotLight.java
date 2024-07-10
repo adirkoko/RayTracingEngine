@@ -13,6 +13,10 @@ import static primitives.Util.alignZero;
  */
 public class SpotLight extends PointLight {
 
+    /**
+     * Determines the focus of the light beam
+     * Higher values mean a narrower beam.
+     */
     private double narrowBeam = 1;
 
     /**
@@ -34,8 +38,8 @@ public class SpotLight extends PointLight {
 
     @Override
     public Color getIntensity(Point p) {
-        double projection = getL(p).dotProduct(direction);
-        return projection <= 0 ? Color.BLACK : super.getIntensity(p).scale(projection);
+        double projection = alignZero(direction.dotProduct(getL(p)));
+        return projection <= 0 ? Color.BLACK : super.getIntensity(p).scale((narrowBeam > 1) ? Math.pow(projection, narrowBeam) : projection);
     }
 
     /**
@@ -71,7 +75,6 @@ public class SpotLight extends PointLight {
         return this;
     }
 
-
     /**
      * Sets the narrow beam factor.
      *
@@ -82,5 +85,6 @@ public class SpotLight extends PointLight {
         this.narrowBeam = narrowBeam;
         return this;
     }
+
 
 }

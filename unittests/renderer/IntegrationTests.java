@@ -2,7 +2,9 @@ package renderer;
 
 import geometries.*;
 import primitives.*;
+
 import static org.junit.jupiter.api.Assertions.*;
+
 import org.junit.jupiter.api.Test;
 import scene.Scene;
 
