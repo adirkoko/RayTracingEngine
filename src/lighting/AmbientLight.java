@@ -9,43 +9,21 @@ import primitives.Double3;
  *
  * @author Adir and Meir.
  */
-public class AmbientLight {
+public class AmbientLight extends Light {
     /**
      * Constant for no ambient light
      */
     public static final AmbientLight NONE = new AmbientLight(Color.BLACK, Double3.ZERO);
 
-    /**
-     * The intensity of the ambient light
-     */
-    private final Color intensity;
 
     /**
-     * Constructor for ambient light with intensity and attenuation factor.
+     * Constructor for AmbientLight.
      *
-     * @param iA the color of the ambient light
-     * @param kA the attenuation factor
+     * @param iA the intensity of the ambient light
+     * @param kA the attenuation coefficient
      */
     public AmbientLight(Color iA, Double3 kA) {
-        this.intensity = iA.scale(kA);
+        super(iA.scale(kA));
     }
 
-    /**
-     * Constructor for ambient light with intensity and attenuation factor as scalar.
-     *
-     * @param iA the color of the ambient light
-     * @param kA the attenuation factor as a double
-     */
-    public AmbientLight(Color iA, double kA) {
-        this.intensity = iA.scale(kA);
-    }
-
-    /**
-     * Gets the intensity of the ambient light.
-     *
-     * @return the intensity
-     */
-    public Color getIntensity() {
-        return intensity;
-    }
 }
