@@ -8,8 +8,12 @@ import static primitives.Util.alignZero;
 
 /**
  * Class representing a spotlight source.
+ *
+ * @author Adir and Meir.
  */
 public class SpotLight extends PointLight {
+
+    private double narrowBeam = 1;
 
     /**
      * The direction of the spotlight.
@@ -33,4 +37,50 @@ public class SpotLight extends PointLight {
         double projection = getL(p).dotProduct(direction);
         return projection <= 0 ? Color.BLACK : super.getIntensity(p).scale(projection);
     }
+
+    /**
+     * Sets the constant attenuation factor and returns the SpotLight itself (chained).
+     *
+     * @param kC the constant attenuation factor
+     * @return the SpotLight itself
+     */
+    public SpotLight setKc(double kC) {
+        super.setKc(kC);
+        return this;
+    }
+
+    /**
+     * Sets the linear attenuation factor and returns the SpotLight itself (chained).
+     *
+     * @param kL the linear attenuation factor
+     * @return the SpotLight itself
+     */
+    public SpotLight setKl(double kL) {
+        super.setKl(kL);
+        return this;
+    }
+
+    /**
+     * Sets the quadratic attenuation factor and returns the SpotLight itself (chained).
+     *
+     * @param kQ the quadratic attenuation factor
+     * @return the SpotLight itself
+     */
+    public SpotLight setKq(double kQ) {
+        super.setKq(kQ);
+        return this;
+    }
+
+
+    /**
+     * Sets the narrow beam factor.
+     *
+     * @param narrowBeam the narrow beam factor
+     * @return the SpotLight object itself for chaining
+     */
+    public SpotLight setNarrowBeam(double narrowBeam) {
+        this.narrowBeam = narrowBeam;
+        return this;
+    }
+
 }

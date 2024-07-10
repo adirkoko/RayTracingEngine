@@ -6,6 +6,8 @@ import primitives.Vector;
 
 /**
  * Interface representing a light source in the scene.
+ *
+ * @author Adir and Meir.
  */
 public interface LightSource {
     /**

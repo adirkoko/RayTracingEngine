@@ -1,9 +1,13 @@
 package renderer;
 
 import geometries.Intersectable.GeoPoint;
-import primitives.Color;
-import primitives.Ray;
+import lighting.LightSource;
+import primitives.*;
 import scene.Scene;
+
+import java.util.List;
+
+import static primitives.Util.alignZero;
 
 /**
  * SimpleRayTracer class that extends RayTracerBase.
@@ -21,22 +25,103 @@ public class SimpleRayTracer extends RayTracerBase {
         super(scene);
     }
 
-    @Override
+    /**
+     * Traces the given ray and calculates the color at the closest intersection point.
+     *
+     * @param ray the ray
+     * @return the color at the closest intersection point or the background color if no intersection
+     */
     public Color traceRay(Ray ray) {
         var intersections = scene.geometries.findGeoIntersections(ray);
-        if (intersections == null) return scene.background;
+        return intersections == null
+                ? scene.background
+                : calcColor(ray.findClosestGeoPoint(intersections), ray);
+    }
 
-        GeoPoint closestPoint = ray.findClosestGeoPoint(intersections);
-        return calcColor(closestPoint);
+
+    /**
+     * Calculates the color at the intersection point including local effects and ambient light.
+     *
+     * @param intersection the intersection point
+     * @param ray the ray
+     * @return the color at the intersection point
+     */
+    private Color calcColor(GeoPoint intersection, Ray ray) {
+        return scene.ambientLight.getIntensity()
+                .add(calcLocalEffects(intersection, ray));
+    }
+
+
+    /**
+     * Calculates the local effects (diffuse and specular) of the lighting on a given point.
+     *
+     * @param gp the geo point
+     * @param ray the ray
+     * @return the color with local lighting effects
+     */
+    private Color calcLocalEffects(GeoPoint gp, Ray ray) {
+        Vector n = gp.geometry.getNormal(gp.point);
+        Vector v = ray.getDirection();
+        double nv = alignZero(n.dotProduct(v));
+        if (nv == 0) return gp.geometry.getEmission();
+
+        Material material = gp.geometry.getMaterial();
+        Color color = gp.geometry.getEmission();
+        for (LightSource lightSource : scene.lights) {
+            Vector l = lightSource.getL(gp.point);
+            double nl = alignZero(n.dotProduct(l));
+            if (nl * nv > 0 && unshaded(gp, l)) {
+                Color iL = lightSource.getIntensity(gp.point);
+                color = color.add(
+                        iL.scale(calcDiffuse(material.kD, l, n))
+                                .add(calcSpecular(material.kS, l, n, v, material.nShininess, iL))
+                );
+            }
+        }
+        return color;
     }
 
     /**
-     * Calculates the color of a GeoPoint.
+     * Calculates the diffuse lighting effect.
      *
-     * @param geoPoint the GeoPoint to calculate the color for
-     * @return the color of the GeoPoint
+     * @param kD the diffuse coefficient
+     * @param l the light direction vector
+     * @param n the normal vector at the point
+     * @return the diffuse lighting effect color
      */
-    private Color calcColor(GeoPoint geoPoint) {
-        return geoPoint.geometry.getEmission().add(scene.ambientLight.getIntensity());
+    private Double3 calcDiffuse(Double3 kD, Vector l, Vector n) {
+        return kD.scale(Math.abs(l.dotProduct(n)));
     }
+
+    /**
+     * Calculates the specular lighting effect.
+     *
+     * @param kS the specular coefficient
+     * @param l the light direction vector
+     * @param n the normal vector at the point
+     * @param v the view direction vector
+     * @param shininess the shininess coefficient
+     * @param lightIntensity the intensity of the light
+     * @return the specular lighting effect color
+     */
+    private Color calcSpecular(Double3 kS, Vector l, Vector n, Vector v, int shininess, Color lightIntensity) {
+        Vector r = l.subtract(n.scale(2 * l.dotProduct(n))).normalize();
+        double vr = Math.max(0, v.dotProduct(r));
+        return lightIntensity.scale(kS.scale(Math.pow(vr, shininess)));
+    }
+
+    /**
+     * Checks if the point is unshaded (not in shadow) from the given light direction.
+     *
+     * @param gp the geo point
+     * @param l the light direction vector
+     * @return true if the point is unshaded, false otherwise
+     */
+    private boolean unshaded(GeoPoint gp, Vector l) {
+        Vector lightDirection = l.scale(-1); // from point to light source
+        Ray ray = new Ray(gp.point, lightDirection);
+        List<GeoPoint> intersections = scene.geometries.findGeoIntersections(ray);
+        return intersections.isEmpty();
+    }
+
 }

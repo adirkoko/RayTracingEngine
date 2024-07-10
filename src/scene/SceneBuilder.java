@@ -45,7 +45,7 @@ public class SceneBuilder {
             if (ambientLightList.getLength() > 0) {
                 Element ambientLightElement = (Element) ambientLightList.item(0);
                 String ambientColor = ambientLightElement.getAttribute("color");
-                scene.setAmbientLight(new AmbientLight(parseColor(ambientColor), 1));
+                scene.setAmbientLight(new AmbientLight(parseColor(ambientColor), new Double3(1)));
             }
 
             // Parse geometries

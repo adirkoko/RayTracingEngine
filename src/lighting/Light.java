@@ -4,6 +4,8 @@ import primitives.Color;
 
 /**
  * Abstract class representing a light source.
+ *
+ * @author Adir and Meir.
  */
 abstract class Light {
     /**
