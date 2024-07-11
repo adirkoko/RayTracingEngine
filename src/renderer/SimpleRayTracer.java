@@ -64,24 +64,34 @@ public class SimpleRayTracer extends RayTracerBase {
      * @return The color with local lighting effects.
      */
     private Color calcLocalEffects(GeoPoint gp, Ray ray) {
-        Vector n = gp.geometry.getNormal(gp.point);
-        Vector v = ray.getDirection();
-        double nv = alignZero(n.dotProduct(v));
-        if (nv == 0) return gp.geometry.getEmission();
+        Vector n = gp.geometry.getNormal(gp.point); // Normal vector at the geo point
+        Vector v = ray.getDirection(); // Direction vector of the ray
+        double nv = alignZero(n.dotProduct(v)); // Dot product of normal and view direction
 
-        Material material = gp.geometry.getMaterial();
-        Color color = gp.geometry.getEmission();
+        if (nv == 0) return gp.geometry.getEmission(); // No lighting effect if vectors are orthogonal
+
+        Material material = gp.geometry.getMaterial(); // Material properties of the geometry
+        Color color = gp.geometry.getEmission(); // Base emission color of the geometry
+
         for (LightSource lightSource : scene.lights) {
-            Vector l = lightSource.getL(gp.point);
+            Vector l = lightSource.getL(gp.point); // Direction vector from point to light source
+
+            // Check if the light source is on the same side of the surface as the view direction
             if (alignZero(n.dotProduct(l)) * nv > 0 && unshaded(gp, lightSource, l, n)) {
-                Color iL = lightSource.getIntensity(gp.point);
-                color = color.add(iL.scale(calcDiffuse(material.kD, l, n)
-                        .add(calcSpecular(material.kS, l, n, v, material.nShininess, iL))));
+                Color iL = lightSource.getIntensity(gp.point); // Intensity of the light at the point
+
+                // Add diffuse and specular lighting effects
+                color = color.add(
+                        iL.scale(
+                                calcDiffuse(material.kD, l, n) // Diffuse component
+                                        .add(calcSpecular(material.kS, l, n, v, material.nShininess, iL)) // Specular component
+                        )
+                );
             }
         }
-        return color;
-    }
 
+        return color; // Return the final color with local lighting effects
+    }
 
     /**
      * Calculates the diffuse lighting effect.
