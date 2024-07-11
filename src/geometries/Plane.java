@@ -68,9 +68,8 @@ public class Plane extends Geometry {
         return this.normal;
     }
 
-
     @Override
-    public List<GeoPoint> findGeoIntersectionsHelper(Ray ray) {
+    public List<GeoPoint> findGeoIntersectionsHelper(Ray ray, double maxDistance) {
         Point head = ray.getHead();
         Vector direction = ray.getDirection();
 
@@ -84,7 +83,11 @@ public class Plane extends Geometry {
 
         double t = normal.dotProduct(q.subtract(head)) / nv;
 
-        // Return null if the intersection is behind the ray's start, else return the intersection as a GeoPoint
-        return (alignZero(t) <= 0) ? null : List.of(new GeoPoint(this, ray.getPoint(t)));
+        // Return null if the intersection is behind the ray's start, or if it exceeds the max distance
+        if (alignZero(t) <= 0 || alignZero(maxDistance - t) < 0) {
+            return null;
+        }
+
+        return List.of(new GeoPoint(this, ray.getPoint(t)));
     }
 }

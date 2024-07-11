@@ -2,8 +2,6 @@ package geometries;
 
 import primitives.*;
 
-import java.util.List;
-
 /**
  * Represents a cylinder in 3D space.
  *

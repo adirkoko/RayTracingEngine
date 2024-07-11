@@ -95,10 +95,11 @@ public class Polygon extends Geometry {
         return plane.getNormal();
     }
 
+
     @Override
-    public List<GeoPoint> findGeoIntersectionsHelper(Ray ray) {
+    public List<GeoPoint> findGeoIntersectionsHelper(Ray ray, double maxDistance) {
         // Find intersections with the plane containing the polygon
-        List<GeoPoint> planeIntersections = plane.findGeoIntersections(ray);
+        List<GeoPoint> planeIntersections = plane.findGeoIntersections(ray, maxDistance);
         if (planeIntersections == null) {
             return null; // No intersection with the plane, thus no intersection with the polygon
         }
@@ -114,7 +115,7 @@ public class Polygon extends Geometry {
 
         // Check if the intersection point is inside the polygon using the cross product method
         int size = edgeVectors.size();
-        double crossProductSign = alignZero(rayDirection.dotProduct(edgeVectors.get(size - 1).crossProduct(edgeVectors.get(0))));
+        double crossProductSign = alignZero(rayDirection.dotProduct(edgeVectors.get(size - 1).crossProduct(edgeVectors.getFirst())));
         if (crossProductSign == 0) return null;
         boolean sign = crossProductSign > 0;
 

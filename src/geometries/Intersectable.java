@@ -29,16 +29,28 @@ public abstract class Intersectable {
      * @return list of intersection points as GeoPoint objects
      */
     public List<GeoPoint> findGeoIntersections(Ray ray) {
-        return findGeoIntersectionsHelper(ray);
+        return findGeoIntersections(ray, Double.POSITIVE_INFINITY);
     }
 
     /**
-     * Helper method to find intersections with the given ray.
+     * Find intersections with the given ray up to a maximum distance.
      *
-     * @param ray the ray
+     * @param ray         the ray
+     * @param maxDistance the maximum distance to find intersections
      * @return list of intersection points as GeoPoint objects
      */
-    protected abstract List<GeoPoint> findGeoIntersectionsHelper(Ray ray);
+    public List<GeoPoint> findGeoIntersections(Ray ray, double maxDistance) {
+        return findGeoIntersectionsHelper(ray, maxDistance);
+    }
+
+    /**
+     * Helper method to find intersections with the given ray up to a maximum distance.
+     *
+     * @param ray         the ray
+     * @param maxDistance the maximum distance to find intersections
+     * @return list of intersection points as GeoPoint objects
+     */
+    protected abstract List<GeoPoint> findGeoIntersectionsHelper(Ray ray, double maxDistance);
 
     /**
      * GeoPoint is a helper class that represents a point on a geometry.

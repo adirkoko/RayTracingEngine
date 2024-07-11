@@ -5,6 +5,8 @@ import lighting.LightSource;
 import primitives.*;
 import scene.Scene;
 
+import java.util.List;
+
 import static primitives.Util.alignZero;
 
 /**
@@ -14,6 +16,11 @@ import static primitives.Util.alignZero;
  * @author Adir and Meir
  */
 public class SimpleRayTracer extends RayTracerBase {
+
+    /**
+     * Offset size for primary rays to avoid shadow acne.
+     */
+    private static final double DELTA = 0.1;
 
     /**
      * Constructor for SimpleRayTracer.
@@ -52,9 +59,9 @@ public class SimpleRayTracer extends RayTracerBase {
     /**
      * Calculates the local effects (diffuse and specular) of the lighting on a given point.
      *
-     * @param gp  the geo point
-     * @param ray the ray
-     * @return the color with local lighting effects
+     * @param gp  The geo point.
+     * @param ray The ray.
+     * @return The color with local lighting effects.
      */
     private Color calcLocalEffects(GeoPoint gp, Ray ray) {
         Vector n = gp.geometry.getNormal(gp.point);
@@ -66,17 +73,15 @@ public class SimpleRayTracer extends RayTracerBase {
         Color color = gp.geometry.getEmission();
         for (LightSource lightSource : scene.lights) {
             Vector l = lightSource.getL(gp.point);
-            double nl = alignZero(n.dotProduct(l));
-            if (nl * nv > 0) {
+            if (alignZero(n.dotProduct(l)) * nv > 0 && unshaded(gp, lightSource, l, n)) {
                 Color iL = lightSource.getIntensity(gp.point);
-                color = color.add(
-                        iL.scale(calcDiffuse(material.kD, l, n)
-                                .add(calcSpecular(material.kS, l, n, v, material.nShininess, iL))
-                        ));
+                color = color.add(iL.scale(calcDiffuse(material.kD, l, n)
+                        .add(calcSpecular(material.kS, l, n, v, material.nShininess, iL))));
             }
         }
         return color;
     }
+
 
     /**
      * Calculates the diffuse lighting effect.
@@ -106,5 +111,33 @@ public class SimpleRayTracer extends RayTracerBase {
         double vr = alignZero(-v.dotProduct(r));
         return vr <= 0 ? Double3.ZERO : kS.scale(Math.pow(vr, shininess));
     }
+
+    /**
+     * Checks if a point is unshaded from a given light source.
+     *
+     * @param gp          The geo point to check.
+     * @param lightSource The light source.
+     * @param l           The light direction vector.
+     * @param n           The normal vector at the point.
+     * @return true if the point is unshaded, false otherwise.
+     */
+    private boolean unshaded(GeoPoint gp, LightSource lightSource, Vector l, Vector n) {
+        Point point = gp.point.add(n.scale(DELTA)); // Offset point to avoid self-shadowing
+        double lightDistance = lightSource.getDistance(point); // Distance to the light source
+
+        // Find intersections between the light ray and the geometries within the light distance
+        List<GeoPoint> intersections = scene.geometries.findGeoIntersections(new Ray(point, l.scale(-1)), lightDistance);
+
+        if (intersections == null) return true; // No intersections, point is unshaded
+
+        for (GeoPoint intersection : intersections) {
+            // If an intersection is found within the light distance and the transparency coefficient is less than 1
+            if (alignZero(intersection.point.distance(point) - lightDistance) <= 0 && gp.geometry.getMaterial().kT.lowerThan(1)) {
+                return false; // Point is shaded
+            }
+        }
+        return true; // Point is unshaded
+    }
+
 
 }

@@ -4,7 +4,6 @@ import primitives.*;
 
 import java.util.List;
 
-import static java.lang.Math.sqrt;
 import static primitives.Util.alignZero;
 
 /**
@@ -36,11 +35,12 @@ public class Sphere extends RadialGeometry {
     }
 
     @Override
-    public List<GeoPoint> findGeoIntersectionsHelper(Ray ray) {
+    public List<GeoPoint> findGeoIntersectionsHelper(Ray ray, double maxDistance) {
         // Check if the ray starts at the center of the sphere
         if (center.equals(ray.getHead())) {
-            // The intersection point is on the surface of the sphere
-            return List.of(new GeoPoint(this, ray.getPoint(radius)));
+            return alignZero(maxDistance - radius) >= 0
+                    ? List.of(new GeoPoint(this, ray.getPoint(radius)))
+                    : null;
         }
 
         // Calculate the vector from the ray's head to the center of the sphere
@@ -53,19 +53,26 @@ public class Sphere extends RadialGeometry {
         if (alignZero(squaredOffset) <= 0) return null; // No intersection if the distance is greater than the radius
 
         // Calculate the distance from the projection point to the intersection points
-        double offset = sqrt(squaredOffset);
+        double offset = Math.sqrt(squaredOffset);
 
         // Calculate the parameter t for the second intersection point
         double t2 = projectionLength + offset;
-        if (alignZero(t2) <= 0) return null; // Both intersection points are behind the ray's origin
+        if (alignZero(t2) <= 0 || alignZero(maxDistance - t2) < 0)
+            return null; // Both intersection points are behind the ray's origin or beyond maxDistance
 
         // Calculate the parameter t for the first intersection point
         double t1 = projectionLength - offset;
 
-        // Return the intersection as a GeoPoint
-        return alignZero(t1) <= 0
-                ? List.of(new GeoPoint(this, ray.getPoint(t2))) // Only the second intersection point is valid
-                : List.of(new GeoPoint(this, ray.getPoint(t1)), new GeoPoint(this, ray.getPoint(t2))); // Both intersection points are valid
+        // Return the intersection points as GeoPoints, filtering by maxDistance
+        if (alignZero(t1) > 0 && alignZero(maxDistance - t1) >= 0) {
+            return List.of(
+                    new GeoPoint(this, ray.getPoint(t1)),
+                    new GeoPoint(this, ray.getPoint(t2))
+            );
+        } else {
+            return List.of(new GeoPoint(this, ray.getPoint(t2)));
+        }
     }
+
 
 }

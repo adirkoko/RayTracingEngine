@@ -43,11 +43,11 @@ public class Geometries extends Intersectable {
     }
 
     @Override
-    public List<GeoPoint> findGeoIntersectionsHelper(Ray ray) {
+    public List<GeoPoint> findGeoIntersectionsHelper(Ray ray, double maxDistance) {
         List<GeoPoint> intersections = null;
 
         for (Intersectable geo : geometries) {
-            List<GeoPoint> tempGeoIntersections = geo.findGeoIntersections(ray);
+            List<GeoPoint> tempGeoIntersections = geo.findGeoIntersections(ray, maxDistance);
             if (tempGeoIntersections != null) {
                 if (intersections == null)
                     intersections = new LinkedList<>(tempGeoIntersections);

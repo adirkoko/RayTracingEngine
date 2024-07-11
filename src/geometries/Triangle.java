@@ -26,16 +26,16 @@ public class Triangle extends Polygon {
     }
 
     @Override
-    public List<GeoPoint> findGeoIntersectionsHelper(Ray ray) {
-        // Find intersections with the plane containing the polygon
-        var planeIntersections = plane.findGeoIntersections(ray);
+    public List<GeoPoint> findGeoIntersectionsHelper(Ray ray, double maxDistance) {
+        // Find intersections with the plane containing the triangle
+        var planeIntersections = plane.findGeoIntersections(ray, maxDistance);
         if (planeIntersections == null) return null; // No intersection with the plane
 
         // Ray's origin and direction
         Point head = ray.getHead();
         Vector direction = ray.getDirection();
 
-        // Calculate vectors from the ray's origin to the polygon's vertices
+        // Calculate vectors from the ray's origin to the triangle's vertices
         Vector vectorToVertex1 = vertices.get(0).subtract(head);
         Vector vectorToVertex2 = vertices.get(1).subtract(head);
 
@@ -50,19 +50,19 @@ public class Triangle extends Polygon {
         // Calculate the normal of the plane formed by the second and third vertices and the ray's origin
         Vector normal2 = vectorToVertex2.crossProduct(vectorToVertex3).normalize();
         double dotProduct2 = alignZero(direction.dotProduct(normal2));
-        if (dotProduct1 * dotProduct2 <= 0) return null; // Intersection point is outside the polygon
+        if (dotProduct1 * dotProduct2 <= 0) return null; // Intersection point is outside the triangle
 
         // Calculate the normal of the plane formed by the third and first vertices and the ray's origin
         Vector normal3 = vectorToVertex3.crossProduct(vectorToVertex1).normalize();
         double dotProduct3 = alignZero(direction.dotProduct(normal3));
-        if (dotProduct1 * dotProduct3 <= 0) return null; // Intersection point is outside the polygon
+        if (dotProduct1 * dotProduct3 <= 0) return null; // Intersection point is outside the triangle
 
         // Create a list of GeoPoints with the intersection points from the plane
         List<GeoPoint> geoPoints = new ArrayList<>();
         for (GeoPoint geoPoint : planeIntersections) {
             geoPoints.add(new GeoPoint(this, geoPoint.point));
         }
-        return geoPoints; // The intersection point is inside the polygon
+        return geoPoints; // The intersection point is inside the triangle
     }
 
 }
