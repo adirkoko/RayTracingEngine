@@ -233,8 +233,7 @@ public class LightsTests {
     public void sphereSpotSharp() {
         scene1.geometries.add(sphere);
         scene1.lights
-                .add(new SpotLight(sphereLightColor, sphereLightPosition, new Vector(1, 1, -0.5))
-                        .setKl(0.001).setKq(0.00004).setNarrowBeam(10));
+                .add(new SpotLight(sphereLightColor, sphereLightPosition, new Vector(1, 1, -0.5)));
 
         camera1.setImageWriter(new ImageWriter("lightSphereSpotSharp", 500, 500))
                 .build()
@@ -248,10 +247,40 @@ public class LightsTests {
     @Test
     public void trianglesSpotSharp() {
         scene2.geometries.add(triangle1, triangle2);
+        scene2.lights.add(new SpotLight(trianglesLightColor, trianglesLightPosition, trianglesLightDirection));
+
+        camera2.setImageWriter(new ImageWriter("lightTrianglesSpotSharp", 500, 500))
+                .build()
+                .renderImage()
+                .writeToImage();
+    }
+
+    /**
+     * Produce a picture of a sphere lighted by a narrow spotlight.
+     */
+    @Test
+    public void sphereSpotNarrow() {
+        scene1.geometries.add(sphere);
+        scene1.lights
+                .add(new SpotLight(sphereLightColor, sphereLightPosition, new Vector(1, 1, -0.5))
+                        .setKl(0.001).setKq(0.00004).setNarrowBeam(10));
+
+        camera1.setImageWriter(new ImageWriter("lightSphereSpotNarrow", 500, 500))
+                .build()
+                .renderImage()
+                .writeToImage();
+    }
+
+    /**
+     * Produce a picture of two triangles lighted by a narrow spotlight.
+     */
+    @Test
+    public void trianglesSpotNarrow() {
+        scene2.geometries.add(triangle1, triangle2);
         scene2.lights.add(new SpotLight(trianglesLightColor, trianglesLightPosition, trianglesLightDirection)
                 .setKl(0.001).setKq(0.00004).setNarrowBeam(10));
 
-        camera2.setImageWriter(new ImageWriter("lightTrianglesSpotSharp", 500, 500))
+        camera2.setImageWriter(new ImageWriter("lightTrianglesSpotNarrow", 500, 500))
                 .build()
                 .renderImage()
                 .writeToImage();
