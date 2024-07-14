@@ -88,7 +88,8 @@ public class SimpleRayTracer extends RayTracerBase {
      */
     private Color calcColor(GeoPoint gp, Ray ray, int level, Double3 k) {
         Color color = calcLocalEffects(gp, ray, k); // Calculate local effects
-        return 1 == level ? color : color.add(calcGlobalEffects(gp, ray, level, k)); // Add global effects
+        return color;
+//        return 1 == level ? color : color.add(calcGlobalEffects(gp, ray, level, k)); // Add global effects
     }
 
     /**
@@ -173,9 +174,9 @@ public class SimpleRayTracer extends RayTracerBase {
             Vector l = lightSource.getL(gp.point); // Direction vector from point to light source
 
             if (alignZero(n.dotProduct(l)) * nv > 0) { // Check if the light source is on the same side of the surface as the view direction
-                Double3 ktr = transparency(lightSource, l, n, gp);
-                if (!ktr.product(k).lowerThan(MIN_CALC_COLOR_K)) {
-                    Color iL = lightSource.getIntensity(gp.point).scale(ktr); // Intensity of the light at the point
+//                Double3 ktr = transparency(lightSource, l, n, gp);
+//                if (!ktr.product(k).lowerThan(MIN_CALC_COLOR_K)) {
+                    Color iL = lightSource.getIntensity(gp.point); //.scale(ktr); // Intensity of the light at the point
                     // Add diffuse and specular lighting effects
                     color = color.add(
                             iL.scale(
@@ -183,7 +184,7 @@ public class SimpleRayTracer extends RayTracerBase {
                                             .add(calcSpecular(material.kS, l, n, v, material.nShininess)) // Specular component
                             )
                     );
-                }
+//                }
             }
         }
 

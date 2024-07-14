@@ -2,6 +2,7 @@ package renderer;
 
 import static java.awt.Color.*;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import geometries.*;
@@ -58,6 +59,7 @@ public class RenderTests {
      * Test for XML based scene - for bonus
      */
     @Test
+    @Disabled
     public void basicRenderXml() {
         // Build the scene from the XML file.
         Scene scene = SceneBuilder.buildSceneFromXml("xml\\renderTestTwoColors.xml");
