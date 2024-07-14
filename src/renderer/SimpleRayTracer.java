@@ -97,14 +97,13 @@ public class SimpleRayTracer extends RayTracerBase {
         double vn = v.dotProduct(n);
         if (isZero(vn)) return Color.BLACK;
         Color color = calcLocalEffects(gp, v, n, vn, k); // Calculate local effects
-        return color; // stage 6, next line is for stage 7
-//        return 1 == level ? color : color.add(calcGlobalEffects(gp, v, n, vn, level, k)); // Add global effects
+        return 1 == level ? color : color.add(calcGlobalEffects(gp, v, n, vn, level, k)); // Add global effects
     }
 
     /**
      * Constructs a reflected ray.
      *
-     * @param gp     The geo point.
+     * @param gp The geo point.
      * @param v  The incoming ray direction.
      * @param n  the normal vector at gp
      * @param vn v dot-product n
@@ -117,7 +116,7 @@ public class SimpleRayTracer extends RayTracerBase {
     /**
      * Constructs a refracted ray.
      *
-     * @param gp     The geo point.
+     * @param gp The geo point.
      * @param v  The incoming ray direction.
      * @param n  the normal vector at gp
      * @return The refracted ray.
@@ -144,9 +143,9 @@ public class SimpleRayTracer extends RayTracerBase {
      * Calculates the global effects (reflection and transparency) of the ray.
      *
      * @param gp    The intersection point.
-     * @param v  The incoming ray direction.
-     * @param n  the normal vector at gp
-     * @param vn v dot-product n
+     * @param v     The incoming ray direction.
+     * @param n     the normal vector at gp
+     * @param vn    v dot-product n
      * @param level The recursion level.
      * @param k     The accumulated attenuation factor.
      * @return The combined color of reflection and transparency.
@@ -175,17 +174,17 @@ public class SimpleRayTracer extends RayTracerBase {
             Vector l = lightSource.getL(gp.point); // Direction vector from point to light source
             double ln = alignZero(l.dotProduct(n));
             if (ln * vn > 0) { // Check if the light source is on the same side of the surface as the view direction
-//                Double3 ktr = transparency(lightSource, l, n, gp);
-//                if (!ktr.product(k).lowerThan(MIN_CALC_COLOR_K)) {
-                Color iL = lightSource.getIntensity(gp.point); //.scale(ktr); // Intensity of the light at the point
-                // Add diffuse and specular lighting effects
-                color = color.add(
-                        iL.scale(
-                                calcDiffuse(material.kD, l, n) // Diffuse component
-                                        .add(calcSpecular(material.kS, l, n, ln, v, material.nShininess)) // Specular component
-                        )
-                );
-//                }
+                Double3 ktr = transparency(lightSource, l, n, gp);
+                if (!ktr.product(k).lowerThan(MIN_CALC_COLOR_K)) {
+                    Color iL = lightSource.getIntensity(gp.point); //.scale(ktr); // Intensity of the light at the point
+                    // Add diffuse and specular lighting effects
+                    color = color.add(
+                            iL.scale(
+                                    calcDiffuse(material.kD, l, n) // Diffuse component
+                                            .add(calcSpecular(material.kS, l, n, ln, v, material.nShininess)) // Specular component
+                            )
+                    );
+                }
             }
         }
 
@@ -241,7 +240,7 @@ public class SimpleRayTracer extends RayTracerBase {
      * @param shininess the shininess coefficient
      * @return the specular lighting effect color
      */
-    private Double3 calcSpecular(Double3 kS, Vector l, Vector n, double ln,  Vector v, int shininess) {
+    private Double3 calcSpecular(Double3 kS, Vector l, Vector n, double ln, Vector v, int shininess) {
         Vector r = l.subtract(n.scale(2 * ln));
         double vr = alignZero(-v.dotProduct(r));
         return vr <= 0 ? Double3.ZERO : kS.scale(Math.pow(vr, shininess));
@@ -256,6 +255,8 @@ public class SimpleRayTracer extends RayTracerBase {
      * @param n           The normal vector at the point.
      * @return true if the point is unshaded, false otherwise.
      */
+    @SuppressWarnings("unused")
+    @Deprecated(forRemoval = true)
     private boolean unshaded(GeoPoint gp, LightSource lightSource, Vector l, Vector n) {
         Vector lightDirection = l.scale(-1); // from point to light source
         Vector delta = n.scale(n.dotProduct(lightDirection) > 0 ? DELTA : -DELTA); // Calculate the delta based on the dot product
