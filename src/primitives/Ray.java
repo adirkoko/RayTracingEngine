@@ -4,6 +4,9 @@ import geometries.Intersectable;
 
 import java.util.List;
 
+import static renderer.SimpleRayTracer.DELTA;
+
+
 /**
  * Represents a ray in three-dimensional space defined by a starting point (head) and a direction vector.
  * The direction vector is always normalized.
@@ -30,6 +33,20 @@ public class Ray {
      */
     public Ray(Point head, Vector direction) {
         this.head = head;
+        this.direction = direction.normalize();
+    }
+
+    /**
+     * Constructor for Ray that accepts a starting point, a direction vector, and a normal vector.
+     * The start point is shifted along the normal to avoid precision issues.
+     *
+     * @param head      The start point of the ray.
+     * @param direction The direction vector of the ray.
+     * @param normal    The normal vector at the start point.
+     */
+    public Ray(Point head, Vector direction, Vector normal) {
+        double delta = normal.dotProduct(direction) > 0 ? DELTA : -DELTA;
+        this.head = head.add(normal.scale(delta));
         this.direction = direction.normalize();
     }
 
