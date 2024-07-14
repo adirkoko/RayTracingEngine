@@ -81,7 +81,6 @@ public class SimpleRayTracer extends RayTracerBase {
         return intersections == null ? null : ray.findClosestGeoPoint(intersections);
     }
 
-
     /**
      * Calculates the color at the intersection point, including local effects and global effects (reflection and transparency).
      *
@@ -135,8 +134,10 @@ public class SimpleRayTracer extends RayTracerBase {
      * @return The color of the global effect.
      */
     private Color calcGlobalEffect(Ray ray, int level, Double3 k, Double3 kx) {
+        Double3 kkx = kx.product(k);
+        if (kkx.lowerThan(MIN_CALC_COLOR_K)) return Color.BLACK;
         GeoPoint gp = findClosestIntersection(ray);
-        return (gp == null ? scene.background : calcColor(gp, ray, level - 1, kx).scale(k));
+        return (gp == null ? scene.background : calcColor(gp, ray, level - 1, kkx).scale(kx));
     }
 
     /**
@@ -201,18 +202,15 @@ public class SimpleRayTracer extends RayTracerBase {
      * @return the transparency coefficient
      */
     private Double3 transparency(LightSource lightSource, Vector l, Vector n, GeoPoint geoPoint) {
-        Ray lightRay = new Ray(geoPoint.point, l.scale(-1), n);
-        List<GeoPoint> intersections = scene.geometries.findGeoIntersections(lightRay);
-        if (intersections == null) return Double3.ONE;
-
         Double3 ktr = Double3.ONE;
+        Ray lightRay = new Ray(geoPoint.point, l.scale(-1), n);
         double lightDistance = lightSource.getDistance(geoPoint.point);
+        List<GeoPoint> intersections = scene.geometries.findGeoIntersections(lightRay, lightDistance);
+        if (intersections == null) return ktr;
 
         for (GeoPoint gp : intersections) {
-            if (alignZero(gp.point.distance(geoPoint.point) - lightDistance) <= 0) {
-                ktr = ktr.product(gp.geometry.getMaterial().kT);
-                if (ktr.lowerThan(MIN_CALC_COLOR_K)) return Double3.ZERO;
-            }
+            ktr = ktr.product(gp.geometry.getMaterial().kT);
+            if (ktr.lowerThan(MIN_CALC_COLOR_K)) return Double3.ZERO;
         }
         return ktr;
     }
