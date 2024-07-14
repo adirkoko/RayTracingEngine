@@ -21,16 +21,6 @@ public class Color {
     public static final Color BLACK = new Color();
 
     /**
-     * Orange color = (1, 0.647, 0)
-     */
-    public static final Color ORANGE = new Color(1, 0.647, 0);
-
-    /**
-     * Red color = (1, 0, 0)
-     */
-    public static final Color RED = new Color(1, 0, 0);
-
-    /**
      * Default constructor - to generate Black Color (privately)
      */
     private Color() {

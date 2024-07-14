@@ -62,7 +62,7 @@ public class SimpleRayTracer extends RayTracerBase {
      * @return The color at the intersection point.
      */
     private Color calcColor(GeoPoint intersection, Ray ray) {
-        return calcColor(intersection, ray, MAX_CALC_COLOR_LEVEL, new Double3(1.0));
+        return calcColor(intersection, ray, MAX_CALC_COLOR_LEVEL, new Double3(1.0)).add(scene.ambientLight.getIntensity());
     }
 
     /**
@@ -150,7 +150,6 @@ public class SimpleRayTracer extends RayTracerBase {
                 .add(calcGlobalEffect(constructReflectedRay(gp, ray, n), level, k, material.kR));
     }
 
-
     /**
      * Calculates the local effects (diffuse and specular) of the lighting on a given point.
      *
@@ -164,15 +163,16 @@ public class SimpleRayTracer extends RayTracerBase {
         Vector v = ray.getDirection(); // Direction vector of the ray
         double nv = alignZero(n.dotProduct(v)); // Dot product of normal and view direction
 
-        if (nv == 0) return gp.geometry.getEmission(); // No lighting effect if vectors are orthogonal
+        Color color = gp.geometry.getEmission(); // Base emission color of the geometry
+
+        if (nv == 0) return color; // No lighting effect if vectors are orthogonal
 
         Material material = gp.geometry.getMaterial(); // Material properties of the geometry
-        Color color = gp.geometry.getEmission(); // Base emission color of the geometry
 
         for (LightSource lightSource : scene.lights) {
             Vector l = lightSource.getL(gp.point); // Direction vector from point to light source
 
-            if (alignZero(n.dotProduct(l)) * nv > 0 && unshaded(gp, lightSource, l, n)) { // Check if the light source is on the same side of the surface as the view direction
+            if (alignZero(n.dotProduct(l)) * nv > 0) { // Check if the light source is on the same side of the surface as the view direction
                 Double3 ktr = transparency(lightSource, l, n, gp);
                 if (!ktr.product(k).lowerThan(MIN_CALC_COLOR_K)) {
                     Color iL = lightSource.getIntensity(gp.point).scale(ktr); // Intensity of the light at the point
