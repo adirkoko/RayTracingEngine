@@ -145,4 +145,5 @@ class PlaneTest {
         // TC10: Ray is orthogonal to the plane and starts outside the plane
         assertNull(plane.findIntersections(new Ray(new Point(1, 1, 3), new Vector(0, 0, 1))), "BVA TC10: Ray is orthogonal and starts outside the plane");
     }
+
 }

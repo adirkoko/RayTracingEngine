@@ -132,7 +132,9 @@ public class SimpleRayTracer extends RayTracerBase {
      * @return true if the point is unshaded, false otherwise.
      */
     private boolean unshaded(GeoPoint gp, LightSource lightSource, Vector l, Vector n) {
-        Point point = gp.point.add(n.scale(DELTA)); // Offset point to avoid self-shadowing
+        Vector lightDirection = l.scale(-1); // from point to light source
+        Vector delta = n.scale(n.dotProduct(lightDirection) > 0 ? DELTA : -DELTA); // Calculate the delta based on the dot product
+        Point point = gp.point.add(delta); // Offset point to avoid self-shadowing
         double lightDistance = lightSource.getDistance(point); // Distance to the light source
 
         // Find intersections between the light ray and the geometries within the light distance
@@ -142,7 +144,7 @@ public class SimpleRayTracer extends RayTracerBase {
 
         for (GeoPoint intersection : intersections) {
             // If an intersection is found within the light distance and the transparency coefficient is less than 1
-            if (alignZero(intersection.point.distance(point) - lightDistance) <= 0 && gp.geometry.getMaterial().kT.lowerThan(1)) {
+            if (alignZero(intersection.point.distance(point) - lightDistance) <= 0) {
                 return false; // Point is shaded
             }
         }
