@@ -39,40 +39,24 @@ public class SpotLight extends PointLight {
     @Override
     public Color getIntensity(Point p) {
         double projection = alignZero(direction.dotProduct(getL(p)));
-        return projection <= 0 ? Color.BLACK : super.getIntensity(p).scale((narrowBeam > 1) ? Math.pow(projection, narrowBeam) : projection);
+        return projection <= 0 ? Color.BLACK
+                : super.getIntensity(p)
+                .scale((narrowBeam == 1) ? projection : Math.pow(projection, narrowBeam));
     }
 
-    /**
-     * Sets the constant attenuation factor and returns the SpotLight itself (chained).
-     *
-     * @param kC the constant attenuation factor
-     * @return the SpotLight itself
-     */
+    @Override
     public SpotLight setKc(double kC) {
-        super.setKc(kC);
-        return this;
+        return (SpotLight) super.setKc(kC);
     }
 
-    /**
-     * Sets the linear attenuation factor and returns the SpotLight itself (chained).
-     *
-     * @param kL the linear attenuation factor
-     * @return the SpotLight itself
-     */
+    @Override
     public SpotLight setKl(double kL) {
-        super.setKl(kL);
-        return this;
+        return (SpotLight) super.setKl(kL);
     }
 
-    /**
-     * Sets the quadratic attenuation factor and returns the SpotLight itself (chained).
-     *
-     * @param kQ the quadratic attenuation factor
-     * @return the SpotLight itself
-     */
+    @Override
     public SpotLight setKq(double kQ) {
-        super.setKq(kQ);
-        return this;
+        return (SpotLight) super.setKq(kQ);
     }
 
     /**
@@ -85,6 +69,5 @@ public class SpotLight extends PointLight {
         this.narrowBeam = narrowBeam;
         return this;
     }
-
 
 }

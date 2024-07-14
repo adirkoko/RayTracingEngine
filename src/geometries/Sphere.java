@@ -35,10 +35,10 @@ public class Sphere extends RadialGeometry {
     }
 
     @Override
-    public List<GeoPoint> findGeoIntersectionsHelper(Ray ray, double maxDistance) {
+    protected List<GeoPoint> findGeoIntersectionsHelper(Ray ray, double maxDistance) {
         // Check if the ray starts at the center of the sphere
         if (center.equals(ray.getHead())) {
-            return alignZero(maxDistance - radius) >= 0
+            return alignZero(maxDistance - radius) > 0
                     ? List.of(new GeoPoint(this, ray.getPoint(radius)))
                     : null;
         }
@@ -56,23 +56,22 @@ public class Sphere extends RadialGeometry {
         double offset = Math.sqrt(squaredOffset);
 
         // Calculate the parameter t for the second intersection point
-        double t2 = projectionLength + offset;
-        if (alignZero(t2) <= 0 || alignZero(maxDistance - t2) < 0)
+        // Calculate the parameter t for the first intersection point
+        double t1 = alignZero(projectionLength - offset);
+        double t2 = alignZero(projectionLength + offset);
+        if (t2 <= 0 || alignZero(maxDistance - t1) <= 0)
             return null; // Both intersection points are behind the ray's origin or beyond maxDistance
 
-        // Calculate the parameter t for the first intersection point
-        double t1 = projectionLength - offset;
-
         // Return the intersection points as GeoPoints, filtering by maxDistance
-        if (alignZero(t1) > 0 && alignZero(maxDistance - t1) >= 0) {
-            return List.of(
+        if (alignZero(maxDistance - t2) > 0)
+            return t1 <= 0
+                    ? List.of(new GeoPoint(this, ray.getPoint(t2)))
+                    : List.of(
                     new GeoPoint(this, ray.getPoint(t1)),
                     new GeoPoint(this, ray.getPoint(t2))
             );
-        } else {
-            return List.of(new GeoPoint(this, ray.getPoint(t2)));
-        }
+        else
+            return t1 <= 0 ? null : List.of(new GeoPoint(this, ray.getPoint(t1)));
     }
-
 
 }

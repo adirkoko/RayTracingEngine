@@ -1,9 +1,10 @@
 package primitives;
 
-import geometries.Intersectable;
+import static geometries.Intersectable.GeoPoint;
 
 import java.util.List;
 
+import static primitives.Util.isZero;
 import static renderer.SimpleRayTracer.DELTA;
 
 
@@ -41,13 +42,13 @@ public class Ray {
      * The start point is shifted along the normal to avoid precision issues.
      *
      * @param head      The start point of the ray.
-     * @param direction The direction vector of the ray.
+     * @param direction The direction vector of the ray. it must be normalized (length=1)
      * @param normal    The normal vector at the start point.
      */
     public Ray(Point head, Vector direction, Vector normal) {
         double delta = normal.dotProduct(direction) > 0 ? DELTA : -DELTA;
         this.head = head.add(normal.scale(delta));
-        this.direction = direction.normalize();
+        this.direction = direction;
     }
 
     /**
@@ -88,7 +89,7 @@ public class Ray {
      * @return the point on the ray at distance t
      */
     public Point getPoint(double t) {
-        return Util.isZero(t) ? head : head.add(direction.scale(t));
+        return isZero(t) ? head : head.add(direction.scale(t));
     }
 
     /**
@@ -98,7 +99,9 @@ public class Ray {
      * @return the closest point
      */
     public Point findClosestPoint(List<Point> points) {
-        return points == null || points.isEmpty() ? null : findClosestGeoPoint(points.stream().map(p -> new Intersectable.GeoPoint(null, p)).toList()).point;
+        return points == null || points.isEmpty() ? null
+                : findClosestGeoPoint(points.stream()
+                .map(p -> new GeoPoint(null, p)).toList()).point;
     }
 
     /**
@@ -107,15 +110,13 @@ public class Ray {
      * @param geoPoints The list of GeoPoints to search.
      * @return The closest GeoPoint to the ray's origin.
      */
-    public Intersectable.GeoPoint findClosestGeoPoint(List<Intersectable.GeoPoint> geoPoints) {
-        if (geoPoints == null || geoPoints.isEmpty()) {
-            return null;
-        }
+    public GeoPoint findClosestGeoPoint(List<GeoPoint> geoPoints) {
+        if (geoPoints == null || geoPoints.isEmpty()) return null;
 
-        Intersectable.GeoPoint closestGeoPoint = null;
+        GeoPoint closestGeoPoint = null;
         double closestDistanceSquared = Double.POSITIVE_INFINITY;
 
-        for (Intersectable.GeoPoint geoPoint : geoPoints) {
+        for (var geoPoint : geoPoints) {
             double distanceSquared = geoPoint.point.distanceSquared(head);
             if (distanceSquared < closestDistanceSquared) {
                 closestDistanceSquared = distanceSquared;

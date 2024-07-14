@@ -26,7 +26,7 @@ public class Triangle extends Polygon {
     }
 
     @Override
-    public List<GeoPoint> findGeoIntersectionsHelper(Ray ray, double maxDistance) {
+    protected List<GeoPoint> findGeoIntersectionsHelper(Ray ray, double maxDistance) {
         // Find intersections with the plane containing the triangle
         var planeIntersections = plane.findGeoIntersections(ray, maxDistance);
         if (planeIntersections == null) return null; // No intersection with the plane
@@ -58,11 +58,7 @@ public class Triangle extends Polygon {
         if (dotProduct1 * dotProduct3 <= 0) return null; // Intersection point is outside the triangle
 
         // Create a list of GeoPoints with the intersection points from the plane
-        List<GeoPoint> geoPoints = new ArrayList<>();
-        for (GeoPoint geoPoint : planeIntersections) {
-            geoPoints.add(new GeoPoint(this, geoPoint.point));
-        }
-        return geoPoints; // The intersection point is inside the triangle
+        return List.of(new GeoPoint(this, planeIntersections.getFirst().point)); // The intersection point is inside the triangle
     }
 
 }

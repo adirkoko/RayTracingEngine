@@ -48,6 +48,7 @@ public class PointLight extends Light implements LightSource {
      * @param kC the constant attenuation factor
      * @return the PointLight object itself for chaining
      */
+    @SuppressWarnings("unused")
     public PointLight setKc(double kC) {
         this.kC = kC;
         return this;

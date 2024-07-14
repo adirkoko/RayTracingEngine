@@ -17,7 +17,7 @@ public abstract class Intersectable {
      * @param ray the ray
      * @return list of intersection points
      */
-    public List<Point> findIntersections(Ray ray) {
+    public final List<Point> findIntersections(Ray ray) {
         var geoList = findGeoIntersections(ray);
         return geoList == null ? null : geoList.stream().map(gp -> gp.point).toList();
     }
@@ -28,7 +28,7 @@ public abstract class Intersectable {
      * @param ray the ray
      * @return list of intersection points as GeoPoint objects
      */
-    public List<GeoPoint> findGeoIntersections(Ray ray) {
+    public final List<GeoPoint> findGeoIntersections(Ray ray) {
         return findGeoIntersections(ray, Double.POSITIVE_INFINITY);
     }
 
@@ -39,7 +39,7 @@ public abstract class Intersectable {
      * @param maxDistance the maximum distance to find intersections
      * @return list of intersection points as GeoPoint objects
      */
-    public List<GeoPoint> findGeoIntersections(Ray ray, double maxDistance) {
+    public final List<GeoPoint> findGeoIntersections(Ray ray, double maxDistance) {
         return findGeoIntersectionsHelper(ray, maxDistance);
     }
 
@@ -82,7 +82,7 @@ public abstract class Intersectable {
         public boolean equals(Object obj) {
             if (this == obj) return true;
             return (obj instanceof GeoPoint other)
-                    && this.geometry.equals(other.geometry)
+                    && this.geometry == other.geometry
                     && this.point.equals(other.point);
         }
 
