@@ -5,8 +5,6 @@ import static geometries.Intersectable.GeoPoint;
 import java.util.List;
 
 import static primitives.Util.isZero;
-import static renderer.SimpleRayTracer.DELTA;
-
 
 /**
  * Represents a ray in three-dimensional space defined by a starting point (head) and a direction vector.
@@ -15,6 +13,11 @@ import static renderer.SimpleRayTracer.DELTA;
  * @author Adir and Meir.
  */
 public class Ray {
+
+    /**
+     * Offset size for primary rays to avoid shadow acne.
+     */
+    private static final double DELTA = 0.1;
 
     /**
      * The starting point of the Ray.

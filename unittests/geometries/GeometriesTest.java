@@ -7,8 +7,7 @@ import primitives.Vector;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Testing Geometries, the class that holds a list of geometries.
@@ -51,5 +50,42 @@ class GeometriesTest {
         // TC14: only one geometry in the list, with a couple of geometries intersects the ray. The ray intersects the sphere.
         List<Point> result3 = geometries.findIntersections(new Ray(new Point(0.5, 0.5, -0.5), new Vector(0, 1, 0)));
         assertEquals(1, result3.size(), "Wrong number of points");
+    }
+
+    /**
+     * Test method for {@link geometries.Geometries#findGeoIntersectionsHelper(primitives.Ray, double)}.
+     */
+    @Test
+    public void findGeoIntersectionsHelper() {
+        Geometries geometries = new Geometries(
+                new Sphere(new Point(0, 0, 2), 1),
+                new Plane(new Point(0, 0, 5), new Vector(0, 0, 1)),
+                new Triangle(new Point(0, 1, 4), new Point(1, 0, 4), new Point(-1, -1, 4))
+        );
+        List<Intersectable.GeoPoint> result;
+
+        // ============ Equivalence Partitions Tests ==============
+
+        // TC01: Ray intersects some geometries within max distance
+        result = geometries.findGeoIntersectionsHelper(new Ray(
+                new Point(0, 0, 0),
+                new Vector(0, 0, 1)), 5.1);
+        assertNotNull(result, "TC01 Ray intersects some geometries within max distance");
+        assertEquals(4, result.size(), "TC01 Wrong number of intersection points");
+
+        // TC02: Ray does not intersect any geometry due to max distance
+        result = geometries.findGeoIntersectionsHelper(new Ray(
+                new Point(0, 0, 0),
+                new Vector(0, 0, 1)), 1.0);
+        assertNull(result, "TC02 Ray does not intersect any geometry due to max distance");
+
+        // =============== Boundary Values Tests ==================
+
+        // TC11: Ray intersects geometries exactly at max distance
+        result = geometries.findGeoIntersectionsHelper(new Ray(
+                new Point(0, 0, 0),
+                new Vector(0, 0, 1)), 4.0);
+        assertNotNull(result, "TC11 Ray intersects geometries exactly at max distance");
+        assertEquals(2, result.size(), "TC11 Wrong number of intersection points");
     }
 }

@@ -146,4 +146,40 @@ class PlaneTest {
         assertNull(plane.findIntersections(new Ray(new Point(1, 1, 3), new Vector(0, 0, 1))), "BVA TC10: Ray is orthogonal and starts outside the plane");
     }
 
+
+    /**
+     * Test method for {@link geometries.Plane#findGeoIntersectionsHelper(primitives.Ray, double)}.
+     */
+    @Test
+    public void findGeoIntersectionsHelper() {
+        Plane plane = new Plane(
+                new Point(0, 0, 1),
+                new Vector(0, 0, 1)
+        );
+        List<Intersectable.GeoPoint> result;
+
+        // ============ Equivalence Partitions Tests ==============
+
+        // TC01 Ray intersects the plane within max distance
+        result = plane.findGeoIntersectionsHelper(new Ray(
+                new Point(0, 0, -1),
+                new Vector(0, 0, 1)), 2.1);
+        assertNotNull(result, "TC01 Ray intersects the plane within max distance");
+        assertEquals(1, result.size(), "TC01 Wrong number of intersection points");
+
+        // TC02 Ray does not intersect the plane due to max distance
+        result = plane.findGeoIntersectionsHelper(new Ray(
+                new Point(0, 0, -1),
+                new Vector(0, 0, 1)), 0.5);
+        assertNull(result, "TC02 Ray does not intersect the plane due to max distance");
+
+        // =============== Boundary Values Tests ==================
+
+        // TC11 Ray intersects the plane exactly at max distance
+        result = plane.findGeoIntersectionsHelper(new Ray(
+                new Point(0, 0, -1),
+                new Vector(0, 0, 1)), 2.0);
+        assertNull(result, "TC11 Ray intersects the plane exactly at max distance");
+    }
+
 }

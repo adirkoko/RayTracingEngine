@@ -20,7 +20,7 @@ public class SimpleRayTracer extends RayTracerBase {
     /**
      * Offset size for primary rays to avoid shadow acne.
      */
-    public static final double DELTA = 0.1;
+    private static final double DELTA = 0.1;
 
     /**
      * Maximum recursion level for color calculation to prevent infinite recursion.
@@ -192,6 +192,7 @@ public class SimpleRayTracer extends RayTracerBase {
         return color; // Return the final color with local lighting effects
     }
 
+
     /**
      * Calculates the transparency coefficient for the given light source and ray.
      *
@@ -214,6 +215,7 @@ public class SimpleRayTracer extends RayTracerBase {
         }
         return ktr;
     }
+
 
     /**
      * Calculates the diffuse lighting effect.

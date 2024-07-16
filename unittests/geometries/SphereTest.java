@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 import primitives.Point;
 import primitives.Ray;
 import primitives.Vector;
-
 import java.util.Comparator;
 import java.util.List;
 
@@ -139,5 +138,59 @@ public class SphereTest {
 
     }
 
+    @Test
+    void findGeoIntersectionsHelper() {
+        // Sphere centered at (0, 0, 0) with radius 1
+        Sphere sphere = new Sphere(new Point(0, 0, 0), 1);
+        List<Intersectable.GeoPoint> result;
 
+        // ============ Equivalence Partitions Tests ==============
+        // TC01: Ray starts at the center of the sphere and goes outwards
+        result = sphere.findGeoIntersectionsHelper(new Ray(
+                new Point(0, 0, 0),
+                new Vector(1, 0, 0)), 2.0);
+        assertEquals(1, result.size(), "TC01: Ray starts at the center and intersects the sphere");
+        assertEquals(new Point(1, 0, 0), result.getFirst().point, "TC01: Intersection point");
+
+        // TC02: Ray starts outside the sphere and intersects the sphere twice within maxDistance
+        result = sphere.findGeoIntersectionsHelper(new Ray(
+                new Point(-2, 0, 0),
+                new Vector(1, 0, 0)), 5.0);
+        assertEquals(2, result.size(), "TC02: Ray intersects the sphere twice");
+        assertEquals(new Point(-1, 0, 0), result.get(0).point, "TC02: First intersection point");
+        assertEquals(new Point(1, 0, 0), result.get(1).point, "TC02: Second intersection point");
+
+        // TC03: Ray starts inside the sphere and intersects the sphere once within maxDistance
+        result = sphere.findGeoIntersectionsHelper(new Ray(
+                new Point(0.5, 0, 0),
+                new Vector(1, 0, 0)), 2.0);
+        assertEquals(1, result.size(), "TC03: Ray starts inside and intersects the sphere once");
+        assertEquals(new Point(1, 0, 0), result.getFirst().point, "TC03: Intersection point");
+
+        // TC04: Ray starts inside the sphere and does not intersect within maxDistance
+        result = sphere.findGeoIntersectionsHelper(new Ray(
+                new Point(0.5, 0, 0),
+                new Vector(1, 0, 0)), 0.2);
+        assertNull(result, "TC04: Ray starts inside the sphere and does not intersect within maxDistance");
+
+        // =============== Boundary Values Tests ==================
+        // TC11: Ray starts outside the sphere and intersects the sphere once within maxDistance
+        result = sphere.findGeoIntersectionsHelper(new Ray(
+                new Point(-2, 0, 0),
+                new Vector(1, 0, 0)), 1.5);
+        assertEquals(1, result.size(), "TC11: Ray intersects the sphere once");
+        assertEquals(new Point(-1, 0, 0), result.getFirst().point, "TC11: Intersection point");
+
+        // TC12: Ray starts outside the sphere and does not intersect the sphere within maxDistance
+        result = sphere.findGeoIntersectionsHelper(new Ray(
+                new Point(-2, 0, 0),
+                new Vector(1, 0, 0)), 0.5);
+        assertNull(result, "TC12: Ray does not intersect the sphere within maxDistance");
+
+        // TC13: Ray starts outside the sphere and is tangent to the sphere within maxDistance
+        result = sphere.findGeoIntersectionsHelper(new Ray(
+                new Point(-2, 1, 0),
+                new Vector(1, 0, 0)), 5.0);
+        assertNull(result, "TC13: Ray is tangent to the sphere within maxDistance");
+    }
 }

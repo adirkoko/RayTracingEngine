@@ -128,4 +128,41 @@ public class PolygonTests {
                 "TC06: Ray's crosses the polygon's edge");
     }
 
+    /**
+     * Test method for {@link geometries.Polygon#findGeoIntersectionsHelper(primitives.Ray, double)}.
+     */
+    @Test
+    public void findGeoIntersectionsHelper() {
+        Polygon polygon = new Polygon(
+                new Point(0, 0, 1),
+                new Point(1, 0, 1),
+                new Point(1, 1, 1),
+                new Point(0, 1, 1)
+        );
+        List<Intersectable.GeoPoint> result;
+
+        // ============ Equivalence Partitions Tests ==============
+
+        // TC01: Ray intersects the polygon within max distance
+        result = polygon.findGeoIntersectionsHelper(new Ray(
+                new Point(0.5, 0.5, 0),
+                new Vector(0, 0, 1)), 2.1);
+        assertNotNull(result, "TC01 Ray intersects the polygon within max distance");
+        assertEquals(1, result.size(), "TC01 Wrong number of intersection points");
+
+        // TC02: Ray does not intersect the polygon due to max distance
+        result = polygon.findGeoIntersectionsHelper(new Ray(
+                new Point(0.5, 0.5, 0),
+                new Vector(0, 0, 1)), 0.5);
+        assertNull(result, "TC02 Ray does not intersect the polygon due to max distance");
+
+        // =============== Boundary Values Tests ==================
+
+        // TC11: Ray intersects the polygon exactly at max distance
+        result = polygon.findGeoIntersectionsHelper(new Ray(
+                new Point(0.5, 0.5, 0),
+                new Vector(0, 0, 1)), 1.0);
+        assertNull(result, "TC11 Ray intersects the polygon exactly at max distance");
+    }
+
 }
