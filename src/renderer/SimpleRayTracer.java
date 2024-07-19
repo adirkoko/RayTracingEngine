@@ -162,8 +162,8 @@ public class SimpleRayTracer extends RayTracerBase {
      *
      * @param gp The geo point.
      * @param v  The incoming ray direction.
-     * @param n  the normal vector at gp
-     * @param vn v dot-product n
+     * @param n  The normal vector at gp.
+     * @param vn v dot-product n.
      * @param k  The accumulated attenuation factor.
      * @return The color with local lighting effects.
      */
@@ -175,15 +175,13 @@ public class SimpleRayTracer extends RayTracerBase {
             Vector l = lightSource.getL(gp.point); // Direction vector from point to light source
             double ln = alignZero(l.dotProduct(n));
             if (ln * vn > 0) { // Check if the light source is on the same side of the surface as the view direction
-                Double3 ktr = transparency(lightSource, l, n, gp);
+                Double3 ktr = transparency(gp, lightSource, l, n);
                 if (!ktr.product(k).lowerThan(MIN_CALC_COLOR_K)) {
-                    Color iL = lightSource.getIntensity(gp.point); //.scale(ktr); // Intensity of the light at the point
+                    Color iL = lightSource.getIntensity(gp.point).scale(ktr); // Intensity of the light at the point
                     // Add diffuse and specular lighting effects
                     color = color.add(
-                            iL.scale(
-                                    calcDiffuse(material.kD, l, n) // Diffuse component
-                                            .add(calcSpecular(material.kS, l, n, ln, v, material.nShininess)) // Specular component
-                            )
+                            iL.scale(calcDiffuse(material, ln)), // Diffuse component
+                            iL.scale(calcSpecular(material, n, l, ln, v)) // Specular component
                     );
                 }
             }
@@ -192,59 +190,57 @@ public class SimpleRayTracer extends RayTracerBase {
         return color; // Return the final color with local lighting effects
     }
 
-
     /**
      * Calculates the transparency coefficient for the given light source and ray.
      *
-     * @param lightSource the light source
-     * @param l           the direction from the point to the light source
-     * @param n           the normal at the intersection point
-     * @param geoPoint    the intersection point
-     * @return the transparency coefficient
+     * @param gp          The geo point.
+     * @param lightSource The light source.
+     * @param l           The direction from the point to the light source.
+     * @param n           The normal at the intersection point.
+     * @return The transparency coefficient.
      */
-    private Double3 transparency(LightSource lightSource, Vector l, Vector n, GeoPoint geoPoint) {
+    private Double3 transparency(GeoPoint gp, LightSource lightSource, Vector l, Vector n) {
         Double3 ktr = Double3.ONE;
-        Ray lightRay = new Ray(geoPoint.point, l.scale(-1), n);
-        double lightDistance = lightSource.getDistance(geoPoint.point);
-        List<GeoPoint> intersections = scene.geometries.findGeoIntersections(lightRay, lightDistance);
+        List<GeoPoint> intersections = scene.geometries.findGeoIntersections(
+                new Ray(gp.point, l.scale(-1), n)
+                , lightSource.getDistance(gp.point));
+
         if (intersections == null) return ktr;
 
-        for (GeoPoint gp : intersections) {
-            ktr = ktr.product(gp.geometry.getMaterial().kT);
-            if (ktr.lowerThan(MIN_CALC_COLOR_K)) return Double3.ZERO;
+        for (GeoPoint p : intersections) {
+            ktr = ktr.product(p.geometry.getMaterial().kT); // Calculate the transparency coefficient
+            if (ktr.lowerThan(MIN_CALC_COLOR_K))
+                return Double3.ZERO; // If transparency is below the threshold, return zero
         }
-        return ktr;
+        return ktr; // Return the final transparency coefficient
     }
-
 
     /**
      * Calculates the diffuse lighting effect.
      *
-     * @param kD the diffuse coefficient
-     * @param l  the light direction vector
-     * @param n  the normal vector at the point
-     * @return the diffuse lighting effect color
+     * @param mat The material of the geometry.
+     * @param nl  The dot product of the light direction and the normal vector.
+     * @return The diffuse lighting effect color.
      */
-    private Double3 calcDiffuse(Double3 kD, Vector l, Vector n) {
-        return kD.scale(Math.abs(l.dotProduct(n)));
+    private Double3 calcDiffuse(Material mat, double nl) {
+        return mat.kD.scale(alignZero(nl) < 0 ? -nl : nl); // Calculate the diffuse component based on the dot product
     }
 
     /**
      * Calculates the specular lighting effect.
      *
-     * @param kS        the specular coefficient
-     * @param l         the light direction vector
-     * @param n         the normal vector at the point
-     * @param ln        l dot-product n
-     * @param v         the view direction vector
-     * @param shininess the shininess coefficient
-     * @return the specular lighting effect color
+     * @param mat The material of the geometry.
+     * @param n   The normal vector at the point.
+     * @param l   The light direction vector.
+     * @param nl  The dot product of the light direction and the normal vector.
+     * @param v   The view direction vector.
+     * @return The specular lighting effect color.
      */
-    private Double3 calcSpecular(Double3 kS, Vector l, Vector n, double ln, Vector v, int shininess) {
-        Vector r = l.subtract(n.scale(2 * ln));
-        double vr = alignZero(-v.dotProduct(r));
-        return vr <= 0 ? Double3.ZERO : kS.scale(Math.pow(vr, shininess));
+    private Double3 calcSpecular(Material mat, Vector n, Vector l, double nl, Vector v) {
+        double vr = v.dotProduct(l.subtract(n.scale(nl * 2))); // Calculate the reflection vector
+        return (alignZero(vr) > 0) ? Double3.ZERO : mat.kS.scale(Math.pow(-vr, mat.nShininess)); // Calculate the specular component
     }
+
 
     /**
      * Checks if a point is unshaded from a given light source.
