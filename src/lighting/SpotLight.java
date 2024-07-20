@@ -8,6 +8,9 @@ import static primitives.Util.alignZero;
 
 /**
  * Class representing a spotlight source.
+ * SpotLight has a specific position, direction, and intensity.
+ * Provides methods to get light intensity, direction, and distance at a given point.
+ * Allows setting attenuation factors and narrow beam factor for the light.
  *
  * @author Adir and Meir.
  */

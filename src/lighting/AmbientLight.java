@@ -6,6 +6,7 @@ import primitives.Double3;
 /**
  * Represents the ambient light in the scene.
  * This light is constant and not affected by the distance from the light source.
+ * Provides constructors for initializing ambient light with intensity and attenuation coefficient.
  *
  * @author Adir and Meir.
  */

@@ -7,8 +7,10 @@ import java.util.MissingResourceException;
 import static primitives.Util.*;
 
 /**
- * represents a camera in a 3D space with the ability to construct rays.
+ * Represents a camera in a 3D space with the ability to construct rays.
  * This class uses the Builder Design Pattern.
+ * Provides methods for setting the camera's position, direction, and view plane properties.
+ * Can construct rays through view plane pixels and render images.
  *
  * @author Adir and Meir
  */
@@ -243,6 +245,8 @@ public class Camera implements Cloneable {
 
     /**
      * Builder class for constructing a Camera object.
+     * Provides methods for setting camera properties and building the Camera object.
+     * Implements the Builder Design Pattern.
      *
      * @author Adir and Meir.
      */

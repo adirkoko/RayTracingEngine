@@ -4,6 +4,8 @@ import primitives.*;
 
 /**
  * Represents a cylinder in 3D space.
+ * Extends the Tube class by adding a height property.
+ * Provides methods for calculating the normal vector at a given point on the cylinder.
  *
  * @author Adir and Meir
  */

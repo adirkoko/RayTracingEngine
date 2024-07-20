@@ -6,6 +6,7 @@ import java.util.List;
 
 /**
  * Abstract class for intersectable geometric bodies.
+ * Provides methods for finding intersections with rays and helper methods for intersection calculations. *
  *
  * @author Adir and Meir.
  */

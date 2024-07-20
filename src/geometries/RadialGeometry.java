@@ -2,6 +2,8 @@ package geometries;
 
 /**
  * Abstract class representing radial geometries, defined by a radius.
+ * Extends the Geometry class.
+ * Provides properties for radius and squared radius.
  *
  * @author Adir and Meir.
  */

@@ -12,6 +12,7 @@ import primitives.*;
 /**
  * SceneBuilder is a utility class to build Scene objects from XML files.
  * This class uses the DOM parser to read and parse the XML file and extract scene information.
+ * Provides methods to parse colors, points, vectors, and rays from strings.
  *
  * @author Adir and Meir
  */

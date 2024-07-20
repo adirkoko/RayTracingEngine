@@ -2,6 +2,10 @@ package primitives;
 
 /**
  * Class representing the material properties of a geometry.
+ * Provides coefficients for transparency, reflection, diffuse, and specular properties.
+ * Also includes shininess coefficient for specular highlights.
+ *
+ * @author Adir and Meir
  */
 public class Material {
 

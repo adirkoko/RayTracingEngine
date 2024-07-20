@@ -6,6 +6,9 @@ import primitives.Vector;
 
 /**
  * Class representing a point light source.
+ * Point light has a specific position and intensity.
+ * Provides methods to get light intensity, direction, and distance at a given point.
+ * Allows setting attenuation factors for the light.
  *
  * @author Adir and Meir.
  */

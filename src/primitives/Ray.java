@@ -9,6 +9,7 @@ import static primitives.Util.isZero;
 /**
  * Represents a ray in three-dimensional space defined by a starting point (head) and a direction vector.
  * The direction vector is always normalized.
+ * Provides methods for ray construction, point calculations, and intersection finding.
  *
  * @author Adir and Meir.
  */

@@ -3,6 +3,8 @@ package primitives;
 
 /**
  * Represents a vector in three-dimensional space, extending the functionality of a point with additional vector operations.
+ * Provides methods for vector addition, scaling, dot product, cross product, length calculations, and normalization.
+ * Crucial for various 3D applications.
  *
  * @author Adir and Meir.
  */

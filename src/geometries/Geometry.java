@@ -4,6 +4,8 @@ import primitives.*;
 
 /**
  * Abstract class for geometric bodies.
+ * Represents geometric objects that have material properties and emission color.
+ * Provides a method for calculating the normal vector at a given point on the geometry.
  *
  * @author Adir and Meir.
  */

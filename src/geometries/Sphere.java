@@ -8,6 +8,8 @@ import static primitives.Util.alignZero;
 
 /**
  * Represents a sphere in 3D space.
+ * Extends the RadialGeometry class.
+ * Provides methods to calculate the normal vector and find intersections with rays.
  *
  * @author Adir and Meir.
  */

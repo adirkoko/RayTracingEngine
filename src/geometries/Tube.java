@@ -6,6 +6,8 @@ import java.util.List;
 
 /**
  * Represents a tube in 3D space, defined by a radius and a central axis ray.
+ * Extends the RadialGeometry class.
+ * Provides methods to calculate the normal vector at a given point on the tube.
  *
  * @author Adir and Meir.
  */

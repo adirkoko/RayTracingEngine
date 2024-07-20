@@ -8,7 +8,8 @@ import static primitives.Util.alignZero;
 import static primitives.Util.isZero;
 
 /**
- * Represents a Plane in 3D space
+ * Represents a plane in 3D space.
+ * Provides methods for calculating the normal vector at a given point on the plane and finding intersections with rays.
  *
  * @author Adir and Meir.
  */

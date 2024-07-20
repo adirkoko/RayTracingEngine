@@ -8,7 +8,9 @@ import java.util.List;
 import static primitives.Util.alignZero;
 
 /**
- * Represents a triangle in 3D space, defined by three vertices.
+ * Represents a triangle in 3D space.
+ * Extends the Polygon class.
+ * Provides methods to find intersections with rays.
  *
  * @author Adir and Meir.
  */

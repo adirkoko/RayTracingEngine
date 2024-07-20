@@ -7,6 +7,7 @@ import scene.Scene;
 /**
  * Provides a base for tracing rays through a scene to determine the color at each pixel.
  * This class is intended to be extended by specific ray tracing implementations.
+ * Contains a reference to the scene and an abstract method for tracing rays.
  *
  * @author Adir and Meir
  */

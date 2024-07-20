@@ -4,6 +4,8 @@ import primitives.Color;
 
 /**
  * Abstract class representing a light source.
+ * Contains the intensity of the light source.
+ * Provides a method to get the intensity of the light.
  *
  * @author Adir and Meir.
  */

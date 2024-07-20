@@ -6,6 +6,7 @@ import primitives.Vector;
 
 /**
  * Interface representing a light source in the scene.
+ * Defines methods to get light intensity, direction, and distance at a given point.
  *
  * @author Adir and Meir.
  */

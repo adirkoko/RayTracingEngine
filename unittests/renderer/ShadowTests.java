@@ -109,7 +109,7 @@ public class ShadowTests {
     }
 
     /**
-     * Produce a picture of a two triangles lighted by a spot light with a Sphere
+     * Produce a picture of two triangles lighted by a spotlight with a Sphere
      * producing a shading
      */
     @Test

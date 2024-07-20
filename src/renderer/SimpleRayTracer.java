@@ -12,6 +12,7 @@ import static primitives.Util.*;
 /**
  * SimpleRayTracer class that extends RayTracerBase.
  * Implements a simple ray tracer that calculates color at intersections using local effects and ambient light.
+ * Provides methods for tracing rays, calculating color, and handling local and global effects.
  *
  * @author Adir and Meir
  */

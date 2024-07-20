@@ -8,6 +8,7 @@ import primitives.Ray;
 /**
  * Represents a collection of geometric objects.
  * Implements the Intersectable class using the Composite design pattern.
+ * Provides methods for adding geometries and finding intersections with rays.
  *
  * @author Adir and Meir.
  */

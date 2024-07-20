@@ -10,6 +10,8 @@ import java.util.List;
 
 /**
  * Represents a 3D scene with background color, ambient light, and geometries.
+ * Contains properties for the scene's name, background color, ambient light, geometries, and light sources.
+ * Provides methods for setting these properties and adding geometries.
  *
  * @author Adir and Meir
  */

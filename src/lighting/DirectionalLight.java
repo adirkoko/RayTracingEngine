@@ -6,6 +6,8 @@ import primitives.Vector;
 
 /**
  * Class representing a directional light source.
+ * Directional light has a direction and intensity but no specific position.
+ * Provides methods to get light intensity and direction at a given point.
  *
  * @author Adir and Meir.
  */
