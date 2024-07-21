@@ -139,6 +139,9 @@ public class SphereTest {
 
     }
 
+    /**
+     * Test method for {@link geometries.Sphere#(primitives.Ray)}.
+     */
     @Test
     void findGeoIntersectionsHelper() {
         // Sphere centered at (0, 0, 0) with radius 1
