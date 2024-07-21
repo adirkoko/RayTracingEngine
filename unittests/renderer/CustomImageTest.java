@@ -9,14 +9,14 @@ import primitives.*;
 import scene.Scene;
 
 /**
- * CustomImage Test
+ * CustomImage Test.
  *
  * @author Adir and Meir
  */
 public class CustomImageTest {
 
     /**
-     * customImage Test
+     * customImage Test.
      */
     @Test
     public void customImage() {
