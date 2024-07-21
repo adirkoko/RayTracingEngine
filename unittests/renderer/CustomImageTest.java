@@ -86,15 +86,16 @@ public class CustomImageTest {
         );
 
         // Add lights
-        scene.lights.add(
-                new SpotLight(new Color(255, 255, 255), new Point(200, 200, 100), new Vector(-1, -1, -2))
-                        .setKl(0.0000005).setKq(0.0000005)
-        );
+        scene.lights.add(new SpotLight(
+                        new Color(255, 255, 255),
+                        new Point(200, 200, 100),
+                        new Vector(-1, -1, -2))
+                        .setKl(0.0000005).setKq(0.0000005));
 
-        scene.lights.add(
-                new PointLight(new Color(255, 255, 255), new Point(-200, 200, 100))
-                        .setKl(0.0005).setKq(0.0005)
-        );
+        scene.lights.add(new PointLight(
+                        new Color(255, 255, 255),
+                        new Point(-200, 200, 100))
+                        .setKl(0.0005).setKq(0.0005));
 
         // Camera
         Camera camera = Camera.getBuilder()
