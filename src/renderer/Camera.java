@@ -2,6 +2,8 @@ package renderer;
 
 import primitives.*;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.MissingResourceException;
 
 import static primitives.Util.*;
@@ -15,6 +17,7 @@ import static primitives.Util.*;
  * @author Adir and Meir
  */
 public class Camera implements Cloneable {
+
     /**
      * The position of the camera in 3D space.
      */
@@ -49,6 +52,13 @@ public class Camera implements Cloneable {
      * The distance from the camera to the view plane.
      */
     private double viewPlaneDistance = 0;
+
+    /**
+     * The number of samples per pixel for anti-aliasing.
+     * Default value for no anti-aliasing.
+     */
+    private int sampleSize = 1;
+
 
     /**
      * Private constructor to prevent direct instantiation.
@@ -178,6 +188,42 @@ public class Camera implements Cloneable {
     }
 
     /**
+     * Constructs jittered rays through the pixel for anti-aliasing.
+     *
+     * @param nX         number of columns in the view plane
+     * @param nY         number of rows in the view plane
+     * @param j          column index of the pixel
+     * @param i          row index of the pixel
+     * @param sampleSize number of samples per pixel
+     * @return a list of jittered rays
+     */
+    private List<Ray> constructJitteredRays(int nX, int nY, int j, int i, int sampleSize) {
+        List<Ray> rays = new LinkedList<>();
+        double pixelWidth = viewPlaneWidth / nX;
+        double pixelHeight = viewPlaneHeight / nY;
+        Point center = position.add(toward.scale(viewPlaneDistance));
+        double xOffset = (j - (nX - 1) / 2.0) * pixelWidth;
+        double yOffset = (i - (nY - 1) / 2.0) * pixelHeight;
+        Point pIJ = center;
+        if (!isZero(xOffset)) pIJ = pIJ.add(right.scale(xOffset));
+        if (!isZero(yOffset)) pIJ = pIJ.add(up.scale(-yOffset));
+
+        for (int p = 0; p < sampleSize; p++) {
+            for (int q = 0; q < sampleSize; q++) {
+                double rx = (Math.random() - 0.5) * pixelWidth / sampleSize;
+                double ry = (Math.random() - 0.5) * pixelHeight / sampleSize;
+                Point pJittered = pIJ.add(right.scale(rx)).add(up.scale(ry));
+                rays.add(new Ray(position, pJittered.subtract(position)));
+            }
+        }
+        return rays;
+    }
+
+
+
+
+
+    /**
      * Writes the image to a file using the image writer.
      */
     public void writeToImage() {
@@ -222,14 +268,16 @@ public class Camera implements Cloneable {
     public Camera renderImage() {
         int nX = imageWriter.getNx();
         int nY = imageWriter.getNy();
-        for (int i = 0; i < nY; i++)
-            for (int j = 0; j < nX; j++)
+        for (int i = 0; i < nY; i++) {
+            for (int j = 0; j < nX; j++) {
                 castRay(nX, nY, j, i);
+            }
+        }
         return this;
     }
 
     /**
-     * Casts a ray through the center of the pixel, calculates the color using the ray tracer,
+     * Casts rays through the pixel, calculates the color using the ray tracer,
      * and colors the pixel using the writePixel method of the image writer.
      *
      * @param nX number of columns in the view plane
@@ -238,10 +286,20 @@ public class Camera implements Cloneable {
      * @param i  row index of the pixel
      */
     private void castRay(int nX, int nY, int j, int i) {
-        Ray ray = constructRay(nX, nY, j, i);
-        Color pixelColor = rayTracer.traceRay(ray);
+        List<Ray> rays;
+        if (sampleSize == 1) {
+            rays = List.of(constructRay(nX, nY, j, i));
+        } else {
+            rays = constructJitteredRays(nX, nY, j, i, sampleSize);
+        }
+        Color pixelColor = Color.BLACK;
+        for (Ray ray : rays) {
+            pixelColor = pixelColor.add(rayTracer.traceRay(ray));
+        }
+        pixelColor = pixelColor.reduce(rays.size());
         imageWriter.writePixel(j, i, pixelColor);
     }
+
 
     /**
      * Builder class for constructing a Camera object.
@@ -373,5 +431,17 @@ public class Camera implements Cloneable {
         }
 
 
+        /**
+         * Sets the number of samples per pixel for anti-aliasing.
+         *
+         * @param sampleSize the number of samples per pixel.
+         * @return the Builder instance.
+         */
+        public Builder setSampleSize(int sampleSize) {
+            if (sampleSize <= 0)
+                throw new IllegalArgumentException("Sample size must be positive");
+            camera.sampleSize = sampleSize;
+            return this;
+        }
     }
 }

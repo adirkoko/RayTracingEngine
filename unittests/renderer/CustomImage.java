@@ -88,18 +88,34 @@ public class CustomImage {
                         .setKl(0.0005).setKq(0.0005)
         );
 
-        // Camera
-        Camera camera = Camera.getBuilder()
+        // Camera1
+        Camera camera1 = Camera.getBuilder()
                 .setDirection(new Vector(0, 0, -1), new Vector(0, 1, 0))
                 .setLocation(new Point(0, 100, 600))
                 .setVpDistance(1000)
                 .setVpSize(500, 500)
                 .setRayTracer(new SimpleRayTracer(scene))
-                .setImageWriter(new ImageWriter("intersectingSpheresAndBoxImage", 10000, 10000)) // File name and image size
+                .setImageWriter(new ImageWriter("CustomImageWithAnti-aliasing", 1000, 1000)) // File name and image size
+                .setSampleSize(4)
                 .build();
 
-        // Render the image
-        camera.renderImage();
-        camera.writeToImage();
+        // Camera2
+        Camera camera2 = Camera.getBuilder()
+                .setDirection(new Vector(0, 0, -1), new Vector(0, 1, 0))
+                .setLocation(new Point(0, 100, 600))
+                .setVpDistance(1000)
+                .setVpSize(500, 500)
+                .setRayTracer(new SimpleRayTracer(scene))
+                .setImageWriter(new ImageWriter("CustomImageNoAnti-aliasing", 1000, 1000)) // File name and image size
+                .setSampleSize(1)
+                .build();
+
+        // Render the image with Anti-aliasing
+        camera1.renderImage();
+        camera1.writeToImage();
+
+        // Render the image with no Anti-aliasing
+        camera2.renderImage();
+        camera2.writeToImage();
     }
 }
