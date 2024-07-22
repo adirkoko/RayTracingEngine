@@ -166,19 +166,13 @@ public class Camera implements Cloneable {
      * @return the constructed Ray
      */
     public Ray constructRay(int nX, int nY, int j, int i) {
-        // Find the center of the view plane
-        Point center = position.add(toward.scale(viewPlaneDistance));
-
-        // Calculate the pixel size
-        double pixelWidth = viewPlaneWidth / nX;
-        double pixelHeight = viewPlaneHeight / nY;
 
         // Calculate the offset of the pixel from the center
-        double xOffset = (j - (nX - 1) / 2.0) * pixelWidth;
-        double yOffset = (i - (nY - 1) / 2.0) * pixelHeight;
+        double xOffset = (j - (nX - 1) / 2.0) * (viewPlaneWidth / nX);
+        double yOffset = (i - (nY - 1) / 2.0) * (viewPlaneHeight / nY);
 
         // Calculate the point on the view plane
-        Point pIJ = center;
+        Point pIJ = position.add(toward.scale(viewPlaneDistance));
         if (!isZero(xOffset)) pIJ = pIJ.add(right.scale(xOffset));
         // Minus because up is positive direction
         if (!isZero(yOffset)) pIJ = pIJ.add(up.scale(-yOffset));
@@ -201,18 +195,17 @@ public class Camera implements Cloneable {
         List<Ray> rays = new LinkedList<>();
         double pixelWidth = viewPlaneWidth / nX;
         double pixelHeight = viewPlaneHeight / nY;
-        Point center = position.add(toward.scale(viewPlaneDistance));
         double xOffset = (j - (nX - 1) / 2.0) * pixelWidth;
         double yOffset = (i - (nY - 1) / 2.0) * pixelHeight;
-        Point pIJ = center;
+        Point pIJ = position.add(toward.scale(viewPlaneDistance));
         if (!isZero(xOffset)) pIJ = pIJ.add(right.scale(xOffset));
         if (!isZero(yOffset)) pIJ = pIJ.add(up.scale(-yOffset));
 
         for (int p = 0; p < sampleSize; p++) {
             for (int q = 0; q < sampleSize; q++) {
-                double rx = (Math.random() - 0.5) * pixelWidth / sampleSize;
-                double ry = (Math.random() - 0.5) * pixelHeight / sampleSize;
-                Point pJittered = pIJ.add(right.scale(rx)).add(up.scale(ry));
+                Point pJittered = pIJ
+                        .add(right.scale((Math.random() - 0.5) * pixelWidth / sampleSize))
+                        .add(up.scale((Math.random() - 0.5) * pixelHeight / sampleSize));
                 rays.add(new Ray(position, pJittered.subtract(position)));
             }
         }
@@ -220,14 +213,14 @@ public class Camera implements Cloneable {
     }
 
 
-
-
-
     /**
      * Writes the image to a file using the image writer.
+     *
+     * @return the current Camera instance
      */
-    public void writeToImage() {
+    public Camera writeToImage() {
         imageWriter.writeToImage();
+        return this;
     }
 
 
@@ -287,17 +280,13 @@ public class Camera implements Cloneable {
      */
     private void castRay(int nX, int nY, int j, int i) {
         List<Ray> rays;
-        if (sampleSize == 1) {
-            rays = List.of(constructRay(nX, nY, j, i));
-        } else {
-            rays = constructJitteredRays(nX, nY, j, i, sampleSize);
-        }
+        if (sampleSize == 1) rays = List.of(constructRay(nX, nY, j, i));
+        else rays = constructJitteredRays(nX, nY, j, i, sampleSize);
+
         Color pixelColor = Color.BLACK;
-        for (Ray ray : rays) {
-            pixelColor = pixelColor.add(rayTracer.traceRay(ray));
-        }
-        pixelColor = pixelColor.reduce(rays.size());
-        imageWriter.writePixel(j, i, pixelColor);
+        for (Ray ray : rays) pixelColor = pixelColor.add(rayTracer.traceRay(ray));
+
+        imageWriter.writePixel(j, i, pixelColor.reduce(rays.size()));
     }
 
 

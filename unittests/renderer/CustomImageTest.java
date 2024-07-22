@@ -4,6 +4,7 @@ import geometries.*;
 import lighting.AmbientLight;
 import lighting.PointLight;
 import lighting.SpotLight;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import primitives.*;
 import scene.Scene;
@@ -23,7 +24,7 @@ public class CustomImageTest {
         // Scene
         Scene scene = new Scene("Intersecting Spheres and Box Scene");
         scene.setBackground(new Color(135, 206, 235)) // Light sky blue
-                .setAmbientLight(new AmbientLight(new Color(255, 255, 255), 0.1)); // Light white ambient light
+                .setAmbientLight(new AmbientLight(new Color(255, 255, 255), 0.1)); // white ambient light
 
         // Add geometries to the scene
         scene.geometries.add(
@@ -97,34 +98,68 @@ public class CustomImageTest {
                 new Point(-200, 200, 100))
                 .setKl(0.0005).setKq(0.0005));
 
-        // Camera1
-        Camera camera1 = Camera.getBuilder()
+        Camera.getBuilder()
                 .setDirection(new Vector(0, 0, -1), new Vector(0, 1, 0))
                 .setLocation(new Point(0, 100, 600))
                 .setVpDistance(1000)
                 .setVpSize(500, 500)
                 .setRayTracer(new SimpleRayTracer(scene))
-                .setImageWriter(new ImageWriter("CustomImageWithAnti-aliasing", 1000, 1000)) // File name and image size
+                .setImageWriter(new ImageWriter("CustomImageWithAnti-aliasing", 100, 100)) // File name and image size
                 .setSampleSize(4)
-                .build();
+                .build()
+                .renderImage()
+                .writeToImage();
 
-        // Camera2
-        Camera camera2 = Camera.getBuilder()
+
+        Camera.getBuilder()
                 .setDirection(new Vector(0, 0, -1), new Vector(0, 1, 0))
                 .setLocation(new Point(0, 100, 600))
                 .setVpDistance(1000)
                 .setVpSize(500, 500)
                 .setRayTracer(new SimpleRayTracer(scene))
-                .setImageWriter(new ImageWriter("CustomImageNoAnti-aliasing", 1000, 1000)) // File name and image size
+                .setImageWriter(new ImageWriter("CustomImageNoAnti-aliasing", 100, 100)) // File name and image size
                 .setSampleSize(1)
-                .build();
+                .build()
+                .renderImage()
+                .writeToImage();
+    }
 
-        // Render the image with Anti-aliasing.
-        camera1.renderImage();
-        camera1.writeToImage();
+    /**
+     * blackBall Test.
+     */
+    @Test
+    public void blackBall() {
+        // Scene
+        Scene scene = new Scene("Test");
+        scene.setBackground(new Color(255, 255, 255))
+                .setAmbientLight(new AmbientLight(new Color(255, 255, 255), 0.1));
 
-        // Render the image with no Anti-aliasing.
-        camera2.renderImage();
-        camera2.writeToImage();
+        // Add geometries to the scene
+        scene.geometries.add(new Sphere(new Point(0, 100, 0), 100d)
+                .setEmission(new Color(0, 0, 0)));
+
+        Camera.getBuilder()
+                .setDirection(new Vector(0, 0, -1), new Vector(0, 1, 0))
+                .setLocation(new Point(0, 100, 600))
+                .setVpDistance(1000)
+                .setVpSize(500, 500)
+                .setRayTracer(new SimpleRayTracer(scene))
+                .setImageWriter(new ImageWriter("blackBallWithAnti-aliasing", 50, 50)) // File name and image size
+                .setSampleSize(4)
+                .build()
+                .renderImage()
+                .writeToImage();
+
+        Camera.getBuilder()
+                .setDirection(new Vector(0, 0, -1), new Vector(0, 1, 0))
+                .setLocation(new Point(0, 100, 600))
+                .setVpDistance(1000)
+                .setVpSize(500, 500)
+                .setRayTracer(new SimpleRayTracer(scene))
+                .setImageWriter(new ImageWriter("blackBallNoAnti-aliasing", 50, 50)) // File name and image size
+                .setSampleSize(1)
+                .build()
+                .renderImage()
+                .writeToImage();
     }
 }
