@@ -166,18 +166,18 @@ public class Camera implements Cloneable {
      * @return the constructed Ray
      */
     public Ray constructRay(int nX, int nY, int j, int i) {
-
-        // Calculate the offset of the pixel from the center
+        // Calculate the offsets for the pixel in the view plane
         double xOffset = (j - (nX - 1) / 2.0) * (viewPlaneWidth / nX);
         double yOffset = (i - (nY - 1) / 2.0) * (viewPlaneHeight / nY);
 
-        // Calculate the point on the view plane
+        // Start with the center of the view plane
         Point pIJ = position.add(toward.scale(viewPlaneDistance));
+
+        // Adjust the point based on the offsets
         if (!isZero(xOffset)) pIJ = pIJ.add(right.scale(xOffset));
-        // Minus because up is positive direction
         if (!isZero(yOffset)) pIJ = pIJ.add(up.scale(-yOffset));
 
-        // Return the ray from the camera position through the pixel
+        // Return the ray from the camera position through the adjusted point
         return new Ray(position, pIJ.subtract(position));
     }
 
@@ -193,19 +193,31 @@ public class Camera implements Cloneable {
      */
     private List<Ray> constructJitteredRays(int nX, int nY, int j, int i, int sampleSize) {
         List<Ray> rays = new LinkedList<>();
+
+        // Calculate the pixel size
         double pixelWidth = viewPlaneWidth / nX;
         double pixelHeight = viewPlaneHeight / nY;
+
+        // Calculate the offsets for the pixel in the view plane
         double xOffset = (j - (nX - 1) / 2.0) * pixelWidth;
         double yOffset = (i - (nY - 1) / 2.0) * pixelHeight;
+
+        // Start with the center of the view plane
         Point pIJ = position.add(toward.scale(viewPlaneDistance));
+
+        // Adjust the point based on the offsets
         if (!isZero(xOffset)) pIJ = pIJ.add(right.scale(xOffset));
         if (!isZero(yOffset)) pIJ = pIJ.add(up.scale(-yOffset));
 
+        // Generate jittered rays
         for (int p = 0; p < sampleSize; p++) {
             for (int q = 0; q < sampleSize; q++) {
+                // Create jittered point within the pixel
                 Point pJittered = pIJ
                         .add(right.scale((Math.random() - 0.5) * pixelWidth / sampleSize))
                         .add(up.scale((Math.random() - 0.5) * pixelHeight / sampleSize));
+
+                // Add the ray from the camera position through the jittered point
                 rays.add(new Ray(position, pJittered.subtract(position)));
             }
         }
@@ -261,10 +273,11 @@ public class Camera implements Cloneable {
     public Camera renderImage() {
         int nX = imageWriter.getNx();
         int nY = imageWriter.getNy();
+
+        // Loop over all pixels in the view plane
         for (int i = 0; i < nY; i++) {
-            for (int j = 0; j < nX; j++) {
-                castRay(nX, nY, j, i);
-            }
+            // Cast ray/s through each pixel
+            for (int j = 0; j < nX; j++) castRay(nX, nY, j, i);
         }
         return this;
     }
@@ -279,13 +292,21 @@ public class Camera implements Cloneable {
      * @param i  row index of the pixel
      */
     private void castRay(int nX, int nY, int j, int i) {
+        // List to store rays generated for anti-aliasing
         List<Ray> rays;
+
+        // If sampleSize is 1, use a single ray (standard ray tracing)
+        // Otherwise, generate jittered rays for anti-aliasing
         if (sampleSize == 1) rays = List.of(constructRay(nX, nY, j, i));
         else rays = constructJitteredRays(nX, nY, j, i, sampleSize);
 
+        // Initialize the pixel color to black
         Color pixelColor = Color.BLACK;
+
+        // Accumulate the color of each ray
         for (Ray ray : rays) pixelColor = pixelColor.add(rayTracer.traceRay(ray));
 
+        // Average the accumulated color and write it to the pixel
         imageWriter.writePixel(j, i, pixelColor.reduce(rays.size()));
     }
 
