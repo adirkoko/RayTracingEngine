@@ -17,12 +17,6 @@ import static primitives.Util.*;
  * @author Adir and Meir
  */
 public class SimpleRayTracer extends RayTracerBase {
-
-    /**
-     * Offset size for primary rays to avoid shadow acne.
-     */
-    private static final double DELTA = 0.1;
-
     /**
      * Maximum recursion level for color calculation to prevent infinite recursion.
      */
@@ -205,7 +199,6 @@ public class SimpleRayTracer extends RayTracerBase {
         List<GeoPoint> intersections = scene.geometries.findGeoIntersections(
                 new Ray(gp.point, l.scale(-1), n)
                 , lightSource.getDistance(gp.point));
-
         if (intersections == null) return ktr;
 
         for (GeoPoint p : intersections) {
@@ -255,21 +248,16 @@ public class SimpleRayTracer extends RayTracerBase {
     @SuppressWarnings("unused")
     @Deprecated(forRemoval = true)
     private boolean unshaded(GeoPoint gp, LightSource lightSource, Vector l, Vector n) {
-        Vector lightDirection = l.scale(-1); // from point to light source
-        Vector delta = n.scale(n.dotProduct(lightDirection) > 0 ? DELTA : -DELTA); // Calculate the delta based on the dot product
-        Point point = gp.point.add(delta); // Offset point to avoid self-shadowing
-        double lightDistance = lightSource.getDistance(point); // Distance to the light source
+        double lightDistance = lightSource.getDistance(gp.point); // Distance to the light source
 
         // Find intersections between the light ray and the geometries within the light distance
-        List<GeoPoint> intersections = scene.geometries.findGeoIntersections(new Ray(point, l.scale(-1)), lightDistance);
-
+        List<GeoPoint> intersections = scene.geometries.findGeoIntersections(new Ray(gp.point, l.scale(-1), n), lightDistance);
         if (intersections == null) return true; // No intersections, point is unshaded
 
         for (GeoPoint intersection : intersections) {
             // If an intersection is found within the light distance and the transparency coefficient is less than 1
-            if (alignZero(intersection.point.distance(point) - lightDistance) <= 0 && intersection.geometry.getMaterial().kT.equals(Double3.ZERO)) {
+            if (intersection.point.distance(gp.point) <= lightDistance && intersection.geometry.getMaterial().kT.equals(Double3.ZERO))
                 return false; // Point is shaded
-            }
         }
         return true; // Point is unshaded
     }

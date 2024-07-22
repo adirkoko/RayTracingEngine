@@ -66,7 +66,6 @@ public class SphereTest {
         assertEquals(2, result1.size(), "EP TC02: Wrong number of points");
         assertEquals(exp, result1, "EP TC02: Ray crosses sphere");
 
-
         // TC03: Ray starts inside the sphere (1 point)
         result1 = sphere.findIntersections(new Ray(new Point(0.5, 0, 0), new Vector(1, 2, 0)));
         assertEquals(1, result1.size(), "EP TC03: Wrong number of points");
@@ -139,6 +138,9 @@ public class SphereTest {
 
     }
 
+    /**
+     * Test method for {@link geometries.Sphere#findGeoIntersectionsHelper(primitives.Ray, double)}.
+     */
     @Test
     void findGeoIntersectionsHelper() {
         // Sphere centered at (0, 0, 0) with radius 1
