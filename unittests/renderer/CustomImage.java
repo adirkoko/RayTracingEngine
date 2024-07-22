@@ -110,11 +110,11 @@ public class CustomImage {
                 .setSampleSize(1)
                 .build();
 
-        // Render the image with Anti-aliasing
+        // Render the image with Anti-aliasing.
         camera1.renderImage();
         camera1.writeToImage();
 
-        // Render the image with no Anti-aliasing
+        // Render the image with no Anti-aliasing.
         camera2.renderImage();
         camera2.writeToImage();
     }
