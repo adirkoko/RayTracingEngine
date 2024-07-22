@@ -104,7 +104,7 @@ public class CustomImageTest {
                 .setVpDistance(1000)
                 .setVpSize(500, 500)
                 .setRayTracer(new SimpleRayTracer(scene))
-                .setImageWriter(new ImageWriter("CustomImageWithAnti-aliasing", 100, 100)) // File name and image size
+                .setImageWriter(new ImageWriter("CustomImageWithAnti-aliasing", 500, 500)) // File name and image size
                 .setSampleSize(4)
                 .build()
                 .renderImage()
@@ -117,7 +117,7 @@ public class CustomImageTest {
                 .setVpDistance(1000)
                 .setVpSize(500, 500)
                 .setRayTracer(new SimpleRayTracer(scene))
-                .setImageWriter(new ImageWriter("CustomImageNoAnti-aliasing", 100, 100)) // File name and image size
+                .setImageWriter(new ImageWriter("CustomImageNoAnti-aliasing", 500, 500)) // File name and image size
                 .setSampleSize(1)
                 .build()
                 .renderImage()
@@ -144,7 +144,7 @@ public class CustomImageTest {
                 .setVpDistance(1000)
                 .setVpSize(500, 500)
                 .setRayTracer(new SimpleRayTracer(scene))
-                .setImageWriter(new ImageWriter("blackBallWithAnti-aliasing", 50, 50)) // File name and image size
+                .setImageWriter(new ImageWriter("blackBallWithAnti-aliasing", 500, 500)) // File name and image size
                 .setSampleSize(4)
                 .build()
                 .renderImage()
@@ -156,7 +156,7 @@ public class CustomImageTest {
                 .setVpDistance(1000)
                 .setVpSize(500, 500)
                 .setRayTracer(new SimpleRayTracer(scene))
-                .setImageWriter(new ImageWriter("blackBallNoAnti-aliasing", 50, 50)) // File name and image size
+                .setImageWriter(new ImageWriter("blackBallNoAnti-aliasing", 500, 500)) // File name and image size
                 .setSampleSize(1)
                 .build()
                 .renderImage()

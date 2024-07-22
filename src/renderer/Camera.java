@@ -212,10 +212,10 @@ public class Camera implements Cloneable {
         // Generate jittered rays
         for (int p = 0; p < sampleSize; p++) {
             for (int q = 0; q < sampleSize; q++) {
-                // Create jittered point within the pixel
+                // Create jittered point within the pixel with additional randomization for better distribution
                 Point pJittered = pIJ
-                        .add(right.scale((Math.random() - 0.5) * pixelWidth / sampleSize))
-                        .add(up.scale((Math.random() - 0.5) * pixelHeight / sampleSize));
+                        .add(right.scale((Math.random() - 0.5 + (double)p/sampleSize) * pixelWidth))
+                        .add(up.scale((Math.random() - 0.5 + (double)q/sampleSize) * pixelHeight));
 
                 // Add the ray from the camera position through the jittered point
                 rays.add(new Ray(position, pJittered.subtract(position)));
@@ -223,6 +223,7 @@ public class Camera implements Cloneable {
         }
         return rays;
     }
+
 
 
     /**
@@ -297,14 +298,19 @@ public class Camera implements Cloneable {
 
         // If sampleSize is 1, use a single ray (standard ray tracing)
         // Otherwise, generate jittered rays for anti-aliasing
-        if (sampleSize == 1) rays = List.of(constructRay(nX, nY, j, i));
-        else rays = constructJitteredRays(nX, nY, j, i, sampleSize);
+        if (sampleSize <= 1) {
+            rays = List.of(constructRay(nX, nY, j, i));
+        } else {
+            rays = constructJitteredRays(nX, nY, j, i, sampleSize);
+        }
 
         // Initialize the pixel color to black
         Color pixelColor = Color.BLACK;
 
         // Accumulate the color of each ray
-        for (Ray ray : rays) pixelColor = pixelColor.add(rayTracer.traceRay(ray));
+        for (Ray ray : rays) {
+            pixelColor = pixelColor.add(rayTracer.traceRay(ray));
+        }
 
         // Average the accumulated color and write it to the pixel
         imageWriter.writePixel(j, i, pixelColor.reduce(rays.size()));
