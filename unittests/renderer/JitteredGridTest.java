@@ -8,7 +8,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for the JitteredGrid class.
+ * Unit tests for {@link renderer.JitteredGrid} class
  *
  * @author Adir and Meir
  */
@@ -62,8 +62,9 @@ class JitteredGridTest {
     void testGetSampleSize() {
         // ============ Equivalence Partitions Tests ==============
         // TC01: Sample size retrieval
-        JitteredGrid grid = new JitteredGrid(4, 1.0, 1.0);
-        assertEquals(4, grid.getSampleSize(), "Sample size should be 4");
+        assertEquals(4,
+                new JitteredGrid(4, 1.0, 1.0).getSampleSize(),
+                "Sample size should be 4");
     }
 
     /**
@@ -73,8 +74,8 @@ class JitteredGridTest {
     void testGetJitteredPoints() {
         // ============ Equivalence Partitions Tests ==============
         // TC01: Jittered points retrieval
-        JitteredGrid grid = new JitteredGrid(4, 1.0, 1.0);
-        List<Point> points = grid.getJitteredPoints();
-        assertEquals(16, points.size(), "There should be 16 jittered points");
+        assertEquals(16,
+                new JitteredGrid(4, 1.0, 1.0).getJitteredPoints().size(),
+                "There should be 16 jittered points");
     }
 }
