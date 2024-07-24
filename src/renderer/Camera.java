@@ -59,6 +59,10 @@ public class Camera implements Cloneable {
      */
     private int sampleSize = 1;
 
+    /**
+     * Jittered grid for anti-aliasing.
+     */
+    private JitteredGrid jitteredGrid;
 
     /**
      * Private constructor to prevent direct instantiation.
@@ -181,6 +185,7 @@ public class Camera implements Cloneable {
         return new Ray(position, pIJ.subtract(position));
     }
 
+
     /**
      * Constructs jittered rays through the pixel for anti-aliasing.
      *
@@ -209,21 +214,50 @@ public class Camera implements Cloneable {
         if (!isZero(xOffset)) pIJ = pIJ.add(right.scale(xOffset));
         if (!isZero(yOffset)) pIJ = pIJ.add(up.scale(-yOffset));
 
-        // Generate jittered rays
-        for (int p = 0; p < sampleSize; p++) {
-            for (int q = 0; q < sampleSize; q++) {
-                // Create jittered point within the pixel with additional randomization for better distribution
-                Point pJittered = pIJ
-                        .add(right.scale((Math.random() - 0.5 + (double)p/sampleSize) * pixelWidth))
-                        .add(up.scale((Math.random() - 0.5 + (double)q/sampleSize) * pixelHeight));
+        // Initialize jittered grid if it is null or sample size has changed
+        if (jitteredGrid == null || jitteredGrid.getSampleSize() != sampleSize)
+            jitteredGrid = new JitteredGrid(sampleSize, pixelWidth, pixelHeight);
 
-                // Add the ray from the camera position through the jittered point
-                rays.add(new Ray(position, pJittered.subtract(position)));
-            }
+
+        // Generate rays through jittered points
+        for (Point jitteredPoint : jitteredGrid.getJitteredPoints()) {
+            // Create a jittered point in the 3D space by adjusting the original point with the jittered offsets
+            Point pJittered = pIJ.add(right.scale(jitteredPoint.getX())).add(up.scale(jitteredPoint.getY()));
+            rays.add(new Ray(position, pJittered.subtract(position)));
         }
+
+
         return rays;
     }
 
+
+    /**
+     * Casts rays through the pixel, calculates the color using the ray tracer,
+     * and colors the pixel using the writePixel method of the image writer.
+     *
+     * @param nX number of columns in the view plane
+     * @param nY number of rows in the view plane
+     * @param j  column index of the pixel
+     * @param i  row index of the pixel
+     */
+    private void castRay(int nX, int nY, int j, int i) {
+        List<Ray> rays;
+
+        // If sampleSize is 1 or less, use a single ray (standard ray tracing).
+        // Otherwise, generate jittered rays for anti-aliasing.
+        if (sampleSize <= 1) rays = List.of(constructRay(nX, nY, j, i));
+        else rays = constructJitteredRays(nX, nY, j, i, sampleSize);
+
+        // Initialize the pixel color to black.
+        Color pixelColor = Color.BLACK;
+
+        // Accumulate the color of each ray.
+        for (Ray ray : rays)
+            pixelColor = pixelColor.add(rayTracer.traceRay(ray));
+
+        // Average the accumulated color and write it to the pixel.
+        imageWriter.writePixel(j, i, pixelColor.reduce(rays.size()));
+    }
 
 
     /**
@@ -281,39 +315,6 @@ public class Camera implements Cloneable {
             for (int j = 0; j < nX; j++) castRay(nX, nY, j, i);
         }
         return this;
-    }
-
-    /**
-     * Casts rays through the pixel, calculates the color using the ray tracer,
-     * and colors the pixel using the writePixel method of the image writer.
-     *
-     * @param nX number of columns in the view plane
-     * @param nY number of rows in the view plane
-     * @param j  column index of the pixel
-     * @param i  row index of the pixel
-     */
-    private void castRay(int nX, int nY, int j, int i) {
-        // List to store rays generated for anti-aliasing
-        List<Ray> rays;
-
-        // If sampleSize is 1, use a single ray (standard ray tracing)
-        // Otherwise, generate jittered rays for anti-aliasing
-        if (sampleSize <= 1) {
-            rays = List.of(constructRay(nX, nY, j, i));
-        } else {
-            rays = constructJitteredRays(nX, nY, j, i, sampleSize);
-        }
-
-        // Initialize the pixel color to black
-        Color pixelColor = Color.BLACK;
-
-        // Accumulate the color of each ray
-        for (Ray ray : rays) {
-            pixelColor = pixelColor.add(rayTracer.traceRay(ray));
-        }
-
-        // Average the accumulated color and write it to the pixel
-        imageWriter.writePixel(j, i, pixelColor.reduce(rays.size()));
     }
 
 

@@ -29,8 +29,7 @@ public class ImageWriter {
     private int nY;
 
     /**
-     * Directory path for the image file generation - relative to the user
-     * directory
+     * Directory path for the image file generation - relative to the user directory
      */
     private static final String FOLDER_PATH = System.getProperty("user.dir") + "/images";
 
@@ -87,9 +86,7 @@ public class ImageWriter {
     // ***************** Operations ******************** //
 
     /**
-     * Function writeToImage produces unoptimized png file of the image according
-     * to
-     * pixel color matrix in the directory of the project
+     * Function writeToImage produces unoptimized png file of the image according to pixel color matrix in the directory of the project
      */
     public void writeToImage() {
         try {
@@ -102,8 +99,7 @@ public class ImageWriter {
     }
 
     /**
-     * The function writePixel writes a color of a specific pixel into pixel color
-     * matrix
+     * The function writePixel writes a color of a specific pixel into pixel color matrix
      *
      * @param xIndex X-axis index of the pixel
      * @param yIndex Y-axis index of the pixel
