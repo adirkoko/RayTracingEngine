@@ -10,9 +10,9 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Testing Geometries, the class that holds a list of geometries.
+ * Unit tests for {@link geometries.Geometries} class
  *
- * @author Eitan Kaantman, Ori Perlmutter
+ * @author Adir and Meir
  */
 class GeometriesTest {
 
