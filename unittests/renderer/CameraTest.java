@@ -61,4 +61,5 @@ class CameraTest {
         assertEquals(new Ray(Point.ZERO, new Vector(2, -2, -10)),
                 camera2.constructRay(3, 3, 0, 0), "BV06: Ray constructed incorrectly for 3x3 grid, corner pixel (0,0)");
     }
+
 }

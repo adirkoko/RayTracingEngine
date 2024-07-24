@@ -449,15 +449,29 @@ public class Camera implements Cloneable {
 
 
         /**
-         * Sets the number of samples per pixel for anti-aliasing.
+         * Sets the sample size per pixel for anti-aliasing (N * N).
          *
-         * @param sampleSize the number of samples per pixel.
+         * @param sampleSize the sample size in a pixel.
          * @return the Builder instance.
          */
         public Builder setSampleSize(int sampleSize) {
             if (sampleSize <= 0)
                 throw new IllegalArgumentException("Sample size must be positive");
             camera.sampleSize = sampleSize;
+            return this;
+        }
+
+        /**
+         * Sets the number of samples per pixel for anti-aliasing.
+         * Adjusts the sample size to the nearest valid square root value.
+         *
+         * @param sampleNum the number of samples per pixel.
+         * @return the Builder instance.
+         */
+        public Builder setSampleNum(int sampleNum) {
+            if (sampleNum <= 0)
+                throw new IllegalArgumentException("Sample number must be positive");
+            camera.sampleSize = (int) Math.round(Math.sqrt(sampleNum));
             return this;
         }
     }
