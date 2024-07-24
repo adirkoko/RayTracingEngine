@@ -322,7 +322,7 @@ public class Camera implements Cloneable {
      * Provides methods for setting camera properties and building the Camera object.
      * Implements the Builder Design Pattern.
      *
-     * @author Adir and Meir.
+     * @author Adir and Meir
      */
     public static class Builder {
 
