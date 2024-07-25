@@ -27,7 +27,8 @@ class JitteredGridTest {
 
         // Check points are within bounds
         for (Point point : grid.getJitteredPoints()) {
-            System.out.printf("X: %6.3f,       Y: %6.3f%n", point.getX(), point.getY());
+            // Verifies that the points are within the correct bounds during the test
+            // System.out.printf("X: %6.3f,       Y: %6.3f%n", point.getX(), point.getY()); // Code line
             assertTrue(point.getX() >= -0.5 && point.getX() <= 0.5, "X coordinate out of bounds");
             assertTrue(point.getY() >= -0.5 && point.getY() <= 0.5, "Y coordinate out of bounds");
         }

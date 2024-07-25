@@ -2,6 +2,7 @@ package primitives;
 
 import static geometries.Intersectable.GeoPoint;
 
+import java.util.LinkedList;
 import java.util.List;
 
 import static primitives.Util.isZero;
@@ -129,5 +130,27 @@ public class Ray {
         }
 
         return closestGeoPoint;
+    }
+
+    /**
+     * Generates jittered rays through a pixel for anti-aliasing.
+     *
+     * @param position       the position of the camera
+     * @param pIJ            the initial point through the pixel
+     * @param right          the right direction vector
+     * @param up             the upward direction vector
+     * @param jitteredPoints the list of jittered points within the pixel
+     * @return a list of jittered rays
+     */
+    public static List<Ray> generateJitteredRays(Point position, Point pIJ, Vector right, Vector up, List<Point> jitteredPoints) {
+        List<Ray> rays = new LinkedList<>();
+
+        for (Point jitteredPoint : jitteredPoints) {
+            // Create a jittered point in the 3D space by adjusting the original point with the jittered offsets
+            Point pJittered = pIJ.add(right.scale(jitteredPoint.getX())).add(up.scale(jitteredPoint.getY()));
+            rays.add(new Ray(position, pJittered.subtract(position)));
+        }
+
+        return rays;
     }
 }

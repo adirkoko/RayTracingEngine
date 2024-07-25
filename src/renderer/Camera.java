@@ -218,16 +218,8 @@ public class Camera implements Cloneable {
         if (jitteredGrid == null || jitteredGrid.getSampleSize() != sampleSize)
             jitteredGrid = new JitteredGrid(sampleSize, pixelWidth, pixelHeight);
 
-
-        // Generate rays through jittered points
-        for (Point jitteredPoint : jitteredGrid.getJitteredPoints()) {
-            // Create a jittered point in the 3D space by adjusting the original point with the jittered offsets
-            Point pJittered = pIJ.add(right.scale(jitteredPoint.getX())).add(up.scale(jitteredPoint.getY()));
-            rays.add(new Ray(position, pJittered.subtract(position)));
-        }
-
-
-        return rays;
+        // Generate rays through jittered points using the function in Ray class
+        return Ray.generateJitteredRays(position, pIJ, right, up, jitteredGrid.getJitteredPoints());
     }
 
 
