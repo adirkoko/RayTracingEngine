@@ -57,7 +57,7 @@ public class BlackBall {
                 .setVpSize(500, 500)
                 .setRayTracer(new SimpleRayTracer(createBlackBallScene()))
                 .setImageWriter(new ImageWriter("blackBallWithAnti-aliasing", 500, 500)) // File name and image size
-                .setSampleSize(55)
+                .setSampleSize(5)
                 .build()
                 .renderImage()
                 .writeToImage();
@@ -75,7 +75,7 @@ public class BlackBall {
                 .setVpSize(500, 500)
                 .setRayTracer(new SimpleRayTracer(createBlackBallScene()))
                 .setImageWriter(new ImageWriter("blackBallWithAdaptiveAnti-aliasing", 500, 500)) // File name and image size
-                .setSampleSize(55)
+                .setSampleSize(5)
                 .setAdaptiveSampling(true)
                 .build()
                 .renderImage()
