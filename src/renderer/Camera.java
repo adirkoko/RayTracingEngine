@@ -18,6 +18,8 @@ import static primitives.Util.*;
  */
 public class Camera implements Cloneable {
 
+    private boolean adaptiveSampling = false;
+
     /**
      * The position of the camera in 3D space.
      */
@@ -222,35 +224,41 @@ public class Camera implements Cloneable {
         return Ray.generateJitteredRays(position, pIJ, right, up, jitteredGrid.getJitteredPoints());
     }
 
+    private Color adaptiveSuperSampling(int nX, int nY, int j, int i, int sampleSize) {
+        // Calculate the pixel size
+        double pixelWidth = viewPlaneWidth / nX;
+        double pixelHeight = viewPlaneHeight / nY;
 
-    /**
-     * Casts rays through the pixel, calculates the color using the ray tracer,
-     * and colors the pixel using the writePixel method of the image writer.
-     *
-     * @param nX number of columns in the view plane
-     * @param nY number of rows in the view plane
-     * @param j  column index of the pixel
-     * @param i  row index of the pixel
-     */
-    private void castRay(int nX, int nY, int j, int i) {
-        List<Ray> rays;
+        Point centerPoint = position.add(toward.scale(viewPlaneDistance));
 
-        // If sampleSize is 1 or less, use a single ray (standard ray tracing).
-        // Otherwise, generate jittered rays for anti-aliasing.
-        if (sampleSize <= 1) rays = List.of(constructRay(nX, nY, j, i));
-        else rays = constructJitteredRays(nX, nY, j, i, sampleSize);
+        // Calculate the offsets for the pixel in the view plane
+        double xOffset = (j - (nX - 1) / 2.0) * pixelWidth;
+        double yOffset = (i - (nY - 1) / 2.0) * pixelHeight;
 
-        // Initialize the pixel color to black.
-        Color pixelColor = Color.BLACK;
+        // Adjust the point based on the offsets
+        if (!isZero(xOffset)) centerPoint = centerPoint.add(right.scale(xOffset));
+        if (!isZero(yOffset)) centerPoint = centerPoint.add(up.scale(-yOffset));
 
-        // Accumulate the color of each ray.
-        for (Ray ray : rays)
-            pixelColor = pixelColor.add(rayTracer.traceRay(ray));
-
-        // Average the accumulated color and write it to the pixel.
-        imageWriter.writePixel(j, i, pixelColor.reduce(rays.size()));
+        return rayTracer.adaptiveSuperSampling(position, centerPoint, right, up, pixelWidth, pixelHeight, sampleSize);
     }
 
+    private void castRay(int nX, int nY, int j, int i) {
+        Color pixelColor;
+
+        if (adaptiveSampling) pixelColor = adaptiveSuperSampling(nX, nY, j, i, sampleSize);
+        else {
+            List<Ray> rays = (sampleSize <= 1) ?
+                    List.of(constructRay(nX, nY, j, i)) :
+                    constructJitteredRays(nX, nY, j, i, sampleSize);
+
+            pixelColor = Color.BLACK;
+            for (Ray ray : rays) pixelColor = pixelColor.add(rayTracer.traceRay(ray));
+
+            pixelColor = pixelColor.reduce(rays.size());
+        }
+
+        imageWriter.writePixel(j, i, pixelColor);
+    }
 
     /**
      * Writes the image to a file using the image writer.
@@ -466,5 +474,11 @@ public class Camera implements Cloneable {
             camera.sampleSize = (int) Math.round(Math.sqrt(sampleNum));
             return this;
         }
+
+        public Builder setAdaptiveSampling(boolean adaptiveSampling) {
+            camera.adaptiveSampling = adaptiveSampling;
+            return this;
+        }
+
     }
 }

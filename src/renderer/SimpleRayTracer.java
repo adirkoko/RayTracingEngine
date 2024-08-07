@@ -5,7 +5,9 @@ import lighting.LightSource;
 import primitives.*;
 import scene.Scene;
 
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 
 import static primitives.Util.*;
 
@@ -261,5 +263,87 @@ public class SimpleRayTracer extends RayTracerBase {
         }
         return true; // Point is unshaded
     }
+
+    @Override
+    public Color adaptiveSuperSampling(Point cameraPosition, Point center, Vector right, Vector up, double width, double height, int sampleSize) {
+        return adaptiveSuperSamplingRec(cameraPosition, center, right, up, width, height, width / 4, height / 4, null, sampleSize, 1);
+    }
+
+    private Color adaptiveSuperSamplingRec(Point cameraPosition, Point center, Vector right, Vector up, double width, double height, double minWidth, double minHeight, List<Point> prePoints, int sampleSize, int sampleCount) {
+        if (width < minWidth * 2 || height < minHeight * 2 || sampleCount > sampleSize * sampleSize) {
+            // Compute rays with jittered offsets within the sub-pixels
+            List<Ray> rays = constructJitteredRaysForSubPixels(center, width, height, cameraPosition, right, up, 2);
+
+            Color finalColor = Color.BLACK;
+            for (Ray ray : rays) {
+                finalColor = finalColor.add(traceRay(ray));
+            }
+            return finalColor.reduce(rays.size());
+        }
+
+        // Divide the pixel into 4 sub-pixels and recurse
+        List<Point> nextCenters = new LinkedList<>();
+        List<Point> corners = new LinkedList<>();
+        List<Color> colors = new LinkedList<>();
+
+        // Calculate the center of each sub-pixel
+        double halfWidth = width / 2;
+        double halfHeight = height / 2;
+
+        for (int i = -1; i <= 1; i += 2) {
+            for (int j = -1; j <= 1; j += 2) {
+                Point subPixelCenter = center.add(right.scale(i * halfWidth / 2)).add(up.scale(j * halfHeight / 2));
+                nextCenters.add(subPixelCenter);
+                corners.add(subPixelCenter);
+                Color subPixelColor = adaptiveSuperSamplingRec(cameraPosition, subPixelCenter, right, up, halfWidth, halfHeight, minWidth, minHeight, corners, sampleSize, sampleCount * 4);
+                colors.add(subPixelColor);
+            }
+        }
+
+        // Check if colors are similar
+        boolean allEqual = true;
+        Color firstColor = colors.getFirst();
+        for (Color color : colors) {
+            if (!color.equals(firstColor)) {
+                allEqual = false;
+                break;
+            }
+        }
+
+        if (allEqual && colors.size() > 1) {
+            return firstColor;
+        }
+
+        Color finalColor = Color.BLACK;
+        for (Point nextCenter : nextCenters) {
+            finalColor = finalColor.add(adaptiveSuperSamplingRec(cameraPosition, nextCenter, right, up, width / 2, height / 2, minWidth, minHeight, corners, sampleSize, 0));
+        }
+        return finalColor.reduce(nextCenters.size());
+    }
+
+
+    private List<Ray> constructJitteredRaysForSubPixels(Point center, double width, double height, Point cameraPosition, Vector right, Vector up, int sampleSize) {
+        List<Ray> rays = new LinkedList<>();
+        Random random = new Random(); // אובייקט רנדומלי
+
+        double pixelWidth = width / 2; // רוחב כל תת פיקסל
+        double pixelHeight = height / 2; // גובה כל תת פיקסל
+
+        // לולאה ליצירת קרניים עבור כל תת פיקסל עם תזוזות רנדומליות
+        for (int x = 0; x < 2; x++) {
+            for (int y = 0; y < 2; y++) {
+                // יצירת תזוזות רנדומליות בתוך הגבולות של תת הפיקסל
+                double jitterX = random.nextDouble() * pixelWidth - pixelWidth / 2;
+                double jitterY = random.nextDouble() * pixelHeight - pixelHeight / 2;
+
+                Point subPixelCenter = center.add(right.scale(jitterX)).add(up.scale(jitterY));
+                Ray ray = new Ray(cameraPosition, subPixelCenter.subtract(cameraPosition));
+                rays.add(ray);
+            }
+        }
+
+        return rays;
+    }
+
 
 }

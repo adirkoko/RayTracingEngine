@@ -16,11 +16,11 @@ import scene.Scene;
 public class CustomImageTest {
 
     /**
-     * customImage Test.
+     * Creates a scene with intersecting spheres and a box.
+     *
+     * @return The scene configured with geometries and lights.
      */
-    @Test
-    public void customImage() {
-        // Scene
+    private Scene createCustomScene() {
         Scene scene = new Scene("Intersecting Spheres and Box Scene");
         scene.setBackground(new Color(135, 206, 235)) // Light sky blue
                 .setAmbientLight(new AmbientLight(new Color(255, 255, 255), 0.1)); // white ambient light
@@ -97,18 +97,15 @@ public class CustomImageTest {
                 new Point(-200, 200, 100))
                 .setKl(0.0005).setKq(0.0005));
 
-        Camera.getBuilder()
-                .setDirection(new Vector(0, 0, -1), new Vector(0, 1, 0))
-                .setLocation(new Point(0, 100, 600))
-                .setVpDistance(1000)
-                .setVpSize(500, 500)
-                .setRayTracer(new SimpleRayTracer(scene))
-                .setImageWriter(new ImageWriter("CustomImageWithAnti-aliasing", 500, 500)) // File name and image size
-                .setSampleNum(17)
-                .build()
-                .renderImage()
-                .writeToImage();
+        return scene;
+    }
 
+    /**
+     * Renders an image with no anti-aliasing.
+     */
+    @Test
+    public void renderCustomImage_NoAntiAliasing() {
+        Scene scene = createCustomScene();
 
         Camera.getBuilder()
                 .setDirection(new Vector(0, 0, -1), new Vector(0, 1, 0))
@@ -123,18 +120,11 @@ public class CustomImageTest {
     }
 
     /**
-     * blackBall Test.
+     * Renders an image with anti-aliasing.
      */
     @Test
-    public void blackBall() {
-        // Scene
-        Scene scene = new Scene("Test");
-        scene.setBackground(new Color(255, 255, 255))
-                .setAmbientLight(new AmbientLight(new Color(255, 255, 255), 0.1));
-
-        // Add geometries to the scene
-        scene.geometries.add(new Sphere(new Point(0, 100, 0), 100d)
-                .setEmission(new Color(0, 0, 0)));
+    public void renderCustomImage_WithAntiAliasing() {
+        Scene scene = createCustomScene();
 
         Camera.getBuilder()
                 .setDirection(new Vector(0, 0, -1), new Vector(0, 1, 0))
@@ -142,11 +132,19 @@ public class CustomImageTest {
                 .setVpDistance(1000)
                 .setVpSize(500, 500)
                 .setRayTracer(new SimpleRayTracer(scene))
-                .setImageWriter(new ImageWriter("blackBallWithAnti-aliasing", 500, 500)) // File name and image size
-                .setSampleSize(17)
+                .setImageWriter(new ImageWriter("CustomImageWithAnti-aliasing", 500, 500)) // File name and image size
+                .setSampleSize(55)
                 .build()
                 .renderImage()
                 .writeToImage();
+    }
+
+    /**
+     * Renders an image with adaptive anti-aliasing.
+     */
+    @Test
+    public void renderCustomImage_WithAdaptiveAntiAliasing() {
+        Scene scene = createCustomScene();
 
         Camera.getBuilder()
                 .setDirection(new Vector(0, 0, -1), new Vector(0, 1, 0))
@@ -154,7 +152,9 @@ public class CustomImageTest {
                 .setVpDistance(1000)
                 .setVpSize(500, 500)
                 .setRayTracer(new SimpleRayTracer(scene))
-                .setImageWriter(new ImageWriter("blackBallNoAnti-aliasing", 500, 500)) // File name and image size
+                .setImageWriter(new ImageWriter("CustomImageWithAdaptiveAnti-aliasing", 500, 500)) // File name and image size
+                .setSampleSize(55)
+                .setAdaptiveSampling(true)
                 .build()
                 .renderImage()
                 .writeToImage();

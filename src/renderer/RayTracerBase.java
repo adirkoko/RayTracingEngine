@@ -1,7 +1,7 @@
 package renderer;
 
-import primitives.Color;
-import primitives.Ray;
+
+import primitives.*;
 import scene.Scene;
 
 /**
@@ -34,4 +34,7 @@ public abstract class RayTracerBase {
      * @return the color at the intersection point of the ray and the scene
      */
     public abstract Color traceRay(Ray ray);
+
+    public abstract Color adaptiveSuperSampling(Point cameraPosition, Point center, Vector right, Vector up, double width, double height, int sampleSize);
+
 }
