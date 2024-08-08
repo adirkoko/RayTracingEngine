@@ -35,6 +35,4 @@ public abstract class RayTracerBase {
      */
     public abstract Color traceRay(Ray ray);
 
-    public abstract Color adaptiveSuperSampling(Point cameraPosition, Point center, Vector right, Vector up, double width, double height, int sampleSize);
-
 }

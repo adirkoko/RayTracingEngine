@@ -224,41 +224,70 @@ public class Camera implements Cloneable {
         return Ray.generateJitteredRays(position, pIJ, right, up, jitteredGrid.getJitteredPoints());
     }
 
-    private Color adaptiveSuperSampling(int nX, int nY, int j, int i, int sampleSize) {
-        // Calculate the pixel size
-        double pixelWidth = viewPlaneWidth / nX;
-        double pixelHeight = viewPlaneHeight / nY;
+    /**
+     * Constructs a list of rays for adaptive super sampling by checking color similarity.
+     * This method generates a list of rays using jittered sampling, traces them to get their colors,
+     * and checks if all obtained colors are similar. If the colors are similar, it returns the generated rays;
+     * otherwise, it generates rays with the specified sample size.
+     *
+     * @param nX         Number of columns in the view plane.
+     * @param nY         Number of rows in the view plane.
+     * @param j          Column index of the pixel.
+     * @param i          Row index of the pixel.
+     * @param sampleSize Number of samples per pixel.
+     * @return A list of rays for the pixel based on adaptive sampling.
+     */
+    private List<Ray> adaptiveSuperSampling(int nX, int nY, int j, int i, int sampleSize) {
+        // Generate rays using jittered sampling
+        List<Ray> rays = constructJitteredRays(nX, nY, j, i, 2);
+        List<Color> colors = new LinkedList<>();
 
-        Point centerPoint = position.add(toward.scale(viewPlaneDistance));
+        // Trace rays and collect colors
+        for (Ray ray : rays) colors.add(rayTracer.traceRay(ray));
 
-        // Calculate the offsets for the pixel in the view plane
-        double xOffset = (j - (nX - 1) / 2.0) * pixelWidth;
-        double yOffset = (i - (nY - 1) / 2.0) * pixelHeight;
-
-        // Adjust the point based on the offsets
-        if (!isZero(xOffset)) centerPoint = centerPoint.add(right.scale(xOffset));
-        if (!isZero(yOffset)) centerPoint = centerPoint.add(up.scale(-yOffset));
-
-        return rayTracer.adaptiveSuperSampling(position, centerPoint, right, up, pixelWidth, pixelHeight, sampleSize);
-    }
-
-    private void castRay(int nX, int nY, int j, int i) {
-        Color pixelColor;
-
-        if (adaptiveSampling) pixelColor = adaptiveSuperSampling(nX, nY, j, i, sampleSize);
-        else {
-            List<Ray> rays = (sampleSize <= 1) ?
-                    List.of(constructRay(nX, nY, j, i)) :
-                    constructJitteredRays(nX, nY, j, i, sampleSize);
-
-            pixelColor = Color.BLACK;
-            for (Ray ray : rays) pixelColor = pixelColor.add(rayTracer.traceRay(ray));
-
-            pixelColor = pixelColor.reduce(rays.size());
+        // Check if all colors are similar
+        boolean colorsEqual = true;
+        for (Color color : colors) {
+            if (!color.equals(colors.getFirst())) {
+                colorsEqual = false;
+                break;
+            }
         }
 
-        imageWriter.writePixel(j, i, pixelColor);
+        // Return rays based on color similarity
+        if (colorsEqual) return rays;
+        else return constructJitteredRays(nX, nY, j, i, sampleSize);
+
     }
+
+    /**
+     * Casts rays for a given pixel and writes the resulting color to the image.
+     * This method determines the list of rays to cast based on whether adaptive sampling is enabled.
+     * It traces each ray to obtain its color and computes the average color for the pixel.
+     *
+     * @param nX Number of columns in the view plane.
+     * @param nY Number of rows in the view plane.
+     * @param j  Column index of the pixel.
+     * @param i  Row index of the pixel.
+     */
+    private void castRay(int nX, int nY, int j, int i) {
+        List<Ray> rays;
+
+        // Determine the list of rays to cast
+        if (adaptiveSampling) rays = adaptiveSuperSampling(nX, nY, j, i, sampleSize);
+        else {
+            if (sampleSize <= 1) rays = List.of(constructRay(nX, nY, j, i));
+            else rays = constructJitteredRays(nX, nY, j, i, sampleSize);
+        }
+
+        // Compute the average color for the pixel
+        Color pixelColor = Color.BLACK;
+        for (Ray ray : rays) pixelColor = pixelColor.add(rayTracer.traceRay(ray));
+
+        // Write the pixel color to the image
+        imageWriter.writePixel(j, i, pixelColor.reduce(rays.size()));
+    }
+
 
     /**
      * Writes the image to a file using the image writer.

@@ -5,6 +5,7 @@ import lighting.LightSource;
 import primitives.*;
 import scene.Scene;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -262,89 +263,5 @@ public class SimpleRayTracer extends RayTracerBase {
                 return false; // Point is shaded
         }
         return true; // Point is unshaded
-    }
-
-    @Override
-    public Color adaptiveSuperSampling(Point cameraPosition, Point center, Vector right, Vector up, double width, double height, int sampleSize) {
-        return adaptiveSuperSamplingRec(cameraPosition, center, right, up, width, height, sampleSize, 0, 0.25, null, Color.BLACK);
-    }
-
-    private Color adaptiveSuperSamplingRec(Point cameraPosition, Point center, Vector right, Vector up, double width, double height, int sampleSize, int sampleCount, double power, List<Color> colors, Color finalColor) {
-        if (colors == null) colors = new LinkedList<>();
-
-        List<Ray> rays = constructJitteredRaysForSubPixels(cameraPosition, center, right, up, width, height);
-        for (Ray ray : rays) {
-            colors.add(traceRay(ray));
-            finalColor.add(traceRay(ray));
-        }
-
-
-        boolean colorsEqual = true;
-
-        for (Color color : colors)
-            if (colors.isEmpty() || !color.equals(colors.getFirst()))
-                colorsEqual = false;
-
-        finalColor.scale(power);
-
-        if (sampleCount >= sampleSize * sampleSize || colorsEqual) return finalColor;
-
-        // Divide the pixel into 4 sub-pixels and recurse
-
-        // Calculate the center of each sub-pixel
-        double halfWidth = width / 2;
-        double halfHeight = height / 2;
-
-        for (int i = -1; i <= 1; i += 2) {
-            for (int j = -1; j <= 1; j += 2) {
-                Point subPixelCenter = center.add(right.scale(i * halfWidth)).add(up.scale(j * halfHeight));
-                System.out.println(i+" "+j);
-                adaptiveSuperSamplingRec(cameraPosition, subPixelCenter, right, up, width / 2, height / 2, sampleSize, sampleCount + 4, power * 0.25, new LinkedList<>(), finalColor);
-            }
-        }
-
-        // Return the final color based on sub-pixel samples
-        return finalColor;
-
-    }
-
-
-    /**
-     * Constructs a list of rays with jittered offsets for sub-pixels.
-     * Generates 4 rays for a given pixel, each passing through a jittered point within the pixel.
-     * This reduces aliasing by sampling multiple rays through different offsets within the pixel area.
-     *
-     * @param cameraPosition The camera's position.
-     * @param center         The pixel's center point on the view plane.
-     * @param right          The right vector of the view plane.
-     * @param up             The up vector of the view plane.
-     * @param width          The pixel width.
-     * @param height         The pixel height.
-     * @return A list of 4 rays with jittered offsets.
-     */
-    private List<Ray> constructJitteredRaysForSubPixels(Point cameraPosition, Point center, Vector right, Vector up, double width, double height) {
-        // Create a list to hold the generated rays
-        List<Ray> rays = new LinkedList<>();
-        Random random = new Random(); // Random number generator for jittering
-
-        // Calculate the width and height of each sub-pixel
-        double pixelWidth = width / 2;
-        double pixelHeight = height / 2;
-
-        // Iterate over the 2x2 grid of sub-pixels within the current pixel
-        for (int x = 0; x < 2; x++) {
-            for (int y = 0; y < 2; y++) {
-                // Calculate the center of the sub-pixel with jitter
-                Point subPixelCenter = center
-                        .add(right.scale(random.nextDouble() * pixelWidth - pixelWidth / 2)) // Add jitter in the x direction
-                        .add(up.scale(random.nextDouble() * pixelHeight - pixelHeight / 2)); // Add jitter in the y direction
-
-                // Create a ray from the camera position through the jittered sub-pixel center
-                rays.add(new Ray(cameraPosition, subPixelCenter.subtract(cameraPosition)));
-            }
-        }
-
-        // Return the list of jittered rays
-        return rays;
     }
 }

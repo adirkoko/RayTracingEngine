@@ -113,7 +113,7 @@ public class CustomImageTest {
                 .setVpDistance(1000)
                 .setVpSize(500, 500)
                 .setRayTracer(new SimpleRayTracer(scene))
-                .setImageWriter(new ImageWriter("CustomImageNoAnti-aliasing", 500, 500)) // File name and image size
+                .setImageWriter(new ImageWriter("CustomImageNoAnti-aliasing", 1000, 1000)) // File name and image size
                 .build()
                 .renderImage()
                 .writeToImage();
@@ -132,8 +132,8 @@ public class CustomImageTest {
                 .setVpDistance(1000)
                 .setVpSize(500, 500)
                 .setRayTracer(new SimpleRayTracer(scene))
-                .setImageWriter(new ImageWriter("CustomImageWithAnti-aliasing", 500, 500)) // File name and image size
-                .setSampleSize(55)
+                .setImageWriter(new ImageWriter("CustomImageWithAnti-aliasing", 1000, 1000)) // File name and image size
+                .setSampleSize(17)
                 .build()
                 .renderImage()
                 .writeToImage();
@@ -152,8 +152,8 @@ public class CustomImageTest {
                 .setVpDistance(1000)
                 .setVpSize(500, 500)
                 .setRayTracer(new SimpleRayTracer(scene))
-                .setImageWriter(new ImageWriter("CustomImageWithAdaptiveAnti-aliasing", 500, 500)) // File name and image size
-                .setSampleSize(55)
+                .setImageWriter(new ImageWriter("CustomImageWithAdaptiveAnti-aliasing", 1000, 1000)) // File name and image size
+                .setSampleSize(17)
                 .setAdaptiveSampling(true)
                 .build()
                 .renderImage()
