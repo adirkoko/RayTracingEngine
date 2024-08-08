@@ -18,8 +18,10 @@ import static primitives.Util.*;
  */
 public class Camera implements Cloneable {
 
+    /**
+     * Indicates if adaptive sampling is enabled.
+     */
     private boolean adaptiveSampling = false;
-
     /**
      * The position of the camera in 3D space.
      */
@@ -504,6 +506,12 @@ public class Camera implements Cloneable {
             return this;
         }
 
+        /**
+         * Sets whether adaptive sampling is enabled.
+         *
+         * @param adaptiveSampling true to enable.
+         * @return the Builder instance.
+         */
         public Builder setAdaptiveSampling(boolean adaptiveSampling) {
             camera.adaptiveSampling = adaptiveSampling;
             return this;
