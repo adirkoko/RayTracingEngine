@@ -15,6 +15,8 @@ public class BlackBall {
 
     /**
      * Scene setup method
+     *
+     * @return the scene
      */
     private Scene createBlackBallScene() {
         Scene scene = new Scene("Test");
