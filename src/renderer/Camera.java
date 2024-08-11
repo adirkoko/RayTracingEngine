@@ -19,6 +19,18 @@ import static primitives.Util.*;
 public class Camera implements Cloneable {
 
     /**
+     * The number of threads to use for multi-threaded rendering.
+     * A value of 0 indicates single-threaded rendering.
+     */
+
+    private int threadsCount = 0;
+
+    /**
+     * Manages pixel allocation and progress tracking for multi-threaded rendering.
+     */
+    private PixelManager pixelManager;
+
+    /**
      * Indicates if adaptive sampling is enabled.
      */
     private boolean adaptiveSampling = false;
@@ -276,18 +288,27 @@ public class Camera implements Cloneable {
         List<Ray> rays;
 
         // Determine the list of rays to cast
-        if (adaptiveSampling) rays = adaptiveSuperSampling(nX, nY, j, i, sampleSize);
-        else {
-            if (sampleSize <= 1) rays = List.of(constructRay(nX, nY, j, i));
-            else rays = constructJitteredRays(nX, nY, j, i, sampleSize);
+        if (adaptiveSampling) {
+            rays = adaptiveSuperSampling(nX, nY, j, i, sampleSize);
+        } else {
+            if (sampleSize <= 1) {
+                rays = List.of(constructRay(nX, nY, j, i));
+            } else {
+                rays = constructJitteredRays(nX, nY, j, i, sampleSize);
+            }
         }
 
         // Compute the average color for the pixel
         Color pixelColor = Color.BLACK;
-        for (Ray ray : rays) pixelColor = pixelColor.add(rayTracer.traceRay(ray));
+        for (Ray ray : rays) {
+            pixelColor = pixelColor.add(rayTracer.traceRay(ray));
+        }
 
         // Write the pixel color to the image
         imageWriter.writePixel(j, i, pixelColor.reduce(rays.size()));
+
+        // Notify PixelManager that this pixel is done
+        pixelManager.pixelDone();
     }
 
 
@@ -331,20 +352,46 @@ public class Camera implements Cloneable {
     }
 
     /**
-     * Renders the image by casting rays through all the pixels in the view plane and calculating their color using the ray tracer.
-     * This method loops over all the pixels of the ViewPlane, and for each pixel, casts a ray using the castRay method.
+     * Renders the image by casting rays through all the pixels in the view plane and calculating their color.
+     * <p>
+     * This method supports both single-threaded and multi-threaded rendering:
+     * - If `threadsCount` is 0, the rendering is done sequentially.
+     * - If `threadsCount` is greater than 0, the rendering is performed in parallel using multiple threads.
+     * <p>
+     * The progress of the rendering is tracked using the `PixelManager`, which can print the progress percentage to the console.
      *
-     * @return the current Camera instance
+     * @return The current `Camera` instance.
      */
     public Camera renderImage() {
-        int nX = imageWriter.getNx();
-        int nY = imageWriter.getNy();
+        final int nX = imageWriter.getNx();
+        final int nY = imageWriter.getNy();
 
-        // Loop over all pixels in the view plane
-        for (int i = 0; i < nY; i++) {
-            // Cast ray/s through each pixel
-            for (int j = 0; j < nX; j++) castRay(nX, nY, j, i);
+        // Initialize pixel manager with progress print interval
+        pixelManager = new PixelManager(nY, nX, 0.1);
+
+        if (threadsCount == 0) {  // No multi-threading
+            for (int i = 0; i < nY; i++) {
+                for (int j = 0; j < nX; j++) {
+                    castRay(nX, nY, j, i);
+                }
+            }
+        } else {
+            var threads = new LinkedList<Thread>();
+            while (threadsCount-- > 0) {
+                threads.add(new Thread(() -> {
+                    PixelManager.Pixel pixel;
+                    while ((pixel = pixelManager.nextPixel()) != null) {
+                        castRay(nX, nY, pixel.col(), pixel.row());
+                    }
+                }));
+            }
+            for (var thread : threads) thread.start();
+            try {
+                for (var thread : threads) thread.join();
+            } catch (InterruptedException ignore) {
+            }
         }
+
         return this;
     }
 
@@ -514,6 +561,17 @@ public class Camera implements Cloneable {
          */
         public Builder setAdaptiveSampling(boolean adaptiveSampling) {
             camera.adaptiveSampling = adaptiveSampling;
+            return this;
+        }
+
+        /**
+         * Sets the number of threads for rendering.
+         *
+         * @param threadsCount The number of threads to use.
+         * @return The current Builder instance.
+         */
+        public Builder setThreadsCount(int threadsCount) {
+            camera.threadsCount = threadsCount;
             return this;
         }
 
