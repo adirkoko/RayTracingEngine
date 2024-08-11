@@ -353,11 +353,9 @@ public class Camera implements Cloneable {
 
     /**
      * Renders the image by casting rays through all the pixels in the view plane and calculating their color.
-     * <p>
      * This method supports both single-threaded and multi-threaded rendering:
      * - If `threadsCount` is 0, the rendering is done sequentially.
      * - If `threadsCount` is greater than 0, the rendering is performed in parallel using multiple threads.
-     * <p>
      * The progress of the rendering is tracked using the `PixelManager`, which can print the progress percentage to the console.
      *
      * @return The current `Camera` instance.
