@@ -4,6 +4,9 @@ import primitives.*;
 
 import java.util.List;
 
+import static primitives.Util.alignZero;
+import static primitives.Util.isZero;
+
 /**
  * Represents a tube in 3D space, defined by a radius and a central axis ray.
  * Extends the RadialGeometry class.
@@ -51,6 +54,45 @@ public class Tube extends RadialGeometry {
 
     @Override
     protected List<GeoPoint> findGeoIntersectionsHelper(Ray ray, double maxDistance) {
-        return null; //TODO
+        Point rayHead = ray.getHead();
+        Vector rayDirection = ray.getDirection();
+        Point axisHead = axisRay.getHead();
+        Vector axisDirection = axisRay.getDirection();
+
+        double dx = rayHead.getX() - axisHead.getX();
+        double dy = rayHead.getY() - axisHead.getY();
+        double dz = rayHead.getZ() - axisHead.getZ();
+
+        double vVa = rayDirection.dotProduct(axisDirection);
+        double dVa = dx * axisDirection.getX() + dy * axisDirection.getY() + dz * axisDirection.getZ();
+
+        double vX = rayDirection.getX() - axisDirection.getX() * vVa;
+        double vY = rayDirection.getY() - axisDirection.getY() * vVa;
+        double vZ = rayDirection.getZ() - axisDirection.getZ() * vVa;
+
+        double dX = dx - axisDirection.getX() * dVa;
+        double dY = dy - axisDirection.getY() * dVa;
+        double dZ = dz - axisDirection.getZ() * dVa;
+
+        double a = alignZero(vX * vX + vY * vY + vZ * vZ);
+        if (isZero(a)) return null;
+
+        double b = alignZero(2 * (vX * dX + vY * dY + vZ * dZ));
+        double c = alignZero(dX * dX + dY * dY + dZ * dZ - radiusSquared);
+        double discriminant = alignZero(b * b - 4 * a * c);
+        if (discriminant <= 0) return null;
+
+        double sqrtDiscriminant = Math.sqrt(discriminant);
+        double t1 = alignZero((-b - sqrtDiscriminant) / (2 * a));
+        double t2 = alignZero((-b + sqrtDiscriminant) / (2 * a));
+
+        if (t1 <= 0 || alignZero(maxDistance - t1) <= 0)
+            return t2 > 0 && alignZero(maxDistance - t2) > 0
+                    ? List.of(new GeoPoint(this, ray.getPoint(t2)))
+                    : null;
+
+        return t2 > 0 && alignZero(maxDistance - t2) > 0
+                ? List.of(new GeoPoint(this, ray.getPoint(t1)), new GeoPoint(this, ray.getPoint(t2)))
+                : List.of(new GeoPoint(this, ray.getPoint(t1)));
     }
 }

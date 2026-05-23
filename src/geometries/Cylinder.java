@@ -2,6 +2,12 @@ package geometries;
 
 import primitives.*;
 
+import java.util.LinkedList;
+import java.util.List;
+
+import static primitives.Util.alignZero;
+import static primitives.Util.isZero;
+
 /**
  * Represents a cylinder in 3D space.
  * Extends the Tube class by adding a height property.
@@ -49,5 +55,50 @@ public class Cylinder extends Tube {
 
         // Calculate the vector from the closest point on the axis to the given point, then normalize it.
         return point.subtract(head.add(direction.scale(projectionLength))).normalize();
+    }
+
+    @Override
+    protected List<GeoPoint> findGeoIntersectionsHelper(Ray ray, double maxDistance) {
+        Vector direction = axisRay.getDirection();
+        List<GeoPoint> intersections = null;
+
+        var sideIntersections = super.findGeoIntersectionsHelper(ray, maxDistance);
+        if (sideIntersections != null) {
+            for (GeoPoint geoPoint : sideIntersections) {
+                double projectionLength = alignZero(direction.dotProduct(geoPoint.point.subtract(axisRay.getHead())));
+                if (projectionLength > 0 && alignZero(height - projectionLength) > 0) {
+                    if (intersections == null) intersections = new LinkedList<>();
+                    intersections.add(geoPoint);
+                }
+            }
+        }
+
+        double nv = direction.dotProduct(ray.getDirection());
+        if (isZero(nv)) return intersections;
+
+        intersections = addBaseIntersection(ray, maxDistance, axisRay.getHead(), nv, intersections);
+        return addBaseIntersection(ray, maxDistance, axisRay.getPoint(height), nv, intersections);
+    }
+
+    /**
+     * Adds a base intersection if the ray hits the finite circular cap.
+     */
+    private List<GeoPoint> addBaseIntersection(Ray ray, double maxDistance, Point center, double nv, List<GeoPoint> intersections) {
+        Point head = ray.getHead();
+        Vector direction = axisRay.getDirection();
+
+        double dx = center.getX() - head.getX();
+        double dy = center.getY() - head.getY();
+        double dz = center.getZ() - head.getZ();
+        double t = alignZero((dx * direction.getX() + dy * direction.getY() + dz * direction.getZ()) / nv);
+
+        if (t <= 0 || alignZero(maxDistance - t) <= 0) return intersections;
+
+        Point point = ray.getPoint(t);
+        if (alignZero(radiusSquared - point.distanceSquared(center)) < 0) return intersections;
+
+        if (intersections == null) intersections = new LinkedList<>();
+        intersections.add(new GeoPoint(this, point));
+        return intersections;
     }
 }
