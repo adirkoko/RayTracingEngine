@@ -2,7 +2,6 @@ package geometries;
 
 import primitives.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static primitives.Util.alignZero;

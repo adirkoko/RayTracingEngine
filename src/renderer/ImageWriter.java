@@ -91,10 +91,14 @@ public class ImageWriter {
     public void writeToImage() {
         try {
             File file = new File(FOLDER_PATH + '/' + imageName + ".png");
+            File parent = file.getParentFile();
+            if (parent != null && !parent.exists() && !parent.mkdirs()) {
+                throw new IOException("Could not create output directory " + parent);
+            }
             ImageIO.write(image, "png", file);
         } catch (IOException e) {
             logger.log(Level.SEVERE, "I/O error", e);
-            throw new IllegalStateException("I/O error - may be missing directory " + FOLDER_PATH, e);
+            throw new IllegalStateException("I/O error while writing image to " + FOLDER_PATH, e);
         }
     }
 

@@ -54,8 +54,6 @@ public class TriangleTest {
         Point p3 = new Point(0, 0, 1);
         // ============ Equivalence Partitions Tests ==============
         // TC01: Checks that the normal is the right one.
-        Triangle triangle = new Triangle(p1, p2, p3);
-
         Vector result = new Triangle(p1, p2, p3).getNormal(p3);
 
         // Check the length is 1

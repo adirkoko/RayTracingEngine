@@ -1,28 +1,19 @@
-### IntelliJ IDEA ###
+### Build output ###
+target/
 out/
-images/
-!**/src/main/**/out/
-!**/src/test/**/out/
-
-### Eclipse ###
-.apt_generated
-.factorypath
-.springBeans
-.sts4-cache
 bin/
 doc/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
+### Render output ###
+images/
 
-### VS Code ###
+### IDE and editor files ###
+.idea/
+*.iml
+.classpath
+.project
+.settings/
 .vscode/
 
-### Mac OS ###
+### OS files ###
 .DS_Store

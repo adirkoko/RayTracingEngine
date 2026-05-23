@@ -213,7 +213,6 @@ public class Camera implements Cloneable {
      * @return a list of jittered rays
      */
     private List<Ray> constructJitteredRays(int nX, int nY, int j, int i, int sampleSize) {
-        List<Ray> rays = new LinkedList<>();
 
         // Calculate the pixel size
         double pixelWidth = viewPlaneWidth / nX;
