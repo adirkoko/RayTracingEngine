@@ -128,6 +128,21 @@ public class Color {
         return new Color(rgb.reduce(k));
     }
 
+    /**
+     * Checks whether two colors are close enough component-wise.
+     *
+     * @param other     the color to compare with
+     * @param tolerance maximum allowed difference per RGB component
+     * @return true if all RGB components are within the given tolerance
+     */
+    public boolean isSimilar(Color other, double tolerance) {
+        if (other == null) return false;
+        if (tolerance < 0) throw new IllegalArgumentException("Tolerance cannot be negative");
+        return Math.abs(rgb.d1 - other.rgb.d1) <= tolerance
+                && Math.abs(rgb.d2 - other.rgb.d2) <= tolerance
+                && Math.abs(rgb.d3 - other.rgb.d3) <= tolerance;
+    }
+
     @Override
     public String toString() {
         return "rgb:" + rgb;

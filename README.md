@@ -123,8 +123,9 @@ mvn -Pvisual-tests -Dtest=RenderTests#renderTwoColorTest test
 - Builder-based camera configuration
 - Single-threaded rendering by default
 - Optional multi-threaded rendering with `setThreadsCount`
-- Jittered-grid supersampling through `setSampleSize` or `setSampleNum`
-- Optional adaptive sampling via `setAdaptiveSampling(true)`
+- Uniform jittered-grid supersampling through `setSampleSize` or `setSampleNum`
+- Recursive adaptive sampling via `setAdaptiveSampling(true)`
+- Fail-fast validation for conflicting anti-aliasing configuration
 - Progress reporting through `PixelManager`
 
 ### Scene Setup
@@ -218,8 +219,11 @@ Camera camera = Camera.getBuilder()
         .setSampleSize(int)                 // Optional N x N jittered grid
         .setSampleNum(int)                  // Optional approximate sample count
         .setAdaptiveSampling(boolean)       // Optional adaptive sampling
+        .setMaxDepth(int)                   // Adaptive only; call after enabling adaptive sampling
         .build();
 ```
+
+If no anti-aliasing boundary is configured, the renderer uses one ray per pixel. Once anti-aliasing is configured, boundary setters are mutually exclusive within one builder. In uniform mode, use either `setSampleSize` or `setSampleNum`. In adaptive mode, use exactly one of `setMaxDepth`, `setSampleSize`, or `setSampleNum`; sample-based limits are rounded up to the nearest power-of-two grid and converted into a recursion depth.
 
 ### Materials
 

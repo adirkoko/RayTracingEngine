@@ -19,6 +19,11 @@ import static primitives.Util.*;
 public class Camera implements Cloneable {
 
     /**
+     * Maximum RGB component delta that is treated as visually uniform during adaptive sampling.
+     */
+    private static final double ADAPTIVE_COLOR_TOLERANCE = 1.0;
+
+    /**
      * The number of threads to use for multi-threaded rendering.
      * A value of 0 indicates single-threaded rendering.
      */
@@ -34,6 +39,11 @@ public class Camera implements Cloneable {
      * Indicates if adaptive sampling is enabled.
      */
     private boolean adaptiveSampling = false;
+
+    /**
+     * Maximum quadtree subdivision depth for adaptive sampling.
+     */
+    private int maxAdaptiveDepth = 0;
     /**
      * The position of the camera in 3D space.
      */
@@ -186,19 +196,42 @@ public class Camera implements Cloneable {
      * @return the constructed Ray
      */
     public Ray constructRay(int nX, int nY, int j, int i) {
-        // Calculate the offsets for the pixel in the view plane
+        Point point = constructPixelCenter(nX, nY, j, i);
+        return new Ray(position, point.subtract(position));
+    }
+
+    /**
+     * Calculates the center point of a pixel on the view plane.
+     *
+     * @param nX number of columns in the view plane
+     * @param nY number of rows in the view plane
+     * @param j  column index of the pixel
+     * @param i  row index of the pixel
+     * @return the pixel center point on the view plane
+     */
+    private Point constructPixelCenter(int nX, int nY, int j, int i) {
         double xOffset = (j - (nX - 1) / 2.0) * (viewPlaneWidth / nX);
         double yOffset = (i - (nY - 1) / 2.0) * (viewPlaneHeight / nY);
 
-        // Start with the center of the view plane
         Point pIJ = position.add(toward.scale(viewPlaneDistance));
-
-        // Adjust the point based on the offsets
         if (!isZero(xOffset)) pIJ = pIJ.add(right.scale(xOffset));
         if (!isZero(yOffset)) pIJ = pIJ.add(up.scale(-yOffset));
+        return pIJ;
+    }
 
-        // Return the ray from the camera position through the adjusted point
-        return new Ray(position, pIJ.subtract(position));
+    /**
+     * Moves a point on the view plane by local right/up offsets.
+     *
+     * @param center  starting point on the view plane
+     * @param rightDx offset along the camera right vector
+     * @param upDy    offset along the camera up vector
+     * @return the shifted point
+     */
+    private Point moveOnViewPlane(Point center, double rightDx, double upDy) {
+        Point point = center;
+        if (!isZero(rightDx)) point = point.add(right.scale(rightDx));
+        if (!isZero(upDy)) point = point.add(up.scale(upDy));
+        return point;
     }
 
 
@@ -238,45 +271,74 @@ public class Camera implements Cloneable {
     }
 
     /**
-     * Constructs a list of rays for adaptive super sampling by checking color similarity.
-     * This method generates a list of rays using jittered sampling, traces them to get their colors,
-     * and checks if all obtained colors are similar. If the colors are similar, it returns the generated rays;
-     * otherwise, it generates rays with the specified sample size.
+     * Calculates a pixel color using recursive adaptive super sampling.
      *
-     * @param nX         Number of columns in the view plane.
-     * @param nY         Number of rows in the view plane.
-     * @param j          Column index of the pixel.
-     * @param i          Row index of the pixel.
-     * @param sampleSize Number of samples per pixel.
-     * @return A list of rays for the pixel based on adaptive sampling.
+     * @param nX number of columns in the view plane
+     * @param nY number of rows in the view plane
+     * @param j  column index of the pixel
+     * @param i  row index of the pixel
+     * @return the adaptively sampled pixel color
      */
-    private List<Ray> adaptiveSuperSampling(int nX, int nY, int j, int i, int sampleSize) {
-        // Generate rays using jittered sampling
-        List<Ray> rays = constructJitteredRays(nX, nY, j, i, 2);
-        List<Color> colors = new LinkedList<>();
+    private Color adaptiveSuperSampling(int nX, int nY, int j, int i) {
+        return adaptiveSuperSampling(
+                constructPixelCenter(nX, nY, j, i),
+                viewPlaneWidth / nX,
+                viewPlaneHeight / nY,
+                maxAdaptiveDepth);
+    }
 
-        // Trace rays and collect colors
-        for (Ray ray : rays) colors.add(rayTracer.traceRay(ray));
+    /**
+     * Recursively samples a rectangular region on the view plane.
+     *
+     * @param center center of the sampled region
+     * @param width  region width
+     * @param height region height
+     * @param depth  remaining subdivision depth
+     * @return the averaged region color
+     */
+    private Color adaptiveSuperSampling(Point center, double width, double height, int depth) {
+        double halfWidth = width / 2;
+        double halfHeight = height / 2;
 
-        // Check if all colors are similar
-        boolean colorsEqual = true;
-        for (Color color : colors) {
-            if (!color.equals(colors.getFirst())) {
-                colorsEqual = false;
-                break;
-            }
+        Color centerColor = rayTracer.traceRay(new Ray(position, center.subtract(position)));
+        Color topLeft = rayTracer.traceRay(new Ray(position, moveOnViewPlane(center, -halfWidth, halfHeight).subtract(position)));
+        Color topRight = rayTracer.traceRay(new Ray(position, moveOnViewPlane(center, halfWidth, halfHeight).subtract(position)));
+        Color bottomLeft = rayTracer.traceRay(new Ray(position, moveOnViewPlane(center, -halfWidth, -halfHeight).subtract(position)));
+        Color bottomRight = rayTracer.traceRay(new Ray(position, moveOnViewPlane(center, halfWidth, -halfHeight).subtract(position)));
+
+        if (depth == 0
+                || centerColor.isSimilar(topLeft, ADAPTIVE_COLOR_TOLERANCE)
+                && centerColor.isSimilar(topRight, ADAPTIVE_COLOR_TOLERANCE)
+                && centerColor.isSimilar(bottomLeft, ADAPTIVE_COLOR_TOLERANCE)
+                && centerColor.isSimilar(bottomRight, ADAPTIVE_COLOR_TOLERANCE)) {
+            return averageColors(centerColor, topLeft, topRight, bottomLeft, bottomRight);
         }
 
-        // Return rays based on color similarity
-        if (colorsEqual) return rays;
-        else return constructJitteredRays(nX, nY, j, i, sampleSize);
+        double quarterWidth = width / 4;
+        double quarterHeight = height / 4;
+        return averageColors(
+                adaptiveSuperSampling(moveOnViewPlane(center, -quarterWidth, quarterHeight), halfWidth, halfHeight, depth - 1),
+                adaptiveSuperSampling(moveOnViewPlane(center, quarterWidth, quarterHeight), halfWidth, halfHeight, depth - 1),
+                adaptiveSuperSampling(moveOnViewPlane(center, -quarterWidth, -quarterHeight), halfWidth, halfHeight, depth - 1),
+                adaptiveSuperSampling(moveOnViewPlane(center, quarterWidth, -quarterHeight), halfWidth, halfHeight, depth - 1)
+        );
+    }
 
+    /**
+     * Averages several colors.
+     *
+     * @param colors colors to average
+     * @return averaged color
+     */
+    private Color averageColors(Color... colors) {
+        Color sum = Color.BLACK;
+        for (Color color : colors) sum = sum.add(color);
+        return sum.reduce(colors.length);
     }
 
     /**
      * Casts rays for a given pixel and writes the resulting color to the image.
-     * This method determines the list of rays to cast based on whether adaptive sampling is enabled.
-     * It traces each ray to obtain its color and computes the average color for the pixel.
+     * This method chooses between uniform sampling and recursive adaptive sampling.
      *
      * @param nX Number of columns in the view plane.
      * @param nY Number of rows in the view plane.
@@ -284,27 +346,27 @@ public class Camera implements Cloneable {
      * @param i  Row index of the pixel.
      */
     private void castRay(int nX, int nY, int j, int i) {
-        List<Ray> rays;
+        Color pixelColor;
 
         // Determine the list of rays to cast
         if (adaptiveSampling) {
-            rays = adaptiveSuperSampling(nX, nY, j, i, sampleSize);
+            pixelColor = adaptiveSuperSampling(nX, nY, j, i);
         } else {
+            List<Ray> rays;
             if (sampleSize <= 1) {
                 rays = List.of(constructRay(nX, nY, j, i));
             } else {
                 rays = constructJitteredRays(nX, nY, j, i, sampleSize);
             }
-        }
-
-        // Compute the average color for the pixel
-        Color pixelColor = Color.BLACK;
-        for (Ray ray : rays) {
-            pixelColor = pixelColor.add(rayTracer.traceRay(ray));
+            pixelColor = Color.BLACK;
+            for (Ray ray : rays) {
+                pixelColor = pixelColor.add(rayTracer.traceRay(ray));
+            }
+            pixelColor = pixelColor.reduce(rays.size());
         }
 
         // Write the pixel color to the image
-        imageWriter.writePixel(j, i, pixelColor.reduce(rays.size()));
+        imageWriter.writePixel(j, i, pixelColor);
 
         // Notify PixelManager that this pixel is done
         pixelManager.pixelDone();
@@ -401,11 +463,24 @@ public class Camera implements Cloneable {
      * @author Adir and Meir
      */
     public static class Builder {
+        /**
+         * Sampling limit setters that are mutually exclusive for one builder.
+         */
+        private enum SamplingLimit {
+            SAMPLE_SIZE,
+            SAMPLE_NUM,
+            MAX_DEPTH
+        }
 
         /**
          * The Camera instance being built.
          */
         private final Camera camera;
+
+        /**
+         * The anti-aliasing boundary parameter selected for this builder.
+         */
+        private SamplingLimit samplingLimit;
 
         /**
          * Constructor for the Builder class, initializes a new Camera.
@@ -485,6 +560,12 @@ public class Camera implements Cloneable {
                     camera.imageWriter == null || camera.rayTracer == null)
                 throw new MissingResourceException("Missing rendering data", Camera.class.getName(), "Camera fields");
 
+            if (camera.adaptiveSampling && samplingLimit == null)
+                throw new MissingResourceException(
+                        "Missing adaptive sampling limit",
+                        Camera.class.getName(),
+                        "setMaxDepth, setSampleSize, or setSampleNum");
+
             // Calculate the right vector if it's not already calculated
             if (camera.right == null)
                 camera.right = camera.toward.crossProduct(camera.up).normalize();
@@ -522,6 +603,34 @@ public class Camera implements Cloneable {
             return this;
         }
 
+        /**
+         * Ensures that only one anti-aliasing boundary parameter is configured.
+         *
+         * @param limit the requested sampling limit type
+         */
+        private void setSamplingLimit(SamplingLimit limit) {
+            if (samplingLimit != null && samplingLimit != limit)
+                throw new IllegalStateException("Only one anti-aliasing boundary parameter can be configured");
+            samplingLimit = limit;
+        }
+
+        /**
+         * Converts a uniform sample grid side length to adaptive subdivision depth.
+         *
+         * @param sampleSize requested sample grid side length
+         * @return adaptive recursion depth
+         */
+        private static int sampleSizeToAdaptiveDepth(int sampleSize) {
+            int roundedSize = 1;
+            while (roundedSize < sampleSize) roundedSize *= 2;
+
+            int depth = 0;
+            while (roundedSize > 1) {
+                roundedSize /= 2;
+                depth++;
+            }
+            return depth;
+        }
 
         /**
          * Sets the sample size per pixel for anti-aliasing (N * N).
@@ -532,7 +641,9 @@ public class Camera implements Cloneable {
         public Builder setSampleSize(int sampleSize) {
             if (sampleSize <= 0)
                 throw new IllegalArgumentException("Sample size must be positive");
+            setSamplingLimit(SamplingLimit.SAMPLE_SIZE);
             camera.sampleSize = sampleSize;
+            if (camera.adaptiveSampling) camera.maxAdaptiveDepth = sampleSizeToAdaptiveDepth(camera.sampleSize);
             return this;
         }
 
@@ -546,7 +657,9 @@ public class Camera implements Cloneable {
         public Builder setSampleNum(int sampleNum) {
             if (sampleNum <= 0)
                 throw new IllegalArgumentException("Sample number must be positive");
-            camera.sampleSize = (int) Math.round(Math.sqrt(sampleNum));
+            setSamplingLimit(SamplingLimit.SAMPLE_NUM);
+            camera.sampleSize = (int) Math.ceil(Math.sqrt(sampleNum));
+            if (camera.adaptiveSampling) camera.maxAdaptiveDepth = sampleSizeToAdaptiveDepth(camera.sampleSize);
             return this;
         }
 
@@ -557,7 +670,28 @@ public class Camera implements Cloneable {
          * @return the Builder instance.
          */
         public Builder setAdaptiveSampling(boolean adaptiveSampling) {
+            if (!adaptiveSampling && samplingLimit == SamplingLimit.MAX_DEPTH)
+                throw new IllegalStateException("setMaxDepth is only valid when adaptive sampling is enabled");
             camera.adaptiveSampling = adaptiveSampling;
+            if (adaptiveSampling && (samplingLimit == SamplingLimit.SAMPLE_SIZE || samplingLimit == SamplingLimit.SAMPLE_NUM))
+                camera.maxAdaptiveDepth = sampleSizeToAdaptiveDepth(camera.sampleSize);
+            if (!adaptiveSampling) camera.maxAdaptiveDepth = 0;
+            return this;
+        }
+
+        /**
+         * Sets the maximum recursive subdivision depth for adaptive sampling.
+         *
+         * @param maxDepth maximum quadtree subdivision depth
+         * @return the Builder instance
+         */
+        public Builder setMaxDepth(int maxDepth) {
+            if (maxDepth < 0)
+                throw new IllegalArgumentException("Max depth cannot be negative");
+            if (!camera.adaptiveSampling)
+                throw new IllegalStateException("setMaxDepth is only valid when adaptive sampling is enabled");
+            setSamplingLimit(SamplingLimit.MAX_DEPTH);
+            camera.maxAdaptiveDepth = maxDepth;
             return this;
         }
 

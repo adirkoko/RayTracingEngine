@@ -1,10 +1,12 @@
 package renderer;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 import primitives.*;
 import scene.Scene;
+
+import java.util.MissingResourceException;
 
 
 /**
@@ -22,6 +24,21 @@ class CameraTest {
             .setVpDistance(10)
             .setImageWriter(new ImageWriter("test", 800, 800))
             .setRayTracer(new SimpleRayTracer(new Scene("Test")));
+
+    /**
+     * Creates a complete camera builder for configuration validation tests.
+     *
+     * @return a builder with all required rendering fields configured
+     */
+    private Camera.Builder createCompleteBuilder() {
+        return Camera.getBuilder()
+                .setLocation(Point.ZERO)
+                .setDirection(new Vector(0, 0, -1), new Vector(0, -1, 0))
+                .setVpDistance(10)
+                .setVpSize(10, 10)
+                .setImageWriter(new ImageWriter("test", 800, 800))
+                .setRayTracer(new SimpleRayTracer(new Scene("Test")));
+    }
 
     /**
      * Test method for {@link renderer.Camera#constructRay(int, int, int, int)}.
@@ -60,6 +77,38 @@ class CameraTest {
         // BV06: 3X3 Corner (0,0)
         assertEquals(new Ray(Point.ZERO, new Vector(2, -2, -10)),
                 camera2.constructRay(3, 3, 0, 0), "BV06: Ray constructed incorrectly for 3x3 grid, corner pixel (0,0)");
+    }
+
+    /**
+     * Test fail-fast validation for anti-aliasing configuration.
+     */
+    @Test
+    void testAntiAliasingConfiguration() {
+        assertThrows(IllegalStateException.class,
+                () -> Camera.getBuilder().setSampleSize(4).setSampleNum(16),
+                "Builder should reject multiple uniform sampling limits");
+
+        assertThrows(IllegalStateException.class,
+                () -> Camera.getBuilder().setMaxDepth(3),
+                "Builder should reject maxDepth while adaptive sampling is disabled");
+
+        assertThrows(IllegalStateException.class,
+                () -> Camera.getBuilder().setAdaptiveSampling(true).setMaxDepth(3).setSampleSize(4),
+                "Builder should reject mixing maxDepth with sampleSize");
+
+        assertThrows(IllegalStateException.class,
+                () -> Camera.getBuilder().setAdaptiveSampling(true).setMaxDepth(3).setAdaptiveSampling(false),
+                "Builder should reject disabling adaptive sampling after maxDepth was configured");
+
+        assertThrows(MissingResourceException.class,
+                () -> createCompleteBuilder().setAdaptiveSampling(true).build(),
+                "Adaptive sampling should require a recursion limit");
+
+        assertDoesNotThrow(() -> createCompleteBuilder().setSampleSize(7).setAdaptiveSampling(true).build(),
+                "Adaptive sampling should accept sampleSize as a recursion limit");
+
+        assertDoesNotThrow(() -> createCompleteBuilder().setAdaptiveSampling(true).setMaxDepth(3).build(),
+                "Adaptive sampling should accept maxDepth as a recursion limit");
     }
 
 }
