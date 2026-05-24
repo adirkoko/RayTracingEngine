@@ -112,6 +112,8 @@ mvn -Pvisual-tests -Dtest=RenderTests#renderTwoColorTest test
 - Per-geometry emission color
 - Scene-level ambient lighting
 - Recursive reflection via `kR` and transparency/refraction via `kT`
+- Glossy reflection sampling through `reflectionBlur` and `globalSamples`
+- Diffused glass sampling through `transparencyBlur` and `globalSamples`
 - Transparency-aware soft shadow handling across light samples
 
 ### Lighting
@@ -129,6 +131,7 @@ mvn -Pvisual-tests -Dtest=RenderTests#renderTwoColorTest test
 - Uniform jittered-grid supersampling through `setSampleSize` or `setSampleNum`
 - Recursive adaptive sampling via `setAdaptiveSampling(true)`
 - Depth of field through `setApertureRadius` and `setFocalDistance`
+- Recursion and sample-count guards for global effects and light sampling
 - Fail-fast validation for conflicting anti-aliasing configuration
 - Progress reporting through `PixelManager`
 
@@ -236,6 +239,8 @@ If no anti-aliasing boundary is configured, the renderer uses one ray per pixel.
 
 Depth of field is disabled by default. Set a positive aperture radius and focal distance to sample rays across the lens aperture; an aperture radius of `0` preserves the existing pinhole-camera behavior.
 
+When depth of field and anti-aliasing are both enabled, camera sampling pairs pixel samples with lens samples rather than taking their full Cartesian product.
+
 ### Materials
 
 ```java
@@ -244,10 +249,15 @@ Material material = new Material()
         .setKs(0.4)             // Specular coefficient
         .setShininess(100)      // Specular exponent
         .setKr(0.3)             // Reflection coefficient
-        .setKt(0.2);            // Transparency coefficient
+        .setKt(0.2)             // Transparency coefficient
+        .setReflectionBlur(0.0) // Glossy reflection blur; 0 keeps current behavior
+        .setTransparencyBlur(0.0) // Diffused glass blur; 0 keeps current behavior
+        .setGlobalSamples(1);   // Global-effect sample count; 1 keeps current behavior
 ```
 
 Each coefficient also provides a `Double3` overload for per-channel control.
+
+`globalSamples` is capped by `Material.MAX_GLOBAL_SAMPLES`. `SimpleRayTracer` also bounds light samples per light source and allows cone-sampled global effects to expand only one recursive layer; deeper reflection/transparency recursion falls back to single rays while still respecting `MAX_CALC_COLOR_LEVEL` and `MIN_CALC_COLOR_K`.
 
 ### Geometry Acceleration
 

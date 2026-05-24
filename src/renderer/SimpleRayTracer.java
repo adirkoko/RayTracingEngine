@@ -4,8 +4,12 @@ import geometries.Intersectable.GeoPoint;
 import lighting.LightSample;
 import lighting.LightSource;
 import primitives.*;
+import sampling.ConeSampler;
 import scene.Scene;
+
+import java.util.LinkedList;
 import java.util.List;
+
 import static primitives.Util.*;
 
 /**
@@ -25,6 +29,17 @@ public class SimpleRayTracer extends RayTracerBase {
      * Minimum attenuation coefficient for color calculation to prevent calculations that have insignificant impact.
      */
     private static final double MIN_CALC_COLOR_K = 0.001;
+
+    /**
+     * Maximum number of light samples consumed from one light source.
+     */
+    private static final int MAX_LIGHT_SAMPLES = 64;
+
+    /**
+     * Maximum recursive layers that may expand one global effect into multiple cone samples.
+     */
+    private static final int MAX_GLOBAL_SAMPLE_DEPTH = 1;
+
     /**
      * Start recursion from aggregated attenuation factor of 1 (i.e. no attenuation)
      */
@@ -60,7 +75,7 @@ public class SimpleRayTracer extends RayTracerBase {
      * @return The color at the intersection point.
      */
     private Color calcColor(GeoPoint intersection, Ray ray) {
-        return calcColor(intersection, ray, MAX_CALC_COLOR_LEVEL, INITIAL_K)
+        return calcColor(intersection, ray, MAX_CALC_COLOR_LEVEL, INITIAL_K, MAX_GLOBAL_SAMPLE_DEPTH)
                 .add(scene.ambientLight.getIntensity());
     }
 
@@ -81,15 +96,17 @@ public class SimpleRayTracer extends RayTracerBase {
      * @param ray   The ray that intersects the geometry.
      * @param level The recursion level.
      * @param k     The accumulated attenuation factor.
+     * @param globalSampleDepth remaining recursive depth that may expand cone-sampled global effects
      * @return The color at the intersection point.
      */
-    private Color calcColor(GeoPoint gp, Ray ray, int level, Double3 k) {
+    private Color calcColor(GeoPoint gp, Ray ray, int level, Double3 k, int globalSampleDepth) {
+        if (level <= 0 || k.lowerThan(MIN_CALC_COLOR_K)) return Color.BLACK;
         Vector v = ray.getDirection();
         Vector n = gp.geometry.getNormal(gp.point);
         double vn = v.dotProduct(n);
         if (isZero(vn)) return Color.BLACK;
         Color color = calcLocalEffects(gp, v, n, vn, k); // Calculate local effects
-        return 1 == level ? color : color.add(calcGlobalEffects(gp, v, n, vn, level, k)); // Add global effects
+        return 1 == level ? color : color.add(calcGlobalEffects(gp, v, n, vn, level, k, globalSampleDepth)); // Add global effects
     }
 
     /**
@@ -102,7 +119,19 @@ public class SimpleRayTracer extends RayTracerBase {
      * @return The reflected ray.
      */
     private Ray constructReflectedRay(GeoPoint gp, Vector v, Vector n, double vn) {
-        return new Ray(gp.point, v.subtract(n.scale(2 * vn)), n);
+        return new Ray(gp.point, constructReflectedDirection(v, n, vn), n);
+    }
+
+    /**
+     * Calculates the reflected direction.
+     *
+     * @param v  The incoming ray direction.
+     * @param n  the normal vector at gp
+     * @param vn v dot-product n
+     * @return The reflected direction.
+     */
+    private Vector constructReflectedDirection(Vector v, Vector n, double vn) {
+        return v.subtract(n.scale(2 * vn));
     }
 
     /**
@@ -124,13 +153,14 @@ public class SimpleRayTracer extends RayTracerBase {
      * @param level The recursion level.
      * @param k     The accumulated attenuation factor.
      * @param kx    The attenuation factor for the specific effect.
+     * @param globalSampleDepth remaining recursive depth that may expand cone-sampled global effects
      * @return The color of the global effect.
      */
-    private Color calcGlobalEffect(Ray ray, int level, Double3 k, Double3 kx) {
+    private Color calcGlobalEffect(Ray ray, int level, Double3 k, Double3 kx, int globalSampleDepth) {
         Double3 kkx = kx.product(k);
         if (kkx.lowerThan(MIN_CALC_COLOR_K)) return Color.BLACK;
         GeoPoint gp = findClosestIntersection(ray);
-        return (gp == null ? scene.background : calcColor(gp, ray, level - 1, kkx).scale(kx));
+        return (gp == null ? scene.background : calcColor(gp, ray, level - 1, kkx, Math.max(0, globalSampleDepth - 1)).scale(kx));
     }
 
     /**
@@ -142,12 +172,108 @@ public class SimpleRayTracer extends RayTracerBase {
      * @param vn    v dot-product n
      * @param level The recursion level.
      * @param k     The accumulated attenuation factor.
+     * @param globalSampleDepth remaining recursive depth that may expand cone-sampled global effects
      * @return The combined color of reflection and transparency.
      */
-    private Color calcGlobalEffects(GeoPoint gp, Vector v, Vector n, double vn, int level, Double3 k) {
+    private Color calcGlobalEffects(GeoPoint gp, Vector v, Vector n, double vn, int level, Double3 k, int globalSampleDepth) {
         Material material = gp.geometry.getMaterial();
-        return calcGlobalEffect(constructRefractedRay(gp, v, n), level, k, material.kT)
-                .add(calcGlobalEffect(constructReflectedRay(gp, v, n, vn), level, k, material.kR));
+        return calcTransparencyEffect(gp, v, n, level, k, material, globalSampleDepth)
+                .add(calcReflectionEffect(gp, v, n, vn, level, k, material, globalSampleDepth));
+    }
+
+    /**
+     * Calculates transparency, either as a single straight-through ray or as averaged diffused glass samples.
+     *
+     * @param gp       The geo point.
+     * @param v        The incoming ray direction.
+     * @param n        the normal vector at gp
+     * @param level    The recursion level.
+     * @param k        The accumulated attenuation factor.
+     * @param material The material of the geometry.
+     * @param globalSampleDepth remaining recursive depth that may expand cone-sampled global effects
+     * @return The transparency color contribution.
+     */
+    private Color calcTransparencyEffect(GeoPoint gp, Vector v, Vector n, int level, Double3 k, Material material, int globalSampleDepth) {
+        if (material.kT.product(k).lowerThan(MIN_CALC_COLOR_K)) return Color.BLACK;
+        if (isZero(material.transparencyBlur) || globalSampleDepth <= 0)
+            return calcGlobalEffect(constructRefractedRay(gp, v, n), level, k, material.kT, globalSampleDepth);
+
+        List<Ray> refractedRays = constructDiffusedRefractedRays(gp, v, n, material, globalSampleCount(material));
+        Color color = Color.BLACK;
+        for (Ray refractedRay : refractedRays)
+            color = color.add(calcGlobalEffect(refractedRay, level, k, material.kT, globalSampleDepth));
+        return color.reduce(refractedRays.size());
+    }
+
+    /**
+     * Calculates reflection, either as a perfect mirror ray or as averaged glossy samples.
+     *
+     * @param gp       The geo point.
+     * @param v        The incoming ray direction.
+     * @param n        the normal vector at gp
+     * @param vn       v dot-product n
+     * @param level    The recursion level.
+     * @param k        The accumulated attenuation factor.
+     * @param material The material of the geometry.
+     * @param globalSampleDepth remaining recursive depth that may expand cone-sampled global effects
+     * @return The reflected color contribution.
+     */
+    private Color calcReflectionEffect(GeoPoint gp, Vector v, Vector n, double vn, int level, Double3 k, Material material, int globalSampleDepth) {
+        if (material.kR.product(k).lowerThan(MIN_CALC_COLOR_K)) return Color.BLACK;
+        if (isZero(material.reflectionBlur) || globalSampleDepth <= 0)
+            return calcGlobalEffect(constructReflectedRay(gp, v, n, vn), level, k, material.kR, globalSampleDepth);
+
+        List<Ray> reflectedRays = constructGlossyReflectedRays(gp, constructReflectedDirection(v, n, vn), n, material, globalSampleCount(material));
+        Color color = Color.BLACK;
+        for (Ray reflectedRay : reflectedRays)
+            color = color.add(calcGlobalEffect(reflectedRay, level, k, material.kR, globalSampleDepth));
+        return color.reduce(reflectedRays.size());
+    }
+
+    /**
+     * Gets a bounded global sample count from a material.
+     *
+     * @param material The material of the geometry.
+     * @return bounded sample count
+     */
+    private int globalSampleCount(Material material) {
+        return Math.max(1, Math.min(material.globalSamples, Material.MAX_GLOBAL_SAMPLES));
+    }
+
+    /**
+     * Constructs glossy reflection rays around a perfect reflection direction.
+     *
+     * @param gp                  The geo point.
+     * @param reflectedDirection  The perfect reflection direction.
+     * @param n                   The normal vector at gp.
+     * @param material            The material of the geometry.
+     * @param sampleCount         Number of glossy samples to construct.
+     * @return Glossy reflection rays.
+     */
+    private List<Ray> constructGlossyReflectedRays(GeoPoint gp, Vector reflectedDirection, Vector n, Material material, int sampleCount) {
+        List<Ray> reflectedRays = new LinkedList<>();
+        for (Vector direction : new ConeSampler(
+                reflectedDirection, material.reflectionBlur, sampleCount).getSamples())
+            reflectedRays.add(new Ray(gp.point, direction, n));
+        return reflectedRays;
+    }
+
+    /**
+     * Constructs diffused transparency rays around the straight-through direction.
+     *
+     * @param gp       The geo point.
+     * @param v        The incoming ray direction.
+     * @param n        The normal vector at gp.
+     * @param material The material of the geometry.
+     * @param sampleCount Number of diffused transparency samples to construct.
+     * @return Diffused transparency rays.
+     */
+    private List<Ray> constructDiffusedRefractedRays(GeoPoint gp, Vector v, Vector n, Material material, int sampleCount) {
+        List<Ray> refractedRays = new LinkedList<>();
+        for (Vector direction : new ConeSampler(
+                v, material.transparencyBlur, sampleCount).getSamples())
+            refractedRays.add(new Ray(gp.point, direction, n));
+        return refractedRays;
     }
 
     /**
@@ -185,13 +311,14 @@ public class SimpleRayTracer extends RayTracerBase {
     private Color calcLightContribution(
             GeoPoint gp, Vector v, Vector n, double vn, Double3 k, Material material, LightSource lightSource) {
         List<LightSample> lightSamples = lightSource.getSamples(gp.point);
-        if (lightSamples.isEmpty()) return Color.BLACK;
+        if (lightSamples == null || lightSamples.isEmpty()) return Color.BLACK;
 
         Color color = Color.BLACK;
-        for (LightSample lightSample : lightSamples)
-            color = color.add(calcLightSampleContribution(gp, v, n, vn, k, material, lightSample));
+        int sampleCount = Math.min(lightSamples.size(), MAX_LIGHT_SAMPLES);
+        for (int i = 0; i < sampleCount; i++)
+            color = color.add(calcLightSampleContribution(gp, v, n, vn, k, material, lightSamples.get(i)));
 
-        return color.reduce(lightSamples.size());
+        return color.reduce(sampleCount);
     }
 
     /**

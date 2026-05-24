@@ -3,11 +3,16 @@ package primitives;
 /**
  * Class representing the material properties of a geometry.
  * Provides coefficients for transparency, reflection, diffuse, and specular properties.
- * Also includes shininess coefficient for specular highlights.
+ * Also includes shininess coefficient for specular highlights and sampling parameters for advanced global effects.
  *
  * @author Adir and Meir
  */
 public class Material {
+
+    /**
+     * Maximum number of samples allowed for blurred global effects.
+     */
+    public static final int MAX_GLOBAL_SAMPLES = 16;
 
     /**
      * Transparency attenuation coefficient.
@@ -33,6 +38,24 @@ public class Material {
      * Shininess coefficient.
      */
     public int nShininess = 0;
+
+    /**
+     * Reflection blur radius for future glossy reflection sampling.
+     * A value of 0 keeps perfect mirror reflection behavior.
+     */
+    public double reflectionBlur = 0;
+
+    /**
+     * Transparency blur radius for future diffused glass sampling.
+     * A value of 0 keeps perfect transparency/refraction behavior.
+     */
+    public double transparencyBlur = 0;
+
+    /**
+     * Number of samples for future blurred global effects.
+     * A value of 1 keeps the current single-ray global effect behavior.
+     */
+    public int globalSamples = 1;
 
     /**
      * Sets the diffuse coefficient.
@@ -86,6 +109,47 @@ public class Material {
      */
     public Material setShininess(int nShininess) {
         this.nShininess = nShininess;
+        return this;
+    }
+
+    /**
+     * Sets the reflection blur radius for future glossy reflection sampling.
+     *
+     * @param reflectionBlur reflection blur radius
+     * @return the Material object itself for chaining
+     */
+    public Material setReflectionBlur(double reflectionBlur) {
+        if (reflectionBlur < 0)
+            throw new IllegalArgumentException("Reflection blur cannot be negative");
+        this.reflectionBlur = reflectionBlur;
+        return this;
+    }
+
+    /**
+     * Sets the transparency blur radius for future diffused glass sampling.
+     *
+     * @param transparencyBlur transparency blur radius
+     * @return the Material object itself for chaining
+     */
+    public Material setTransparencyBlur(double transparencyBlur) {
+        if (transparencyBlur < 0)
+            throw new IllegalArgumentException("Transparency blur cannot be negative");
+        this.transparencyBlur = transparencyBlur;
+        return this;
+    }
+
+    /**
+     * Sets the number of samples for future blurred global effects.
+     *
+     * @param globalSamples number of global-effect samples
+     * @return the Material object itself for chaining
+     */
+    public Material setGlobalSamples(int globalSamples) {
+        if (globalSamples <= 0)
+            throw new IllegalArgumentException("Global samples must be positive");
+        if (globalSamples > MAX_GLOBAL_SAMPLES)
+            throw new IllegalArgumentException("Global samples cannot exceed " + MAX_GLOBAL_SAMPLES);
+        this.globalSamples = globalSamples;
         return this;
     }
 
