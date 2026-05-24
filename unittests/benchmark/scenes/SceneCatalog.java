@@ -38,11 +38,16 @@ public final class SceneCatalog {
         return new UniformBoundedScene();
     }
 
-    /*
-     * TODO: Add clustered bounded scene.
-     * Purpose: many bounded objects arranged in dense clusters with empty space between them.
-     * Expected use: stress GRID cell traversal and compare it against BVH hierarchy traversal.
+    /**
+     * Gets a clustered bounded scene for uneven spatial-distribution measurements.
      *
+     * @return benchmark scene
+     */
+    public static BenchmarkScene clusteredBounded() {
+        return new ClusteredBoundedScene();
+    }
+
+    /*
      * TODO: Add mixed-scale bounded scene.
      * Purpose: objects with very different bounding-box sizes in one scene.
      * Expected use: catch cases where median BVH splitting or automatic GRID resolution
