@@ -46,6 +46,8 @@ public final class GeometryIndexes {
                 bounded.add(new GeometryEntry(geometry, box));
         }
 
+        if (type == AccelerationType.GRID) return new RegularGrid(bounded, unbounded);
+
         return type == AccelerationType.BVH || bounded.size() >= bvhThreshold
                 ? new BvhGeometryIndex(bounded, unbounded)
                 : new LinearGeometryIndex(geometries);

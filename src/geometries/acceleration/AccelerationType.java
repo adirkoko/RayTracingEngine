@@ -15,6 +15,11 @@ public enum AccelerationType {
     BVH,
 
     /**
+     * Uses regular voxel grid traversal for bounded geometry collections.
+     */
+    GRID,
+
+    /**
      * Checks geometries linearly without spatial acceleration.
      */
     LINEAR

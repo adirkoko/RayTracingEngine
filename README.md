@@ -103,8 +103,8 @@ mvn -Pvisual-tests -Dtest=RenderTests#renderTwoColorTest test
 - Supports `Sphere`, `Plane`, `Triangle`, `Polygon`, `Tube`, and `Cylinder`
 - Groups geometries through `Geometries`
 - Computes normals and resolves the nearest intersection point
-- Uses bounding boxes and a lazy internal geometry index, with BVH traversal for bounded geometry collections
-- Provides `setAcceleration(AUTO | BVH | LINEAR)` for benchmark and debugging comparisons
+- Uses bounding boxes and a lazy internal geometry index, with BVH or Regular Grid traversal for bounded geometry collections
+- Provides `setAcceleration(AUTO | BVH | GRID | LINEAR)` for benchmark and debugging comparisons
 
 ### Materials And Shading
 
@@ -156,7 +156,7 @@ src/
 |-- primitives/      # Point, Vector, Ray, Color, Double3, Material, utilities
 |-- sampling/        # Reusable 2D sample generation for rendering effects
 |-- geometries/      # Shapes and ray-intersection logic
-|   `-- acceleration/ # Internal bounding boxes, geometry indexes, and BVH traversal
+|   `-- acceleration/ # Internal bounding boxes, geometry indexes, BVH, and Regular Grid traversal
 |-- lighting/        # Ambient, directional, point, and spot lights
 |-- scene/           # Scene container and XML SceneBuilder
 `-- renderer/        # Camera, ray tracers, ImageWriter, PixelManager, adaptive pixel sampling
@@ -266,10 +266,11 @@ import geometries.acceleration.AccelerationType;
 
 scene.geometries.setAcceleration(AccelerationType.AUTO);   // Default
 scene.geometries.setAcceleration(AccelerationType.BVH);    // Force BVH
+scene.geometries.setAcceleration(AccelerationType.GRID);   // Force Regular Grid / 3D-DDA
 scene.geometries.setAcceleration(AccelerationType.LINEAR); // Force direct traversal
 ```
 
-This is intended for benchmarking and debugging. `AUTO` keeps acceleration transparent for normal rendering, while `BVH` and `LINEAR` make it easy to compare traversal strategies without changing the scene.
+This is intended for benchmarking and debugging. `AUTO` keeps acceleration transparent for normal rendering and currently chooses BVH for sufficiently large bounded geometry collections. `BVH`, `GRID`, and `LINEAR` make it easy to compare traversal strategies without changing the scene.
 
 ### Lights
 
@@ -334,7 +335,7 @@ The `images/` directory is ignored by Git and created automatically by `ImageWri
 
 ## Known Limitations
 
-- Regular Grid / voxel traversal is not implemented yet
+- Regular Grid uses a basic automatic voxel resolution and is intended for explicit benchmark/debug runs, not as the default acceleration strategy
 - BVH construction currently uses a basic median split rather than a surface-area heuristic
 - XML loading is intentionally limited and does not cover full scene or render configuration
 - Visual rendering tests can be CPU-intensive, especially with high sample counts and large output resolutions

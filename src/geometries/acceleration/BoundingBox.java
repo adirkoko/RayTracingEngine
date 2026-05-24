@@ -70,6 +70,18 @@ public class BoundingBox {
      * @return first box hit distance or positive infinity if no hit exists
      */
     double intersectionDistance(Ray ray, double maxDistance) {
+        double[] interval = intersectionInterval(ray, maxDistance);
+        return interval == null ? Double.POSITIVE_INFINITY : interval[0];
+    }
+
+    /**
+     * Returns the positive distance interval where a ray overlaps this box.
+     *
+     * @param ray         ray to test
+     * @param maxDistance maximum intersection distance
+     * @return two-value interval {entry, exit}, or null if no overlap exists
+     */
+    double[] intersectionInterval(Ray ray, double maxDistance) {
         Point head = ray.getHead();
         Vector direction = ray.getDirection();
 
@@ -77,24 +89,24 @@ public class BoundingBox {
         double tMax = maxDistance;
 
         double[] interval = axisInterval(head.getX(), direction.getX(), min.getX(), max.getX());
-        if (interval == null) return Double.POSITIVE_INFINITY;
+        if (interval == null) return null;
         tMin = Math.max(tMin, interval[0]);
         tMax = Math.min(tMax, interval[1]);
-        if (alignZero(tMax - tMin) < 0) return Double.POSITIVE_INFINITY;
+        if (alignZero(tMax - tMin) < 0) return null;
 
         interval = axisInterval(head.getY(), direction.getY(), min.getY(), max.getY());
-        if (interval == null) return Double.POSITIVE_INFINITY;
+        if (interval == null) return null;
         tMin = Math.max(tMin, interval[0]);
         tMax = Math.min(tMax, interval[1]);
-        if (alignZero(tMax - tMin) < 0) return Double.POSITIVE_INFINITY;
+        if (alignZero(tMax - tMin) < 0) return null;
 
         interval = axisInterval(head.getZ(), direction.getZ(), min.getZ(), max.getZ());
-        if (interval == null) return Double.POSITIVE_INFINITY;
+        if (interval == null) return null;
         tMin = Math.max(tMin, interval[0]);
         tMax = Math.min(tMax, interval[1]);
-        if (alignZero(tMax - tMin) < 0 || alignZero(tMax) <= 0) return Double.POSITIVE_INFINITY;
+        if (alignZero(tMax - tMin) < 0 || alignZero(tMax) <= 0) return null;
 
-        return tMin > 0 ? tMin : 0;
+        return new double[]{tMin > 0 ? tMin : 0, tMax};
     }
 
     /**

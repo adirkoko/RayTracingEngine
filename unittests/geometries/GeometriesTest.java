@@ -109,6 +109,39 @@ class GeometriesTest {
     }
 
     /**
+     * Test method for Grid-backed {@link geometries.Geometries#findGeoIntersectionsHelper(Ray, double)}.
+     */
+    @Test
+    void findGeoIntersectionsWithGrid() {
+        Geometries geometries = createBoundedCollection()
+                .setAcceleration(AccelerationType.GRID);
+
+        var result = geometries.findGeoIntersections(new Ray(Point.ZERO, new Vector(0, 0, 1)));
+
+        assertNotNull(result, "Ray should intersect the bounded geometries through the regular grid");
+        assertEquals(8, result.size(), "Wrong number of Grid-backed intersections");
+    }
+
+    /**
+     * Test Grid traversal with unbounded fallback geometries.
+     */
+    @Test
+    void findGeoIntersectionsWithGridAndUnboundedFallback() {
+        Geometries geometries = new Geometries(
+                new Sphere(new Point(0, 0, 5), 1),
+                new Plane(new Point(0, 0, 7), new Vector(0, 0, 1)))
+                .setAcceleration(AccelerationType.GRID);
+
+        var result = geometries.findGeoIntersections(new Ray(Point.ZERO, new Vector(0, 0, 1)));
+
+        assertNotNull(result, "Grid should combine bounded traversal with unbounded fallback");
+        assertEquals(3, result.size(), "Wrong number of Grid intersections with unbounded fallback");
+        assertEquals(new Point(0, 0, 4),
+                geometries.findClosestGeoIntersection(new Ray(Point.ZERO, new Vector(0, 0, 1))).point,
+                "Grid should preserve closest-hit behavior");
+    }
+
+    /**
      * Test method for {@link geometries.Geometries#findClosestGeoIntersection(Ray)}.
      */
     @Test
@@ -146,11 +179,24 @@ class GeometriesTest {
         List<Point> bvhIntersections = geometries.findIntersections(ray);
         Intersectable.GeoPoint bvhClosest = geometries.findClosestGeoIntersection(ray);
 
+        geometries.setAcceleration(AccelerationType.GRID);
+        List<Point> gridIntersections = geometries.findIntersections(ray);
+        Intersectable.GeoPoint gridClosest = geometries.findClosestGeoIntersection(ray);
+
         assertEquals(linearIntersections, bvhIntersections,
                 "BVH and linear traversal should return the same intersections");
 
         assertEquals(linearClosest, bvhClosest,
                 "BVH and linear traversal should return the same closest intersection");
+
+        assertEquals(linearIntersections.size(), gridIntersections.size(),
+                "Grid and linear traversal should return the same number of intersections");
+
+        assertTrue(gridIntersections.containsAll(linearIntersections),
+                "Grid and linear traversal should return the same intersections");
+
+        assertEquals(linearClosest, gridClosest,
+                "Grid and linear traversal should return the same closest intersection");
 
         assertThrows(IllegalArgumentException.class, () -> geometries.setAcceleration(null),
                 "Null acceleration type should be rejected");
