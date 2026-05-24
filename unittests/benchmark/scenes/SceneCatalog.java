@@ -29,12 +29,16 @@ public final class SceneCatalog {
         return new SmallOverheadScene();
     }
 
-    /*
-     * TODO: Add uniform bounded distribution scene.
-     * Purpose: many similarly sized bounded objects spread evenly through space.
-     * Expected use: compare BVH and GRID in the type of scene where both should
-     * have enough spatial coherence to help.
+    /**
+     * Gets a uniformly distributed bounded scene for BVH/GRID comparison.
      *
+     * @return benchmark scene
+     */
+    public static BenchmarkScene uniformBounded() {
+        return new UniformBoundedScene();
+    }
+
+    /*
      * TODO: Add clustered bounded scene.
      * Purpose: many bounded objects arranged in dense clusters with empty space between them.
      * Expected use: stress GRID cell traversal and compare it against BVH hierarchy traversal.
