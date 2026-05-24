@@ -1,5 +1,6 @@
 package geometries;
 
+import geometries.acceleration.BoundingBox;
 import primitives.*;
 
 import java.util.List;
@@ -52,6 +53,15 @@ public abstract class Intersectable {
      * @return list of intersection points as GeoPoint objects
      */
     protected abstract List<GeoPoint> findGeoIntersectionsHelper(Ray ray, double maxDistance);
+
+    /**
+     * Gets the finite bounding box for this object.
+     *
+     * @return bounding box, or null for unbounded objects
+     */
+    BoundingBox getBoundingBox() {
+        return null;
+    }
 
     /**
      * GeoPoint is a helper class that represents a point on a geometry.

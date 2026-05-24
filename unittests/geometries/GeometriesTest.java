@@ -1,5 +1,6 @@
 package geometries;
 
+import geometries.acceleration.AccelerationType;
 import org.junit.jupiter.api.Test;
 import primitives.Point;
 import primitives.Ray;
@@ -87,5 +88,83 @@ class GeometriesTest {
                 new Vector(0, 0, 1)), 4.0);
         assertNotNull(result, "TC11 Ray intersects geometries exactly at max distance");
         assertEquals(2, result.size(), "TC11 Wrong number of intersection points");
+    }
+
+    /**
+     * Test method for BVH-backed {@link geometries.Geometries#findGeoIntersectionsHelper(Ray, double)}.
+     */
+    @Test
+    void findGeoIntersectionsWithBvh() {
+        Geometries geometries = new Geometries(
+                new Sphere(new Point(0, 0, 3), 1),
+                new Sphere(new Point(0, 0, 7), 1),
+                new Sphere(new Point(0, 0, 11), 1),
+                new Sphere(new Point(0, 0, 15), 1),
+                new Sphere(new Point(4, 0, 3), 1));
+
+        var result = geometries.findGeoIntersections(new Ray(Point.ZERO, new Vector(0, 0, 1)));
+
+        assertNotNull(result, "Ray should intersect the bounded geometries through the BVH");
+        assertEquals(8, result.size(), "Wrong number of BVH-backed intersections");
+    }
+
+    /**
+     * Test method for {@link geometries.Geometries#findClosestGeoIntersection(Ray)}.
+     */
+    @Test
+    void findClosestGeoIntersection() {
+        Geometries geometries = new Geometries(
+                new Sphere(new Point(0, 0, 9), 1),
+                new Sphere(new Point(0, 0, 5), 1),
+                new Sphere(new Point(0, 0, 13), 1),
+                new Sphere(new Point(0, 0, 17), 1));
+
+        Ray ray = new Ray(Point.ZERO, new Vector(0, 0, 1));
+
+        assertEquals(new Point(0, 0, 4), geometries.findClosestGeoIntersection(ray).point,
+                "Wrong closest intersection before rebuilding the index");
+
+        geometries.add(new Sphere(new Point(0, 0, 3), 0.5));
+
+        assertEquals(new Point(0, 0, 2.5), geometries.findClosestGeoIntersection(ray).point,
+                "Wrong closest intersection after lazy index rebuild");
+    }
+
+    /**
+     * Test acceleration mode selection for benchmarking and debugging.
+     */
+    @Test
+    void setAcceleration() {
+        Ray ray = new Ray(Point.ZERO, new Vector(0, 0, 1));
+        Geometries geometries = createBoundedCollection();
+
+        geometries.setAcceleration(AccelerationType.LINEAR);
+        List<Point> linearIntersections = geometries.findIntersections(ray);
+        Intersectable.GeoPoint linearClosest = geometries.findClosestGeoIntersection(ray);
+
+        geometries.setAcceleration(AccelerationType.BVH);
+        List<Point> bvhIntersections = geometries.findIntersections(ray);
+        Intersectable.GeoPoint bvhClosest = geometries.findClosestGeoIntersection(ray);
+
+        assertEquals(linearIntersections, bvhIntersections,
+                "BVH and linear traversal should return the same intersections");
+
+        assertEquals(linearClosest, bvhClosest,
+                "BVH and linear traversal should return the same closest intersection");
+
+        assertThrows(IllegalArgumentException.class, () -> geometries.setAcceleration(null),
+                "Null acceleration type should be rejected");
+    }
+
+    /**
+     * Creates a bounded geometry collection above the BVH threshold.
+     */
+    private Geometries createBoundedCollection() {
+        return new Geometries(
+                new Sphere(new Point(0, 0, 3), 1),
+                new Sphere(new Point(0, 0, 7), 1),
+                new Sphere(new Point(0, 0, 11), 1),
+                new Sphere(new Point(0, 0, 15), 1),
+                new Sphere(new Point(4, 0, 3), 1));
     }
 }

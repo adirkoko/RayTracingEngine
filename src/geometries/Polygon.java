@@ -6,6 +6,7 @@ import java.util.List;
 import static primitives.Util.alignZero;
 import static primitives.Util.isZero;
 
+import geometries.acceleration.BoundingBox;
 import primitives.Point;
 import primitives.Ray;
 import primitives.Vector;
@@ -94,6 +95,26 @@ public class Polygon extends Geometry {
         return plane.getNormal();
     }
 
+    @Override
+    BoundingBox getBoundingBox() {
+        double minX = vertices.getFirst().getX();
+        double minY = vertices.getFirst().getY();
+        double minZ = vertices.getFirst().getZ();
+        double maxX = minX;
+        double maxY = minY;
+        double maxZ = minZ;
+
+        for (Point vertex : vertices) {
+            minX = Math.min(minX, vertex.getX());
+            minY = Math.min(minY, vertex.getY());
+            minZ = Math.min(minZ, vertex.getZ());
+            maxX = Math.max(maxX, vertex.getX());
+            maxY = Math.max(maxY, vertex.getY());
+            maxZ = Math.max(maxZ, vertex.getZ());
+        }
+
+        return new BoundingBox(new Point(minX, minY, minZ), new Point(maxX, maxY, maxZ));
+    }
 
     @Override
     protected List<GeoPoint> findGeoIntersectionsHelper(Ray ray, double maxDistance) {

@@ -103,6 +103,8 @@ mvn -Pvisual-tests -Dtest=RenderTests#renderTwoColorTest test
 - Supports `Sphere`, `Plane`, `Triangle`, `Polygon`, `Tube`, and `Cylinder`
 - Groups geometries through `Geometries`
 - Computes normals and resolves the nearest intersection point
+- Uses bounding boxes and a lazy internal geometry index, with BVH traversal for bounded geometry collections
+- Provides `setAcceleration(AUTO | BVH | LINEAR)` for benchmark and debugging comparisons
 
 ### Materials And Shading
 
@@ -149,6 +151,7 @@ src/
 |-- primitives/      # Point, Vector, Ray, Color, Double3, Material, utilities
 |-- sampling/        # Reusable 2D sample generation for rendering effects
 |-- geometries/      # Shapes and ray-intersection logic
+|   `-- acceleration/ # Internal bounding boxes, geometry indexes, and BVH traversal
 |-- lighting/        # Ambient, directional, point, and spot lights
 |-- scene/           # Scene container and XML SceneBuilder
 `-- renderer/        # Camera, ray tracers, ImageWriter, PixelManager, adaptive pixel sampling
@@ -240,6 +243,18 @@ Material material = new Material()
 
 Each coefficient also provides a `Double3` overload for per-channel control.
 
+### Geometry Acceleration
+
+```java
+import geometries.acceleration.AccelerationType;
+
+scene.geometries.setAcceleration(AccelerationType.AUTO);   // Default
+scene.geometries.setAcceleration(AccelerationType.BVH);    // Force BVH
+scene.geometries.setAcceleration(AccelerationType.LINEAR); // Force direct traversal
+```
+
+This is intended for benchmarking and debugging. `AUTO` keeps acceleration transparent for normal rendering, while `BVH` and `LINEAR` make it easy to compare traversal strategies without changing the scene.
+
 ### Lights
 
 ```java
@@ -303,7 +318,8 @@ The `images/` directory is ignored by Git and created automatically by `ImageWri
 
 ## Known Limitations
 
-- No acceleration structure or intersection cache is implemented; geometries are checked directly through the scene geometry collection
+- Regular Grid / voxel traversal is not implemented yet
+- BVH construction currently uses a basic median split rather than a surface-area heuristic
 - XML loading is intentionally limited and does not cover full scene or render configuration
 - Visual rendering tests can be CPU-intensive, especially with high sample counts and large output resolutions
 

@@ -1,5 +1,6 @@
 package geometries;
 
+import geometries.acceleration.BoundingBox;
 import primitives.*;
 
 import java.util.List;
@@ -34,6 +35,13 @@ public class Sphere extends RadialGeometry {
     @Override
     public Vector getNormal(Point point) {
         return point.subtract(center).normalize();
+    }
+
+    @Override
+    BoundingBox getBoundingBox() {
+        return new BoundingBox(
+                new Point(center.getX() - radius, center.getY() - radius, center.getZ() - radius),
+                new Point(center.getX() + radius, center.getY() + radius, center.getZ() + radius));
     }
 
     @Override

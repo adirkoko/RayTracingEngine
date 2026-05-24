@@ -1,5 +1,6 @@
 package geometries;
 
+import geometries.acceleration.BoundingBox;
 import primitives.*;
 
 import java.util.LinkedList;
@@ -55,6 +56,21 @@ public class Cylinder extends Tube {
 
         // Calculate the vector from the closest point on the axis to the given point, then normalize it.
         return point.subtract(head.add(direction.scale(projectionLength))).normalize();
+    }
+
+    @Override
+    BoundingBox getBoundingBox() {
+        Point head = axisRay.getHead();
+        Point top = axisRay.getPoint(height);
+        return new BoundingBox(
+                new Point(
+                        Math.min(head.getX(), top.getX()) - radius,
+                        Math.min(head.getY(), top.getY()) - radius,
+                        Math.min(head.getZ(), top.getZ()) - radius),
+                new Point(
+                        Math.max(head.getX(), top.getX()) + radius,
+                        Math.max(head.getY(), top.getY()) + radius,
+                        Math.max(head.getZ(), top.getZ()) + radius));
     }
 
     @Override
