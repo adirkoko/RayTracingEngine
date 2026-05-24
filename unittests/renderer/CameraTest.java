@@ -138,4 +138,19 @@ class CameraTest {
                 "Depth of field should accept a positive aperture radius and focal distance");
     }
 
+    /**
+     * Test default depth of field settings preserve pinhole ray construction.
+     */
+    @Test
+    void testDepthOfFieldDefaultsPreservePinholeBehavior() {
+        Camera defaultCamera = createCompleteBuilder().build();
+        Camera zeroApertureCamera = createCompleteBuilder()
+                .setApertureRadius(0)
+                .build();
+
+        assertEquals(defaultCamera.constructRay(5, 5, 2, 2),
+                zeroApertureCamera.constructRay(5, 5, 2, 2),
+                "Zero aperture should preserve default pinhole ray construction");
+    }
+
 }

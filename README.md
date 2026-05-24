@@ -157,8 +157,9 @@ mvn -Pbenchmarks -Dtest=AccelerationBenchmark test
 
 ### Test Coverage
 
-- JUnit 5 tests for primitives, geometries, lighting, camera behavior, image writing, and visual rendering scenarios
+- Default JUnit 5 tests cover primitives, sampling, geometries, lighting infrastructure, camera behavior, image writing, and lightweight renderer behavior
 - Visual rendering classes include `RenderTests`, `ShadowTests`, `ReflectionRefractionTests`, `LightsTests`, `CustomImageTest`, `BlackBall`, and `TeapotTest`
+- Visual rendering tests run only through `-Pvisual-tests`; acceleration benchmarks run only through `-Pbenchmarks`
 
 ---
 
@@ -255,6 +256,16 @@ Depth of field is disabled by default. Set a positive aperture radius and focal 
 
 When depth of field and anti-aliasing are both enabled, camera sampling pairs pixel samples with lens samples rather than taking their full Cartesian product.
 
+Enable depth of field:
+
+```java
+Camera camera = Camera.getBuilder()
+        // regular camera configuration...
+        .setApertureRadius(2.0)
+        .setFocalDistance(120)
+        .build();
+```
+
 ### Materials
 
 ```java
@@ -272,6 +283,17 @@ Material material = new Material()
 Each coefficient also provides a `Double3` overload for per-channel control.
 
 `globalSamples` is capped by `Material.MAX_GLOBAL_SAMPLES`. `SimpleRayTracer` also bounds light samples per light source and allows cone-sampled global effects to expand only one recursive layer; deeper reflection/transparency recursion falls back to single rays while still respecting `MAX_CALC_COLOR_LEVEL` and `MIN_CALC_COLOR_K`.
+
+Enable glossy reflection or diffused glass by setting a positive blur radius together with `globalSamples`:
+
+```java
+new Material()
+        .setKr(0.6)
+        .setReflectionBlur(0.15)
+        .setKt(0.3)
+        .setTransparencyBlur(0.1)
+        .setGlobalSamples(8);
+```
 
 ### Geometry Acceleration
 
@@ -300,6 +322,8 @@ new SpotLight(new Color(400, 250, 120), new Point(50, 50, 0), new Vector(-1, -1,
         .setKq(0.0005)
         .setNarrowBeam(10);
 ```
+
+Existing light classes return one `LightSample` by default, preserving classic hard-shadow behavior. Soft shadows are enabled by using a `LightSource` implementation that returns multiple `LightSample` values from `getSamples(Point)`.
 
 ---
 

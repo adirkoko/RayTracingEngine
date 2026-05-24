@@ -203,6 +203,37 @@ class GeometriesTest {
     }
 
     /**
+     * Test all acceleration modes against LINEAR on a small mixed scene.
+     */
+    @Test
+    void accelerationModesMatchLinearOnSmallScene() {
+        List<Ray> rays = List.of(
+                new Ray(new Point(0, 0, -5), new Vector(0, 0, 1)),
+                new Ray(new Point(2, 0, -5), new Vector(0, 0, 1)),
+                new Ray(new Point(-2, 0, -5), new Vector(1, 0, 4)),
+                new Ray(new Point(5, 5, -5), new Vector(0, 0, 1))
+        );
+        Geometries geometries = createMixedSmallCollection();
+
+        for (Ray ray : rays) {
+            geometries.setAcceleration(AccelerationType.LINEAR);
+            List<Point> expectedIntersections = geometries.findIntersections(ray);
+            Intersectable.GeoPoint expectedClosest = geometries.findClosestGeoIntersection(ray);
+
+            for (AccelerationType type : AccelerationType.values()) {
+                geometries.setAcceleration(type);
+                assertSamePoints(expectedIntersections, geometries.findIntersections(ray),
+                        type + " should match LINEAR intersections");
+
+                Intersectable.GeoPoint actualClosest = geometries.findClosestGeoIntersection(ray);
+                assertEquals(expectedClosest == null ? null : expectedClosest.point,
+                        actualClosest == null ? null : actualClosest.point,
+                        type + " should match LINEAR closest intersection");
+            }
+        }
+    }
+
+    /**
      * Creates a bounded geometry collection above the BVH threshold.
      */
     private Geometries createBoundedCollection() {
@@ -212,5 +243,33 @@ class GeometriesTest {
                 new Sphere(new Point(0, 0, 11), 1),
                 new Sphere(new Point(0, 0, 15), 1),
                 new Sphere(new Point(4, 0, 3), 1));
+    }
+
+    /**
+     * Creates a small mixed bounded/unbounded geometry collection.
+     */
+    private Geometries createMixedSmallCollection() {
+        return new Geometries(
+                new Sphere(new Point(0, 0, 0), 1),
+                new Sphere(new Point(2, 0, 2), 0.75),
+                new Triangle(new Point(-1, -1, 3), new Point(1, -1, 3), new Point(0, 1, 3)),
+                new Plane(new Point(0, 0, 4), new Vector(0, 0, 1)));
+    }
+
+    /**
+     * Asserts that two point lists contain the same points, ignoring traversal order.
+     *
+     * @param expected expected point list, or null
+     * @param actual   actual point list, or null
+     * @param message  assertion message
+     */
+    private void assertSamePoints(List<Point> expected, List<Point> actual, String message) {
+        if (expected == null || actual == null) {
+            assertEquals(expected, actual, message);
+            return;
+        }
+
+        assertEquals(expected.size(), actual.size(), message);
+        assertTrue(actual.containsAll(expected), message);
     }
 }

@@ -2,6 +2,7 @@ package renderer;
 
 import geometries.Plane;
 import geometries.Sphere;
+import lighting.PointLight;
 import lighting.LightSample;
 import lighting.LightSource;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,37 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Unit tests for {@link renderer.SimpleRayTracer}.
  */
 class SimpleRayTracerTest {
+
+    /**
+     * Test default light sampling keeps classic single-shadow-ray behavior.
+     */
+    @Test
+    void testSoftShadowDefaultsPreserveSingleLightBehavior() {
+        Color defaultLight = tracePlaneWithLight(new PointLight(new Color(100, 100, 100), new Point(0, 0, -5)));
+        Color explicitSingleSample = tracePlaneWithLight(new SampledLight(
+                new Color(100, 100, 100),
+                List.of(new Point(0, 0, -5))));
+
+        assertTrue(defaultLight.isSimilar(explicitSingleSample, 1e-10),
+                "Default light sampling should match one explicit light sample");
+    }
+
+    /**
+     * Test global-effect defaults keep single-ray reflection and transparency behavior.
+     */
+    @Test
+    void testGlobalEffectDefaultsPreserveSingleRayBehavior() {
+        Color defaultMaterial = traceGlobalDefaultMaterial(new Material().setKr(0.4).setKt(0.6));
+        Color explicitDefaults = traceGlobalDefaultMaterial(new Material()
+                .setKr(0.4)
+                .setKt(0.6)
+                .setReflectionBlur(0)
+                .setTransparencyBlur(0)
+                .setGlobalSamples(1));
+
+        assertTrue(defaultMaterial.isSimilar(explicitDefaults, 1e-10),
+                "Default glossy/diffused settings should preserve single-ray global effects");
+    }
 
     /**
      * Test soft-shadow averaging across multiple light samples.
@@ -105,6 +137,37 @@ class SimpleRayTracerTest {
         if (addBlocker)
             scene.geometries.add(new Sphere(new Point(2, 0, -7.5), 0.5));
         scene.lights.add(new SampledLight(new Color(100, 100, 100), lightPositions));
+
+        return new SimpleRayTracer(scene).traceRay(new Ray(Point.ZERO, new Vector(0, 0, -1)));
+    }
+
+    /**
+     * Traces a diffuse plane under one light source.
+     *
+     * @param lightSource light source
+     * @return traced color at the center of the plane
+     */
+    private Color tracePlaneWithLight(LightSource lightSource) {
+        Scene scene = new Scene("Default light sampling test");
+        scene.geometries.add(new Plane(new Point(0, 0, -10), new Vector(0, 0, 1))
+                .setMaterial(new Material().setKd(1)));
+        scene.lights.add(lightSource);
+
+        return new SimpleRayTracer(scene).traceRay(new Ray(Point.ZERO, new Vector(0, 0, -1)));
+    }
+
+    /**
+     * Traces one ray through a material with reflection/transparency defaults.
+     *
+     * @param material material to test
+     * @return traced color
+     */
+    private Color traceGlobalDefaultMaterial(Material material) {
+        Color background = new Color(25, 35, 45);
+        Scene scene = new Scene("Global default test")
+                .setBackground(background);
+        scene.geometries.add(new Plane(new Point(0, 0, -1), new Vector(0, 0, 1))
+                .setMaterial(material));
 
         return new SimpleRayTracer(scene).traceRay(new Ray(Point.ZERO, new Vector(0, 0, -1)));
     }
