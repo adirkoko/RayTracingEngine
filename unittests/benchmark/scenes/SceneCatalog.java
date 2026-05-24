@@ -65,12 +65,16 @@ public final class SceneCatalog {
         return new UnboundedFallbackScene();
     }
 
-    /*
-     * TODO: Add reflection/transparency recursion scene.
-     * Purpose: reflective and transparent materials with controlled globalSamples values.
-     * Expected use: measure recursion/global-effect cost and confirm acceleration still
-     * helps when intersection work is multiplied by reflection and transparency rays.
+    /**
+     * Gets a bounded scene with controlled reflection/transparency recursion.
      *
+     * @return benchmark scene
+     */
+    public static BenchmarkScene reflectionTransparency() {
+        return new ReflectionTransparencyScene();
+    }
+
+    /*
      * TODO: Add shadow-heavy light-sampling scene.
      * Purpose: multiple occluders and lights that can return several LightSample values.
      * Expected use: measure shadow ray behavior, soft-shadow sampling cost, and acceleration
