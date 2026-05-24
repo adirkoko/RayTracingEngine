@@ -1,6 +1,7 @@
 package renderer;
 
 import primitives.*;
+import sampling.DiskSampler;
 import sampling.JitteredSampler;
 import sampling.Sample2D;
 
@@ -91,6 +92,21 @@ public class Camera implements Cloneable {
      * Jittered grid for anti-aliasing.
      */
     private JitteredSampler jitteredSampler;
+
+    /**
+     * Disk sampler for lens aperture sampling.
+     */
+    private DiskSampler diskSampler;
+
+    /**
+     * Radius of the camera aperture. A zero radius keeps pinhole-camera behavior.
+     */
+    private double apertureRadius = 0;
+
+    /**
+     * Distance from the camera to the focal plane along the forward axis.
+     */
+    private double focalDistance = 0;
 
     /**
      * Adaptive sampler for pixel color refinement.
@@ -269,15 +285,111 @@ public class Camera implements Cloneable {
      */
     private List<Ray> constructRaysFromSamples(Point pixelCenter, List<Sample2D> samples) {
         List<Ray> rays = new LinkedList<>();
+        List<Sample2D> lensSamples = isDepthOfFieldEnabled() ? getLensSamples(sampleSize) : List.of();
+        int lensIndex = 0;
 
         for (Sample2D sample : samples) {
             Point samplePoint = pixelCenter;
             if (!isZero(sample.x())) samplePoint = samplePoint.add(right.scale(sample.x()));
             if (!isZero(sample.y())) samplePoint = samplePoint.add(up.scale(sample.y()));
-            rays.add(new Ray(position, samplePoint.subtract(position)));
+            rays.add(constructRayThroughViewPlanePoint(
+                    samplePoint,
+                    lensSamples.isEmpty() ? null : lensSamples.get(lensIndex++)));
         }
 
         return rays;
+    }
+
+    /**
+     * Constructs rays through a single view-plane point using the configured lens model.
+     *
+     * @param point point on the view plane
+     * @return rays through the point
+     */
+    private List<Ray> constructRaysThroughViewPlanePoint(Point point) {
+        if (!isDepthOfFieldEnabled()) return List.of(constructRayThroughViewPlanePoint(point, null));
+
+        List<Ray> rays = new LinkedList<>();
+        for (Sample2D lensSample : getLensSamples(sampleSize))
+            rays.add(constructRayThroughViewPlanePoint(point, lensSample));
+        return rays;
+    }
+
+    /**
+     * Constructs one ray through a view-plane point, either from the camera position or through the sampled aperture.
+     *
+     * @param point      point on the view plane
+     * @param lensSample aperture offset, or null for pinhole behavior
+     * @return the constructed ray
+     */
+    private Ray constructRayThroughViewPlanePoint(Point point, Sample2D lensSample) {
+        if (!isDepthOfFieldEnabled() || lensSample == null)
+            return new Ray(position, point.subtract(position));
+
+        Point lensPoint = moveByCameraAxes(position, lensSample.x(), lensSample.y());
+        return new Ray(lensPoint, constructFocalPoint(point).subtract(lensPoint));
+    }
+
+    /**
+     * Calculates the point where a pinhole ray hits the focal plane.
+     *
+     * @param viewPlanePoint point on the view plane
+     * @return matching point on the focal plane
+     */
+    private Point constructFocalPoint(Point viewPlanePoint) {
+        Vector direction = viewPlanePoint.subtract(position).normalize();
+        return position.add(direction.scale(focalDistance / alignZero(direction.dotProduct(toward))));
+    }
+
+    /**
+     * Moves a point by camera-local right/up offsets.
+     *
+     * @param point   starting point
+     * @param rightDx offset along the camera right vector
+     * @param upDy    offset along the camera up vector
+     * @return moved point
+     */
+    private Point moveByCameraAxes(Point point, double rightDx, double upDy) {
+        Point movedPoint = point;
+        if (!isZero(rightDx)) movedPoint = movedPoint.add(right.scale(rightDx));
+        if (!isZero(upDy)) movedPoint = movedPoint.add(up.scale(upDy));
+        return movedPoint;
+    }
+
+    /**
+     * Gets cached aperture samples for the current camera configuration.
+     *
+     * @param sampleSize number of samples along each logical sampling axis
+     * @return aperture samples
+     */
+    private List<Sample2D> getLensSamples(int sampleSize) {
+        if (diskSampler == null
+                || diskSampler.getSampleSize() != sampleSize
+                || !isZero(diskSampler.getRadius() - apertureRadius))
+            diskSampler = new DiskSampler(sampleSize, apertureRadius);
+        return diskSampler.getSamples();
+    }
+
+    /**
+     * Checks whether depth of field is enabled.
+     *
+     * @return true when the aperture has positive radius
+     */
+    private boolean isDepthOfFieldEnabled() {
+        return apertureRadius > 0;
+    }
+
+    /**
+     * Traces a view-plane point through the configured camera lens.
+     *
+     * @param point point on the view plane
+     * @return averaged color for the point
+     */
+    private Color traceViewPlanePoint(Point point) {
+        List<Ray> rays = constructRaysThroughViewPlanePoint(point);
+        Color color = Color.BLACK;
+        for (Ray ray : rays) color = color.add(rayTracer.traceRay(ray));
+        return color.reduce(rays.size());
     }
 
     /**
@@ -301,8 +413,10 @@ public class Camera implements Cloneable {
                     maxAdaptiveDepth);
         } else {
             List<Ray> rays;
-            if (sampleSize <= 1) {
+            if (sampleSize <= 1 && !isDepthOfFieldEnabled()) {
                 rays = List.of(constructRay(nX, nY, j, i));
+            } else if (sampleSize <= 1) {
+                rays = constructRaysThroughViewPlanePoint(constructPixelCenter(nX, nY, j, i));
             } else {
                 rays = constructJitteredRays(nX, nY, j, i, sampleSize);
             }
@@ -375,7 +489,7 @@ public class Camera implements Cloneable {
 
         // Initialize pixel manager with progress print interval
         pixelManager = new PixelManager(nY, nX, 0.1);
-        adaptivePixelSampler = new AdaptivePixelSampler(position, right, up, rayTracer, ADAPTIVE_COLOR_TOLERANCE);
+        adaptivePixelSampler = new AdaptivePixelSampler(right, up, this::traceViewPlanePoint, ADAPTIVE_COLOR_TOLERANCE);
 
         if (threadsCount == 0) {  // No multi-threading
             for (int i = 0; i < nY; i++) {
@@ -515,6 +629,12 @@ public class Camera implements Cloneable {
                         Camera.class.getName(),
                         "setMaxDepth, setSampleSize, or setSampleNum");
 
+            if (camera.apertureRadius > 0 && camera.focalDistance == 0)
+                throw new MissingResourceException(
+                        "Missing depth of field focal distance",
+                        Camera.class.getName(),
+                        "setFocalDistance");
+
             // Calculate the right vector if it's not already calculated
             if (camera.right == null)
                 camera.right = camera.toward.crossProduct(camera.up).normalize();
@@ -641,6 +761,32 @@ public class Camera implements Cloneable {
                 throw new IllegalStateException("setMaxDepth is only valid when adaptive sampling is enabled");
             setSamplingLimit(SamplingLimit.MAX_DEPTH);
             camera.maxAdaptiveDepth = maxDepth;
+            return this;
+        }
+
+        /**
+         * Sets the radius of the camera aperture for depth of field.
+         *
+         * @param apertureRadius aperture radius; zero keeps pinhole behavior
+         * @return the Builder instance
+         */
+        public Builder setApertureRadius(double apertureRadius) {
+            if (apertureRadius < 0)
+                throw new IllegalArgumentException("Aperture radius cannot be negative");
+            camera.apertureRadius = apertureRadius;
+            return this;
+        }
+
+        /**
+         * Sets the distance from the camera to the focal plane.
+         *
+         * @param focalDistance focal plane distance along the camera forward axis
+         * @return the Builder instance
+         */
+        public Builder setFocalDistance(double focalDistance) {
+            if (focalDistance <= 0)
+                throw new IllegalArgumentException("Focal distance must be positive");
+            camera.focalDistance = focalDistance;
             return this;
         }
 

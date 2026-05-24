@@ -111,4 +111,31 @@ class CameraTest {
                 "Adaptive sampling should accept maxDepth as a recursion limit");
     }
 
+    /**
+     * Test fail-fast validation for depth of field configuration.
+     */
+    @Test
+    void testDepthOfFieldConfiguration() {
+        assertDoesNotThrow(() -> createCompleteBuilder().build(),
+                "Default camera should keep pinhole behavior without depth of field settings");
+
+        assertDoesNotThrow(() -> createCompleteBuilder().setApertureRadius(0).build(),
+                "Zero aperture radius should keep pinhole behavior");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> Camera.getBuilder().setApertureRadius(-1),
+                "Builder should reject a negative aperture radius");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> Camera.getBuilder().setFocalDistance(0),
+                "Builder should reject a non-positive focal distance");
+
+        assertThrows(MissingResourceException.class,
+                () -> createCompleteBuilder().setApertureRadius(1).build(),
+                "Depth of field should require a focal distance");
+
+        assertDoesNotThrow(() -> createCompleteBuilder().setApertureRadius(1).setFocalDistance(20).build(),
+                "Depth of field should accept a positive aperture radius and focal distance");
+    }
+
 }

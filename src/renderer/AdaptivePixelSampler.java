@@ -2,8 +2,9 @@ package renderer;
 
 import primitives.Color;
 import primitives.Point;
-import primitives.Ray;
 import primitives.Vector;
+
+import java.util.function.Function;
 
 import static primitives.Util.isZero;
 
@@ -11,11 +12,6 @@ import static primitives.Util.isZero;
  * Calculates a pixel color using recursive adaptive super sampling.
  */
 class AdaptivePixelSampler {
-
-    /**
-     * The camera position.
-     */
-    private final Point position;
 
     /**
      * The camera right vector.
@@ -28,9 +24,9 @@ class AdaptivePixelSampler {
     private final Vector up;
 
     /**
-     * Ray tracer used to evaluate sample colors.
+     * Traces a point on the view plane into its rendered color.
      */
-    private final RayTracerBase rayTracer;
+    private final Function<Point, Color> viewPlaneTracer;
 
     /**
      * Maximum RGB component delta treated as visually uniform.
@@ -40,17 +36,15 @@ class AdaptivePixelSampler {
     /**
      * Constructs an adaptive pixel sampler.
      *
-     * @param position       camera position
      * @param right          camera right vector
      * @param up             camera up vector
-     * @param rayTracer      ray tracer used to evaluate rays
+     * @param viewPlaneTracer traces a view-plane point into color
      * @param colorTolerance color similarity tolerance
      */
-    AdaptivePixelSampler(Point position, Vector right, Vector up, RayTracerBase rayTracer, double colorTolerance) {
-        this.position = position;
+    AdaptivePixelSampler(Vector right, Vector up, Function<Point, Color> viewPlaneTracer, double colorTolerance) {
         this.right = right;
         this.up = up;
-        this.rayTracer = rayTracer;
+        this.viewPlaneTracer = viewPlaneTracer;
         this.colorTolerance = colorTolerance;
     }
 
@@ -98,7 +92,7 @@ class AdaptivePixelSampler {
      * @return traced color
      */
     private Color trace(Point point) {
-        return rayTracer.traceRay(new Ray(position, point.subtract(position)));
+        return viewPlaneTracer.apply(point);
     }
 
     /**

@@ -127,6 +127,7 @@ mvn -Pvisual-tests -Dtest=RenderTests#renderTwoColorTest test
 - Optional multi-threaded rendering with `setThreadsCount`
 - Uniform jittered-grid supersampling through `setSampleSize` or `setSampleNum`
 - Recursive adaptive sampling via `setAdaptiveSampling(true)`
+- Depth of field through `setApertureRadius` and `setFocalDistance`
 - Fail-fast validation for conflicting anti-aliasing configuration
 - Progress reporting through `PixelManager`
 
@@ -225,10 +226,14 @@ Camera camera = Camera.getBuilder()
         .setSampleNum(int)                  // Optional approximate sample count
         .setAdaptiveSampling(boolean)       // Optional adaptive sampling
         .setMaxDepth(int)                   // Adaptive only; call after enabling adaptive sampling
+        .setApertureRadius(double)          // Optional; 0 keeps pinhole-camera behavior
+        .setFocalDistance(double)           // Required when aperture radius is positive
         .build();
 ```
 
 If no anti-aliasing boundary is configured, the renderer uses one ray per pixel. Once anti-aliasing is configured, boundary setters are mutually exclusive within one builder. In uniform mode, use either `setSampleSize` or `setSampleNum`. In adaptive mode, use exactly one of `setMaxDepth`, `setSampleSize`, or `setSampleNum`; sample-based limits are rounded up to the nearest power-of-two grid and converted into a recursion depth.
+
+Depth of field is disabled by default. Set a positive aperture radius and focal distance to sample rays across the lens aperture; an aperture radius of `0` preserves the existing pinhole-camera behavior.
 
 ### Materials
 
