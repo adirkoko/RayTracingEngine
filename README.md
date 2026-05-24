@@ -250,6 +250,7 @@ Camera camera = Camera.getBuilder()
         .setFocalDistance(double)           // Required when aperture radius is positive
         .setProgressListener(listener)      // Optional structured render progress callback
         .setProgressIntervalPercent(double) // Optional progress callback interval
+        .setRenderIdSupplier(supplier)      // Optional custom render id generation
         .build();
 ```
 
@@ -331,7 +332,21 @@ The SQLite database contains `render_runs` for one-row-per-render summaries and 
         RenderProgressWriters.sqliteForImage("quick-start")))
 ```
 
-CSV writers create a fresh file when the listener is created. SQLite writers keep appending render runs into the same database, keyed by the per-render `renderId`. The CSV writer buffers rows, and the SQLite writer reuses one connection with prepared statements and batched transactions so persistence does not commit on every progress event. Writers close their resources automatically on `DONE` or `FAILED`; if a render is intentionally stopped after `renderImage()` without `writeToImage()`, close the listener manually.
+Progress listener failures are fail-fast by default so broken metrics do not disappear silently. For best-effort metrics that should not fail a successful render, wrap the listener with `RenderProgressListener.resilient(...)` and route failures to your own warning/logging handler:
+
+```java
+.setProgressListener(RenderProgressListener.resilient(
+        RenderProgressWriters.sqliteForImage("quick-start"),
+        failure -> System.err.println(failure.getMessage())))
+```
+
+CSV writers create a fresh file when the listener is created. SQLite writers keep appending render runs into the same database, keyed by the per-render `renderId`. By default, render ids are UUIDs. Use `setRenderIdSupplier(...)` when an external benchmark or render-history system needs to provide its own ids:
+
+```java
+.setRenderIdSupplier(() -> "benchmark-run-001")
+```
+
+The CSV and SQLite writers synchronize their event writes. The CSV writer buffers rows, and the SQLite writer reuses one connection with prepared statements and batched transactions so persistence does not commit on every progress event. Writers close their resources automatically on `DONE` or `FAILED`; `close()` is safe to call more than once. If a render is intentionally stopped after `renderImage()` without `writeToImage()`, close the listener manually.
 
 The `csvForImage(...)` and `sqliteForImage(...)` helpers keep files next to generated images. For render history or benchmark folders, use the `Path` overloads:
 

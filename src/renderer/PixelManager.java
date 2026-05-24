@@ -80,7 +80,7 @@ class PixelManager {
      */
     private final Object mutexNext = new Object();
     /**
-     * Mutual exclusion object for progress reporting by different threads
+     * Mutual exclusion object for progress accounting by different threads
      */
     private final Object mutexPixels = new Object();
 
@@ -130,7 +130,7 @@ class PixelManager {
         this.renderStartedMillis = renderStartedMillis;
         this.stageStartedMillis = stageStartedMillis;
         this.progressListener = progressListener;
-        report(0, 0);
+        progressListener.onProgress(createProgress(0, 0));
     }
 
     /**
@@ -161,37 +161,42 @@ class PixelManager {
      * Marks one pixel as completed and reports progress when the configured interval is reached.
      */
     void pixelDone() {
+        RenderProgress progress = null;
         synchronized (mutexPixels) {
             ++pixels;
             int percentage = (int) (1000L * pixels / totalPixels);
             if (pixels == totalPixels || progressInterval > 0 && percentage - lastReported >= progressInterval) {
                 lastReported = percentage;
-                report(pixels, percentage / 10.0);
+                progress = createProgress(pixels, percentage / 10.0);
             }
         }
+        if (progress != null) progressListener.onProgress(progress);
     }
 
     /**
      * Reports final pixel rendering progress when it was not emitted by the last pixel update.
      */
     void finish() {
+        RenderProgress progress = null;
         synchronized (mutexPixels) {
             if (lastReported < 1000) {
                 lastReported = 1000;
-                report(totalPixels, 100);
+                progress = createProgress(totalPixels, 100);
             }
         }
+        if (progress != null) progressListener.onProgress(progress);
     }
 
     /**
-     * Reports pixel rendering progress.
+     * Creates pixel rendering progress.
      *
      * @param completedPixels completed pixels
      * @param percent         progress percentage
+     * @return pixel rendering progress event
      */
-    private void report(long completedPixels, double percent) {
+    private RenderProgress createProgress(long completedPixels, double percent) {
         long now = System.currentTimeMillis();
-        progressListener.onProgress(new RenderProgress(
+        return new RenderProgress(
                 renderId,
                 RenderStage.RENDER_PIXELS,
                 completedPixels,
@@ -199,6 +204,6 @@ class PixelManager {
                 percent,
                 now - renderStartedMillis,
                 now - stageStartedMillis,
-                now));
+                now);
     }
 }

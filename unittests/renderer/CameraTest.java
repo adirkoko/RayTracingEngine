@@ -13,6 +13,7 @@ import java.sql.DriverManager;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.MissingResourceException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -130,6 +131,10 @@ class CameraTest {
                 () -> Camera.getBuilder().setProgressIntervalPercent(-0.1),
                 "Builder should reject a negative progress interval");
 
+        assertThrows(IllegalArgumentException.class,
+                () -> Camera.getBuilder().setRenderIdSupplier(null),
+                "Builder should reject a null render id supplier");
+
         assertDoesNotThrow(() -> createCompleteBuilder().setProgressListener(RenderProgressListener.NONE).build(),
                 "Builder should allow replacing default progress printing with a silent listener");
     }
@@ -197,6 +202,54 @@ class CameraTest {
     }
 
     /**
+     * Test custom render id generation.
+     */
+    @Test
+    void testRenderIdSupplier() {
+        List<RenderProgress> events = new LinkedList<>();
+
+        createCompleteBuilder()
+                .setImageWriter(new ImageWriter("render-id-supplier-test", 2, 2))
+                .setRenderIdSupplier(() -> "custom-render-id")
+                .setProgressListener(events::add)
+                .build()
+                .renderImage()
+                .writeToImage();
+
+        assertFalse(events.isEmpty(), "Render should emit progress events");
+        assertTrue(events.stream().allMatch(progress -> progress.renderId().equals("custom-render-id")),
+                "Render should use the supplied render id");
+
+        assertThrows(IllegalStateException.class,
+                () -> createCompleteBuilder()
+                        .setRenderIdSupplier(() -> " ")
+                        .build()
+                        .renderImage(),
+                "Render should reject blank supplied render ids");
+    }
+
+    /**
+     * Test resilient listener wrapper suppresses progress failures.
+     */
+    @Test
+    void testResilientProgressListener() {
+        AtomicInteger failures = new AtomicInteger();
+
+        assertDoesNotThrow(() -> createCompleteBuilder()
+                .setImageWriter(new ImageWriter("resilient-progress-listener-test", 2, 2))
+                .setProgressListener(RenderProgressListener.resilient(
+                        progress -> {
+                            throw new IllegalStateException("metrics failure");
+                        },
+                        failure -> failures.incrementAndGet()))
+                .build()
+                .renderImage()
+                .writeToImage(), "Resilient progress listener should not fail a successful render");
+
+        assertTrue(failures.get() > 0, "Resilient listener should report suppressed failures");
+    }
+
+    /**
      * Test progress interval avoids per-pixel event emission.
      */
     @Test
@@ -241,6 +294,10 @@ class CameraTest {
                 "CSV progress writer should write pixel-rendering rows");
         assertTrue(rows.stream().anyMatch(row -> row.contains(",DONE,")),
                 "CSV progress writer should write a done row");
+
+        RenderProgressListener writer = RenderProgressWriters.csv(csvPath);
+        assertDoesNotThrow(writer::close, "CSV writer close should be safe");
+        assertDoesNotThrow(writer::close, "CSV writer close should be idempotent");
     }
 
     /**
@@ -284,6 +341,9 @@ class CameraTest {
             assertEquals("DONE", runResult.getString(2), "SQLite render-run summaries should mark completed renders");
             assertEquals("DONE", runResult.getString(3), "SQLite render-run summaries should mark completed renders");
         }
+
+        assertDoesNotThrow(sqliteWriter::close, "SQLite writer close should be safe after terminal events");
+        assertDoesNotThrow(sqliteWriter::close, "SQLite writer close should be idempotent");
     }
 
     /**

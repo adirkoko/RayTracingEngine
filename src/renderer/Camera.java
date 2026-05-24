@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import static primitives.Util.*;
 
@@ -128,6 +129,11 @@ public class Camera implements Cloneable {
      * Current render run identifier.
      */
     private String renderId;
+
+    /**
+     * Supplies a new render identifier for each render run.
+     */
+    private Supplier<String> renderIdSupplier = () -> UUID.randomUUID().toString();
 
     /**
      * Current render run start timestamp.
@@ -569,7 +575,9 @@ public class Camera implements Cloneable {
      * Starts a new render run.
      */
     private void beginRenderRun() {
-        renderId = UUID.randomUUID().toString();
+        renderId = renderIdSupplier.get();
+        if (renderId == null || renderId.isBlank())
+            throw new IllegalStateException("Render id cannot be null or blank");
         renderStartedMillis = System.currentTimeMillis();
     }
 
@@ -796,6 +804,19 @@ public class Camera implements Cloneable {
             if (progressListener == null)
                 throw new IllegalArgumentException("Progress listener cannot be null");
             camera.progressListener = progressListener;
+            return this;
+        }
+
+        /**
+         * Sets the supplier used to create render identifiers.
+         *
+         * @param renderIdSupplier supplier that returns a non-blank render id for each render run
+         * @return the Builder instance
+         */
+        public Builder setRenderIdSupplier(Supplier<String> renderIdSupplier) {
+            if (renderIdSupplier == null)
+                throw new IllegalArgumentException("Render id supplier cannot be null");
+            camera.renderIdSupplier = renderIdSupplier;
             return this;
         }
 
