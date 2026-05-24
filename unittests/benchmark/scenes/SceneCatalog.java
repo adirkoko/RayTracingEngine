@@ -20,12 +20,16 @@ public final class SceneCatalog {
         return new ProfileComparisonScene();
     }
 
-    /*
-     * TODO: Add small-overhead scene.
-     * Purpose: very small bounded scene with only a few objects.
-     * Expected use: measure the fixed build/traversal overhead of LINEAR, BVH,
-     * GRID, and AUTO when acceleration may cost more than it saves.
+    /**
+     * Gets a very small bounded scene for acceleration-overhead measurements.
      *
+     * @return benchmark scene
+     */
+    public static BenchmarkScene smallOverhead() {
+        return new SmallOverheadScene();
+    }
+
+    /*
      * TODO: Add uniform bounded distribution scene.
      * Purpose: many similarly sized bounded objects spread evenly through space.
      * Expected use: compare BVH and GRID in the type of scene where both should
