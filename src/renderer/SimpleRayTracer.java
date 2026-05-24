@@ -1,6 +1,7 @@
 package renderer;
 
 import geometries.Intersectable.GeoPoint;
+import lighting.LightSample;
 import lighting.LightSource;
 import primitives.*;
 import scene.Scene;
@@ -164,19 +165,26 @@ public class SimpleRayTracer extends RayTracerBase {
         Material material = gp.geometry.getMaterial(); // Material properties of the geometry
 
         for (LightSource lightSource : scene.lights) {
-            Vector l = lightSource.getL(gp.point); // Direction vector from point to light source
-            double ln = alignZero(l.dotProduct(n));
-            if (ln * vn > 0) { // Check if the light source is on the same side of the surface as the view direction
-                Double3 ktr = transparency(gp, lightSource, l, n);
-                if (!ktr.product(k).lowerThan(MIN_CALC_COLOR_K)) {
-                    Color iL = lightSource.getIntensity(gp.point).scale(ktr); // Intensity of the light at the point
-                    // Add diffuse and specular lighting effects
-                    color = color.add(
-                            iL.scale(calcDiffuse(material, ln)), // Diffuse component
-                            iL.scale(calcSpecular(material, n, l, ln, v)) // Specular component
-                    );
+            List<LightSample> lightSamples = lightSource.getSamples(gp.point);
+            if (lightSamples.isEmpty()) continue;
+            Color lightColor = Color.BLACK;
+
+            for (LightSample lightSample : lightSamples) {
+                Vector l = lightSample.direction(); // Direction vector from light sample to point
+                double ln = alignZero(l.dotProduct(n));
+                if (ln * vn > 0) { // Check if the light sample is on the same side of the surface as the view direction
+                    Double3 ktr = transparency(gp, lightSample, l, n);
+                    if (!ktr.product(k).lowerThan(MIN_CALC_COLOR_K)) {
+                        Color iL = lightSample.intensity().scale(ktr); // Intensity of the light sample at the point
+                        // Add diffuse and specular lighting effects
+                        lightColor = lightColor.add(
+                                iL.scale(calcDiffuse(material, ln)), // Diffuse component
+                                iL.scale(calcSpecular(material, n, l, ln, v)) // Specular component
+                        );
+                    }
                 }
             }
+            color = color.add(lightColor.reduce(lightSamples.size()));
         }
 
         return color; // Return the final color with local lighting effects
@@ -186,16 +194,16 @@ public class SimpleRayTracer extends RayTracerBase {
      * Calculates the transparency coefficient for the given light source and ray.
      *
      * @param gp          The geo point.
-     * @param lightSource The light source.
-     * @param l           The direction from the point to the light source.
+     * @param lightSample The light sample.
+     * @param l           The direction from the light sample to the point.
      * @param n           The normal at the intersection point.
      * @return The transparency coefficient.
      */
-    private Double3 transparency(GeoPoint gp, LightSource lightSource, Vector l, Vector n) {
+    private Double3 transparency(GeoPoint gp, LightSample lightSample, Vector l, Vector n) {
         Double3 ktr = Double3.ONE;
         List<GeoPoint> intersections = scene.geometries.findGeoIntersections(
                 new Ray(gp.point, l.scale(-1), n)
-                , lightSource.getDistance(gp.point));
+                , lightSample.distance());
         if (intersections == null) return ktr;
 
         for (GeoPoint p : intersections) {

@@ -119,6 +119,7 @@ mvn -Pvisual-tests -Dtest=RenderTests#renderTwoColorTest test
 - `AmbientLight`, `DirectionalLight`, `PointLight`, and `SpotLight`
 - Distance attenuation through `setKl`, `setKq`, and `setKc`
 - Narrow beam control through `SpotLight#setNarrowBeam`
+- Light sampling infrastructure through `LightSample`, with one default sample per existing light source
 
 ### Rendering
 

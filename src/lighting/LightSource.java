@@ -4,6 +4,8 @@ import primitives.Color;
 import primitives.Point;
 import primitives.Vector;
 
+import java.util.List;
+
 /**
  * Interface representing a light source in the scene.
  * Defines methods to get light intensity, direction, and distance at a given point.
@@ -34,4 +36,15 @@ public interface LightSource {
      * @return The distance from the light source to the point.
      */
     double getDistance(Point point);
+
+    /**
+     * Gets light samples reaching a given point.
+     * Default implementation returns one sample and preserves the classic point/directional light behavior.
+     *
+     * @param point the point where the light is sampled
+     * @return light samples for the given point
+     */
+    default List<LightSample> getSamples(Point point) {
+        return List.of(new LightSample(getIntensity(point), getL(point), getDistance(point)));
+    }
 }
