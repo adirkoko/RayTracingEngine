@@ -56,12 +56,16 @@ public final class SceneCatalog {
         return new MixedScaleBoundedScene();
     }
 
-    /*
-     * TODO: Add unbounded fallback scene.
-     * Purpose: include planes and other geometries without finite bounding boxes.
-     * Expected use: verify acceleration fallback paths and avoid drawing conclusions
-     * only from fully bounded scenes.
+    /**
+     * Gets a scene that combines bounded objects with unbounded planes.
      *
+     * @return benchmark scene
+     */
+    public static BenchmarkScene unboundedFallback() {
+        return new UnboundedFallbackScene();
+    }
+
+    /*
      * TODO: Add reflection/transparency recursion scene.
      * Purpose: reflective and transparent materials with controlled globalSamples values.
      * Expected use: measure recursion/global-effect cost and confirm acceleration still
