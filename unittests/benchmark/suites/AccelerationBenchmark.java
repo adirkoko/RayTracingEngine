@@ -32,6 +32,7 @@ class AccelerationBenchmark {
                 SceneCatalog.smallOverhead(),
                 SceneCatalog.uniformBounded(),
                 SceneCatalog.clusteredBounded(),
+                SceneCatalog.mixedScaleBounded(),
                 SceneCatalog.profileComparison())) {
             renderScene(scene);
         }

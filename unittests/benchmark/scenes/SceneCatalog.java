@@ -47,12 +47,16 @@ public final class SceneCatalog {
         return new ClusteredBoundedScene();
     }
 
-    /*
-     * TODO: Add mixed-scale bounded scene.
-     * Purpose: objects with very different bounding-box sizes in one scene.
-     * Expected use: catch cases where median BVH splitting or automatic GRID resolution
-     * handles large and small geometry poorly.
+    /**
+     * Gets a mixed-scale bounded scene for comparing acceleration on uneven box sizes.
      *
+     * @return benchmark scene
+     */
+    public static BenchmarkScene mixedScaleBounded() {
+        return new MixedScaleBoundedScene();
+    }
+
+    /*
      * TODO: Add unbounded fallback scene.
      * Purpose: include planes and other geometries without finite bounding boxes.
      * Expected use: verify acceleration fallback paths and avoid drawing conclusions
