@@ -1,7 +1,6 @@
 package primitives;
 
 import org.junit.jupiter.api.Test;
-import renderer.JitteredGrid;
 
 import java.util.List;
 
@@ -64,45 +63,4 @@ class RayTest {
         assertEquals(p1, ray.findClosestPoint(points), "Error: The closest point is the last point in the list");
     }
 
-    /**
-     * Test method for {@link primitives.Ray#generateJitteredRays(Point, Point, Vector, Vector, List<Point>)}.
-     */
-    @Test
-    void testGenerateJitteredRays() {
-        // ============ Equivalence Partitions Tests ==============
-        // TC01: Regular case - sample size 4, pixel size 1x1
-        Point position = new Point(0, 0, 0);
-        Point pIJ = new Point(0, 0, -1);
-        Vector right = new Vector(1, 0, 0);
-        Vector up = new Vector(0, 1, 0);
-        List<Point> jitteredPoints = new JitteredGrid(4, 1.0, 1.0).getJitteredPoints();
-
-        List<Ray> rays = Ray.generateJitteredRays(position, pIJ, right, up, jitteredPoints);
-        assertEquals(16, rays.size(), "There should be 16 jittered rays");
-
-        // Check rays directions are within bounds
-        for (Ray ray : rays) {
-            Point targetPoint = ray.getHead().add(ray.getDirection());
-            double x = targetPoint.getX();
-            double y = targetPoint.getY();
-            assertTrue(x >= -0.5 && x <= 0.5, "X coordinate out of bounds");
-            assertTrue(y >= -0.5 && y <= 0.5, "Y coordinate out of bounds");
-        }
-
-        // TC02: Minimum sample size (1)
-        rays = Ray.generateJitteredRays(position, pIJ, right, up,
-                new JitteredGrid(1, 1.0, 1.0).getJitteredPoints());
-        assertEquals(1, rays.size(), "There should be 1 jittered ray");
-
-        // Check ray direction is within bounds
-        Ray singleRay = rays.getFirst();
-        Point target = singleRay.getHead().add(singleRay.getDirection());
-        assertTrue(target.getX() >= -0.5 && target.getX() <= 0.5, "X coordinate out of bounds");
-        assertTrue(target.getY() >= -0.5 && target.getY() <= 0.5, "Y coordinate out of bounds");
-
-        // =============== Boundary Values Tests ==================
-        // TC11: Negative or zero sample size (should throw exception)
-        assertThrows(IllegalArgumentException.class, () -> new JitteredGrid(0, 1.0, 1.0));
-        assertThrows(IllegalArgumentException.class, () -> new JitteredGrid(-4, 1.0, 1.0));
-    }
 }

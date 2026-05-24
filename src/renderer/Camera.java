@@ -1,6 +1,8 @@
 package renderer;
 
 import primitives.*;
+import sampling.JitteredSampler;
+import sampling.Sample2D;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -88,7 +90,12 @@ public class Camera implements Cloneable {
     /**
      * Jittered grid for anti-aliasing.
      */
-    private JitteredGrid jitteredGrid;
+    private JitteredSampler jitteredSampler;
+
+    /**
+     * Adaptive sampler for pixel color refinement.
+     */
+    private AdaptivePixelSampler adaptivePixelSampler;
 
     /**
      * Private constructor to prevent direct instantiation.
@@ -220,22 +227,6 @@ public class Camera implements Cloneable {
     }
 
     /**
-     * Moves a point on the view plane by local right/up offsets.
-     *
-     * @param center  starting point on the view plane
-     * @param rightDx offset along the camera right vector
-     * @param upDy    offset along the camera up vector
-     * @return the shifted point
-     */
-    private Point moveOnViewPlane(Point center, double rightDx, double upDy) {
-        Point point = center;
-        if (!isZero(rightDx)) point = point.add(right.scale(rightDx));
-        if (!isZero(upDy)) point = point.add(up.scale(upDy));
-        return point;
-    }
-
-
-    /**
      * Constructs jittered rays through the pixel for anti-aliasing.
      *
      * @param nX         number of columns in the view plane
@@ -262,78 +253,31 @@ public class Camera implements Cloneable {
         if (!isZero(xOffset)) pIJ = pIJ.add(right.scale(xOffset));
         if (!isZero(yOffset)) pIJ = pIJ.add(up.scale(-yOffset));
 
-        // Initialize jittered grid if it is null or sample size has changed
-        if (jitteredGrid == null || jitteredGrid.getSampleSize() != sampleSize)
-            jitteredGrid = new JitteredGrid(sampleSize, pixelWidth, pixelHeight);
+        // Initialize jittered sampler if it is null or sample size has changed
+        if (jitteredSampler == null || jitteredSampler.getSampleSize() != sampleSize)
+            jitteredSampler = new JitteredSampler(sampleSize, pixelWidth, pixelHeight);
 
-        // Generate rays through jittered points using the function in Ray class
-        return Ray.generateJitteredRays(position, pIJ, right, up, jitteredGrid.getJitteredPoints());
+        return constructRaysFromSamples(pIJ, jitteredSampler.getSamples());
     }
 
     /**
-     * Calculates a pixel color using recursive adaptive super sampling.
+     * Constructs rays through a pixel from sample offsets.
      *
-     * @param nX number of columns in the view plane
-     * @param nY number of rows in the view plane
-     * @param j  column index of the pixel
-     * @param i  row index of the pixel
-     * @return the adaptively sampled pixel color
+     * @param pixelCenter pixel center on the view plane
+     * @param samples     sample offsets
+     * @return list of rays through the samples
      */
-    private Color adaptiveSuperSampling(int nX, int nY, int j, int i) {
-        return adaptiveSuperSampling(
-                constructPixelCenter(nX, nY, j, i),
-                viewPlaneWidth / nX,
-                viewPlaneHeight / nY,
-                maxAdaptiveDepth);
-    }
+    private List<Ray> constructRaysFromSamples(Point pixelCenter, List<Sample2D> samples) {
+        List<Ray> rays = new LinkedList<>();
 
-    /**
-     * Recursively samples a rectangular region on the view plane.
-     *
-     * @param center center of the sampled region
-     * @param width  region width
-     * @param height region height
-     * @param depth  remaining subdivision depth
-     * @return the averaged region color
-     */
-    private Color adaptiveSuperSampling(Point center, double width, double height, int depth) {
-        double halfWidth = width / 2;
-        double halfHeight = height / 2;
-
-        Color centerColor = rayTracer.traceRay(new Ray(position, center.subtract(position)));
-        Color topLeft = rayTracer.traceRay(new Ray(position, moveOnViewPlane(center, -halfWidth, halfHeight).subtract(position)));
-        Color topRight = rayTracer.traceRay(new Ray(position, moveOnViewPlane(center, halfWidth, halfHeight).subtract(position)));
-        Color bottomLeft = rayTracer.traceRay(new Ray(position, moveOnViewPlane(center, -halfWidth, -halfHeight).subtract(position)));
-        Color bottomRight = rayTracer.traceRay(new Ray(position, moveOnViewPlane(center, halfWidth, -halfHeight).subtract(position)));
-
-        if (depth == 0
-                || centerColor.isSimilar(topLeft, ADAPTIVE_COLOR_TOLERANCE)
-                && centerColor.isSimilar(topRight, ADAPTIVE_COLOR_TOLERANCE)
-                && centerColor.isSimilar(bottomLeft, ADAPTIVE_COLOR_TOLERANCE)
-                && centerColor.isSimilar(bottomRight, ADAPTIVE_COLOR_TOLERANCE)) {
-            return averageColors(centerColor, topLeft, topRight, bottomLeft, bottomRight);
+        for (Sample2D sample : samples) {
+            Point samplePoint = pixelCenter;
+            if (!isZero(sample.x())) samplePoint = samplePoint.add(right.scale(sample.x()));
+            if (!isZero(sample.y())) samplePoint = samplePoint.add(up.scale(sample.y()));
+            rays.add(new Ray(position, samplePoint.subtract(position)));
         }
 
-        double quarterWidth = width / 4;
-        double quarterHeight = height / 4;
-        return averageColors(
-                adaptiveSuperSampling(moveOnViewPlane(center, -quarterWidth, quarterHeight), halfWidth, halfHeight, depth - 1),
-                adaptiveSuperSampling(moveOnViewPlane(center, quarterWidth, quarterHeight), halfWidth, halfHeight, depth - 1),
-                adaptiveSuperSampling(moveOnViewPlane(center, -quarterWidth, -quarterHeight), halfWidth, halfHeight, depth - 1),
-                adaptiveSuperSampling(moveOnViewPlane(center, quarterWidth, -quarterHeight), halfWidth, halfHeight, depth - 1)
-        );
-    }
-
-    /**
-     * Averages several colors.
-     *
-     * @param colors colors to average
-     * @return averaged color
-     */
-    private Color averageColors(Color... colors) {
-        Color sum = Color.BLACK;
-        for (Color color : colors) sum = sum.add(color);
-        return sum.reduce(colors.length);
+        return rays;
     }
 
     /**
@@ -350,7 +294,11 @@ public class Camera implements Cloneable {
 
         // Determine the list of rays to cast
         if (adaptiveSampling) {
-            pixelColor = adaptiveSuperSampling(nX, nY, j, i);
+            pixelColor = adaptivePixelSampler.sample(
+                    constructPixelCenter(nX, nY, j, i),
+                    viewPlaneWidth / nX,
+                    viewPlaneHeight / nY,
+                    maxAdaptiveDepth);
         } else {
             List<Ray> rays;
             if (sampleSize <= 1) {
@@ -427,6 +375,7 @@ public class Camera implements Cloneable {
 
         // Initialize pixel manager with progress print interval
         pixelManager = new PixelManager(nY, nX, 0.1);
+        adaptivePixelSampler = new AdaptivePixelSampler(position, right, up, rayTracer, ADAPTIVE_COLOR_TOLERANCE);
 
         if (threadsCount == 0) {  // No multi-threading
             for (int i = 0; i < nY; i++) {

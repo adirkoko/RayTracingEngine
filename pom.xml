@@ -49,12 +49,12 @@
                     <useModulePath>false</useModulePath>
                     <includes>
                         <include>**/primitives/*Test.java</include>
+                        <include>**/sampling/*Test.java</include>
                         <include>**/geometries/*Test.java</include>
                         <include>**/geometries/*Tests.java</include>
                         <include>**/renderer/CameraTest.java</include>
                         <include>**/renderer/ImageWriterTest.java</include>
                         <include>**/renderer/IntegrationTests.java</include>
-                        <include>**/renderer/JitteredGridTest.java</include>
                     </includes>
                 </configuration>
             </plugin>

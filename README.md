@@ -147,13 +147,15 @@ mvn -Pvisual-tests -Dtest=RenderTests#renderTwoColorTest test
 pom.xml              # Maven build configuration and dependency management
 src/
 |-- primitives/      # Point, Vector, Ray, Color, Double3, Material, utilities
+|-- sampling/        # Reusable 2D sample generation for rendering effects
 |-- geometries/      # Shapes and ray-intersection logic
 |-- lighting/        # Ambient, directional, point, and spot lights
 |-- scene/           # Scene container and XML SceneBuilder
-`-- renderer/        # Camera, ray tracers, ImageWriter, PixelManager, sampling
+`-- renderer/        # Camera, ray tracers, ImageWriter, PixelManager, adaptive pixel sampling
 
 unittests/
 |-- primitives/      # Unit tests for math primitives
+|-- sampling/        # Unit tests for sample generation
 |-- geometries/      # Geometry and intersection tests
 |-- lighting/        # Lighting render tests
 `-- renderer/        # Camera tests and visual rendering tests
@@ -312,10 +314,11 @@ The `images/` directory is ignored by Git and created automatically by `ImageWri
 The renderer is organized in layers of increasing abstraction:
 
 1. `primitives` for mathematical foundations such as `Point`, `Vector`, `Color`, and `Ray`
-2. `geometries` for shape definitions and intersection logic
-3. `lighting` for light sources and attenuation behavior
-4. `scene` for scene composition and XML loading
-5. `renderer` for camera logic, ray tracing, image output, sampling, and progress tracking
+2. `sampling` for reusable sample generation that stays independent of rendering, lighting, and scene composition
+3. `geometries` for shape definitions and intersection logic
+4. `lighting` for light sources and attenuation behavior
+5. `scene` for scene composition and XML loading
+6. `renderer` for camera logic, ray tracing, image output, adaptive pixel sampling, and progress tracking
 
 This layered structure keeps the mathematical core, scene representation, and rendering pipeline clearly separated, making the project easier to understand, test, and extend.
 
