@@ -3,6 +3,7 @@ package renderer;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -31,7 +32,7 @@ public class ImageWriter {
     /**
      * Directory path for the image file generation - relative to the user directory
      */
-    private static final String FOLDER_PATH = System.getProperty("user.dir") + "/images";
+    private static final Path FOLDER_PATH = Path.of(System.getProperty("user.dir"), "images");
 
     /**
      * Image generation buffer (the matrix of the pixels)
@@ -83,6 +84,15 @@ public class ImageWriter {
         return nX;
     }
 
+    /**
+     * Gets the directory where rendered image output is written.
+     *
+     * @return image output directory
+     */
+    public static Path getOutputDirectory() {
+        return FOLDER_PATH;
+    }
+
     // ***************** Operations ******************** //
 
     /**
@@ -90,7 +100,7 @@ public class ImageWriter {
      */
     public void writeToImage() {
         try {
-            File file = new File(FOLDER_PATH + '/' + imageName + ".png");
+            File file = FOLDER_PATH.resolve(imageName + ".png").toFile();
             File parent = file.getParentFile();
             if (parent != null && !parent.exists() && !parent.mkdirs()) {
                 throw new IOException("Could not create output directory " + parent);

@@ -2,8 +2,7 @@ package renderer;
 
 /**
  * PixelManager is a helper class. It is used for multi-threading in the
- * renderer and
- * for follow up its progress.<br/>
+ * renderer and for tracking pixel-rendering progress.<br/>
  * A Camera uses one pixel manager object and several Pixel objects - one in
  * each thread.
  *
@@ -24,15 +23,15 @@ class PixelManager {
     /**
      * Maximum rows of pixels
      */
-    private int maxRows = 0;
+    private final int maxRows;
     /**
      * Maximum columns of pixels
      */
-    private int maxCols = 0;
+    private final int maxCols;
     /**
      * Total amount of pixels in the generated image
      */
-    private long totalPixels = 0l;
+    private final long totalPixels;
 
     /**
      * Currently processed row of pixels
@@ -45,49 +44,93 @@ class PixelManager {
     /**
      * Amount of pixels that have been processed
      */
-    private volatile long pixels = 0l;
+    private volatile long pixels = 0L;
     /**
-     * Last printed progress update percentage
+     * Last reported progress update percentage
      */
-    private volatile int lastPrinted = 0;
+    private volatile int lastReported = 0;
 
     /**
-     * Flag of debug printing of progress percentage
+     * Progress report interval in tenths of a percent.
      */
-    private boolean print = false;
+    private final int progressInterval;
+
     /**
-     * Progress percentage printing interval
+     * Render progress listener.
      */
-    private long printInterval = 100l;
+    private final RenderProgressListener progressListener;
+
     /**
-     * Printing format
+     * Render run identifier.
      */
-    private static final String PRINT_FORMAT = "%5.1f%%\r";
+    private final String renderId;
+
+    /**
+     * Render run start timestamp.
+     */
+    private final long renderStartedMillis;
+
+    /**
+     * Pixel rendering stage start timestamp.
+     */
+    private final long stageStartedMillis;
     /**
      * Mutual exclusion object for synchronizing next pixel allocation between
      * threads
      */
-    private Object mutexNext = new Object();
+    private final Object mutexNext = new Object();
     /**
-     * Mutual exclusion object for printing progress percentage in console window
-     * by different threads
+     * Mutual exclusion object for progress reporting by different threads
      */
-    private Object mutexPixels = new Object();
+    private final Object mutexPixels = new Object();
 
     /**
-     * Initialize pixel manager data for multi-threading
+     * Initialize pixel manager data for multi-threading with default console progress reporting.
      *
      * @param maxRows  the amount of pixel rows
      * @param maxCols  the amount of pixel columns
-     * @param interval print time interval in seconds, 0 if printing is not
-     *                 required
+     * @param interval progress report interval in percent
      */
     PixelManager(int maxRows, int maxCols, double interval) {
+        this(maxRows, maxCols, interval, "render", System.currentTimeMillis(), System.currentTimeMillis(),
+                RenderProgressListener.CONSOLE);
+    }
+
+    /**
+     * Initialize pixel manager data for multi-threading.
+     *
+     * @param maxRows             the amount of pixel rows
+     * @param maxCols             the amount of pixel columns
+     * @param interval            progress report interval in percent
+     * @param renderId            render run identifier
+     * @param renderStartedMillis render run start timestamp
+     * @param stageStartedMillis  pixel rendering stage start timestamp
+     * @param progressListener    progress listener
+     */
+    PixelManager(
+            int maxRows,
+            int maxCols,
+            double interval,
+            String renderId,
+            long renderStartedMillis,
+            long stageStartedMillis,
+            RenderProgressListener progressListener) {
+        if (maxRows <= 0 || maxCols <= 0)
+            throw new IllegalArgumentException("Pixel dimensions must be positive");
+        if (interval < 0)
+            throw new IllegalArgumentException("Progress interval cannot be negative");
+        if (progressListener == null)
+            throw new IllegalArgumentException("Progress listener cannot be null");
+
         this.maxRows = maxRows;
         this.maxCols = maxCols;
         totalPixels = (long) maxRows * maxCols;
-        printInterval = (int) (interval * 10);
-        if (print = printInterval != 0) System.out.printf(PRINT_FORMAT, 0d);
+        progressInterval = interval == 0 ? 0 : Math.max(1, (int) Math.round(interval * 10));
+        this.renderId = renderId;
+        this.renderStartedMillis = renderStartedMillis;
+        this.stageStartedMillis = stageStartedMillis;
+        this.progressListener = progressListener;
+        report(0, 0);
     }
 
     /**
@@ -115,21 +158,47 @@ class PixelManager {
     }
 
     /**
-     * Finish pixel processing by updating and printing of progress percentage
+     * Marks one pixel as completed and reports progress when the configured interval is reached.
      */
     void pixelDone() {
-        boolean flag = false;
-        int percentage = 0;
         synchronized (mutexPixels) {
             ++pixels;
-            if (print) {
-                percentage = (int) (1000l * pixels / totalPixels);
-                if (percentage - lastPrinted >= printInterval) {
-                    lastPrinted = percentage;
-                    flag = true;
-                }
+            int percentage = (int) (1000L * pixels / totalPixels);
+            if (pixels == totalPixels || progressInterval > 0 && percentage - lastReported >= progressInterval) {
+                lastReported = percentage;
+                report(pixels, percentage / 10.0);
             }
-            if (flag) System.out.printf(PRINT_FORMAT, percentage / 10d);
         }
+    }
+
+    /**
+     * Reports final pixel rendering progress when it was not emitted by the last pixel update.
+     */
+    void finish() {
+        synchronized (mutexPixels) {
+            if (lastReported < 1000) {
+                lastReported = 1000;
+                report(totalPixels, 100);
+            }
+        }
+    }
+
+    /**
+     * Reports pixel rendering progress.
+     *
+     * @param completedPixels completed pixels
+     * @param percent         progress percentage
+     */
+    private void report(long completedPixels, double percent) {
+        long now = System.currentTimeMillis();
+        progressListener.onProgress(new RenderProgress(
+                renderId,
+                RenderStage.RENDER_PIXELS,
+                completedPixels,
+                totalPixels,
+                percent,
+                now - renderStartedMillis,
+                now - stageStartedMillis,
+                now));
     }
 }

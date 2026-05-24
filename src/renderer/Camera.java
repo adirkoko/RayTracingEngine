@@ -8,6 +8,7 @@ import sampling.Sample2D;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.MissingResourceException;
+import java.util.UUID;
 
 import static primitives.Util.*;
 
@@ -112,6 +113,26 @@ public class Camera implements Cloneable {
      * Adaptive sampler for pixel color refinement.
      */
     private AdaptivePixelSampler adaptivePixelSampler;
+
+    /**
+     * Listener for render progress events.
+     */
+    private RenderProgressListener progressListener = RenderProgressListener.CONSOLE;
+
+    /**
+     * Progress report interval in percent.
+     */
+    private double progressIntervalPercent = 0.1;
+
+    /**
+     * Current render run identifier.
+     */
+    private String renderId;
+
+    /**
+     * Current render run start timestamp.
+     */
+    private long renderStartedMillis;
 
     /**
      * Private constructor to prevent direct instantiation.
@@ -441,7 +462,17 @@ public class Camera implements Cloneable {
      * @return the current Camera instance
      */
     public Camera writeToImage() {
-        imageWriter.writeToImage();
+        ensureRenderRun();
+        long stageStartedMillis = System.currentTimeMillis();
+        reportProgress(RenderStage.WRITE_IMAGE, 0, 1, stageStartedMillis);
+        try {
+            imageWriter.writeToImage();
+        } catch (RuntimeException e) {
+            reportFailureProgress(e, stageStartedMillis);
+            throw e;
+        }
+        reportProgress(RenderStage.WRITE_IMAGE, 1, 1, stageStartedMillis);
+        reportTerminalProgress(RenderStage.DONE, 1, 1, renderStartedMillis);
         return this;
     }
 
@@ -479,7 +510,7 @@ public class Camera implements Cloneable {
      * This method supports both single-threaded and multi-threaded rendering:
      * - If `threadsCount` is 0, the rendering is done sequentially.
      * - If `threadsCount` is greater than 0, the rendering is performed in parallel using multiple threads.
-     * The progress of the rendering is tracked using the `PixelManager`, which can print the progress percentage to the console.
+     * The progress of the rendering is tracked using the `PixelManager`, which emits render progress events.
      *
      * @return The current `Camera` instance.
      */
@@ -487,34 +518,117 @@ public class Camera implements Cloneable {
         final int nX = imageWriter.getNx();
         final int nY = imageWriter.getNy();
 
-        // Initialize pixel manager with progress print interval
-        pixelManager = new PixelManager(nY, nX, 0.1);
+        beginRenderRun();
+
+        // Initialize pixel manager with progress reporting interval
+        pixelManager = new PixelManager(
+                nY,
+                nX,
+                progressIntervalPercent,
+                renderId,
+                renderStartedMillis,
+                System.currentTimeMillis(),
+                progressListener);
         adaptivePixelSampler = new AdaptivePixelSampler(right, up, this::traceViewPlanePoint, ADAPTIVE_COLOR_TOLERANCE);
 
-        if (threadsCount == 0) {  // No multi-threading
-            for (int i = 0; i < nY; i++) {
-                for (int j = 0; j < nX; j++) {
-                    castRay(nX, nY, j, i);
+        try {
+            if (threadsCount == 0) {  // No multi-threading
+                for (int i = 0; i < nY; i++) {
+                    for (int j = 0; j < nX; j++) {
+                        castRay(nX, nY, j, i);
+                    }
+                }
+            } else {
+                var threads = new LinkedList<Thread>();
+                int threadsToStart = threadsCount;
+                while (threadsToStart-- > 0) {
+                    threads.add(new Thread(() -> {
+                        PixelManager.Pixel pixel;
+                        while ((pixel = pixelManager.nextPixel()) != null) {
+                            castRay(nX, nY, pixel.col(), pixel.row());
+                        }
+                    }));
+                }
+                for (var thread : threads) thread.start();
+                try {
+                    for (var thread : threads) thread.join();
+                } catch (InterruptedException ignore) {
+                    Thread.currentThread().interrupt();
                 }
             }
-        } else {
-            var threads = new LinkedList<Thread>();
-            while (threadsCount-- > 0) {
-                threads.add(new Thread(() -> {
-                    PixelManager.Pixel pixel;
-                    while ((pixel = pixelManager.nextPixel()) != null) {
-                        castRay(nX, nY, pixel.col(), pixel.row());
-                    }
-                }));
-            }
-            for (var thread : threads) thread.start();
-            try {
-                for (var thread : threads) thread.join();
-            } catch (InterruptedException ignore) {
-            }
+            pixelManager.finish();
+        } catch (RuntimeException e) {
+            reportFailureProgress(e, renderStartedMillis);
+            throw e;
         }
 
         return this;
+    }
+
+    /**
+     * Starts a new render run.
+     */
+    private void beginRenderRun() {
+        renderId = UUID.randomUUID().toString();
+        renderStartedMillis = System.currentTimeMillis();
+    }
+
+    /**
+     * Ensures a render run exists before reporting a stage.
+     */
+    private void ensureRenderRun() {
+        if (renderId == null) beginRenderRun();
+    }
+
+    /**
+     * Reports progress for a render lifecycle stage.
+     *
+     * @param stage              render stage
+     * @param completedWork      completed stage work
+     * @param totalWork          total stage work
+     * @param stageStartedMillis stage start timestamp
+     */
+    private void reportProgress(RenderStage stage, long completedWork, long totalWork, long stageStartedMillis) {
+        long now = System.currentTimeMillis();
+        progressListener.onProgress(new RenderProgress(
+                renderId,
+                stage,
+                completedWork,
+                totalWork,
+                totalWork == 0 ? 100 : completedWork * 100.0 / totalWork,
+                now - renderStartedMillis,
+                now - stageStartedMillis,
+                now));
+    }
+
+    /**
+     * Reports a terminal progress event and releases listener resources.
+     *
+     * @param stage              terminal render stage
+     * @param completedWork      completed stage work
+     * @param totalWork          total stage work
+     * @param stageStartedMillis stage start timestamp
+     */
+    private void reportTerminalProgress(RenderStage stage, long completedWork, long totalWork, long stageStartedMillis) {
+        try {
+            reportProgress(stage, completedWork, totalWork, stageStartedMillis);
+        } finally {
+            progressListener.close();
+        }
+    }
+
+    /**
+     * Reports failed render progress without hiding the original render failure.
+     *
+     * @param failure            original render failure
+     * @param stageStartedMillis stage start timestamp
+     */
+    private void reportFailureProgress(RuntimeException failure, long stageStartedMillis) {
+        try {
+            reportTerminalProgress(RenderStage.FAILED, 0, 1, stageStartedMillis);
+        } catch (RuntimeException progressFailure) {
+            failure.addSuppressed(progressFailure);
+        }
     }
 
 
@@ -669,6 +783,32 @@ public class Camera implements Cloneable {
         public Builder setRayTracer(RayTracerBase rayTracer) {
             if (rayTracer == null) throw new IllegalArgumentException("RayTracer cannot be null");
             camera.rayTracer = rayTracer;
+            return this;
+        }
+
+        /**
+         * Sets a render progress listener.
+         *
+         * @param progressListener listener that receives render progress events
+         * @return the Builder instance
+         */
+        public Builder setProgressListener(RenderProgressListener progressListener) {
+            if (progressListener == null)
+                throw new IllegalArgumentException("Progress listener cannot be null");
+            camera.progressListener = progressListener;
+            return this;
+        }
+
+        /**
+         * Sets the progress report interval.
+         *
+         * @param progressIntervalPercent interval in percent; zero reports only stage start and finish
+         * @return the Builder instance
+         */
+        public Builder setProgressIntervalPercent(double progressIntervalPercent) {
+            if (progressIntervalPercent < 0)
+                throw new IllegalArgumentException("Progress interval cannot be negative");
+            camera.progressIntervalPercent = progressIntervalPercent;
             return this;
         }
 

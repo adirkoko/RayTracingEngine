@@ -147,7 +147,7 @@ mvn -Pbenchmarks -Dtest=AccelerationBenchmark test
 - Depth of field through `setApertureRadius` and `setFocalDistance`
 - Recursion and sample-count guards for global effects and light sampling
 - Fail-fast validation for conflicting anti-aliasing configuration
-- Progress reporting through `PixelManager`
+- Structured render progress events through `RenderProgressListener`
 
 ### Scene Setup
 
@@ -173,8 +173,9 @@ src/
 |-- geometries/      # Shapes and ray-intersection logic
 |   `-- acceleration/ # Internal bounding boxes, geometry indexes, BVH, and Regular Grid traversal
 |-- lighting/        # Ambient, directional, point, and spot lights
+|-- metrics/         # Optional CSV and SQLite render progress persistence
 |-- scene/           # Scene container and XML SceneBuilder
-`-- renderer/        # Camera, ray tracers, ImageWriter, PixelManager, adaptive pixel sampling
+`-- renderer/        # Camera, ray tracers, ImageWriter, progress events, adaptive pixel sampling
 
 unittests/
 |-- primitives/      # Unit tests for math primitives
@@ -247,6 +248,8 @@ Camera camera = Camera.getBuilder()
         .setMaxDepth(int)                   // Adaptive only; call after enabling adaptive sampling
         .setApertureRadius(double)          // Optional; 0 keeps pinhole-camera behavior
         .setFocalDistance(double)           // Required when aperture radius is positive
+        .setProgressListener(listener)      // Optional structured render progress callback
+        .setProgressIntervalPercent(double) // Optional progress callback interval
         .build();
 ```
 
@@ -265,6 +268,80 @@ Camera camera = Camera.getBuilder()
         .setFocalDistance(120)
         .build();
 ```
+
+### Render Progress
+
+The renderer emits structured progress events without depending on UI, database, or logging code. `Camera` reports through a `RenderProgressListener`; the default listener keeps the existing console percentage output, and custom listeners can collect metrics, update UI, persist render history, or feed benchmark tooling outside the renderer layer.
+
+```java
+Camera camera = Camera.getBuilder()
+        // regular camera configuration...
+        .setProgressListener(progress -> {
+            if (progress.stage() == RenderStage.RENDER_PIXELS) {
+                double percent = progress.percent();
+            }
+        })
+        .setProgressIntervalPercent(1.0)
+        .build();
+```
+
+Each `RenderProgress` event includes a `renderId`, `RenderStage`, completed and total work units, percentage, total elapsed time, stage elapsed time, and timestamp. Use `setProgressListener(RenderProgressListener.NONE)` to disable the default console output for silent tests, benchmarks, or external progress handling.
+
+Progress events are emitted by stage and configured interval, not once per pixel. This keeps progress collection lightweight even when the renderer traces many rays per pixel.
+
+Progress persistence is opt-in. `RenderProgressWriters` provides ready-made listeners for CSV and SQLite:
+
+```java
+import metrics.RenderProgressWriters;
+
+Camera camera = Camera.getBuilder()
+        // regular camera configuration...
+        .setProgressListener(RenderProgressWriters.csvForImage("quick-start"))
+        .build();
+```
+
+This writes progress events to:
+
+```text
+images/quick-start-progress.csv
+```
+
+Use SQLite in the same way:
+
+```java
+import metrics.RenderProgressWriters;
+
+Camera camera = Camera.getBuilder()
+        // regular camera configuration...
+        .setProgressListener(RenderProgressWriters.sqliteForImage("quick-start"))
+        .build();
+```
+
+This writes:
+
+```text
+images/quick-start-progress.sqlite
+```
+
+The SQLite database contains `render_runs` for one-row-per-render summaries and `render_progress_events` for the detailed event stream. To keep console progress and persist metrics at the same time, combine listeners:
+
+```java
+.setProgressListener(RenderProgressListener.combine(
+        RenderProgressListener.CONSOLE,
+        RenderProgressWriters.sqliteForImage("quick-start")))
+```
+
+CSV writers create a fresh file when the listener is created. SQLite writers keep appending render runs into the same database, keyed by the per-render `renderId`. The CSV writer buffers rows, and the SQLite writer reuses one connection with prepared statements and batched transactions so persistence does not commit on every progress event. Writers close their resources automatically on `DONE` or `FAILED`; if a render is intentionally stopped after `renderImage()` without `writeToImage()`, close the listener manually.
+
+The `csvForImage(...)` and `sqliteForImage(...)` helpers keep files next to generated images. For render history or benchmark folders, use the `Path` overloads:
+
+```java
+import java.nio.file.Path;
+
+.setProgressListener(RenderProgressWriters.sqlite(Path.of("render-history", "renders.sqlite")))
+```
+
+Future render-history data can be added beside this event stream, such as camera settings, anti-aliasing, adaptive sampling, depth of field, acceleration mode, material sampling limits, thread count, and scene identifiers.
 
 ### Materials
 
@@ -367,7 +444,14 @@ Rendered images are written to:
 <project-root>/images/*.png
 ```
 
-The `images/` directory is ignored by Git and created automatically by `ImageWriter` when an image is written.
+Optional render progress files are also written under `images/` when using `RenderProgressWriters.csvForImage(...)` or `RenderProgressWriters.sqliteForImage(...)`.
+
+```text
+<project-root>/images/*-progress.csv
+<project-root>/images/*-progress.sqlite
+```
+
+The `images/` directory is ignored by Git and created automatically when image or progress output is written.
 
 ---
 
