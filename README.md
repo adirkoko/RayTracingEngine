@@ -92,6 +92,20 @@ Run a single visual test method:
 mvn -Pvisual-tests -Dtest=RenderTests#renderTwoColorTest test
 ```
 
+### Run Acceleration Benchmarks
+
+Acceleration benchmarks compare `LINEAR`, `BVH`, and `GRID` on deterministic intersection-query and small render workloads. They print timing data and are excluded from the default test suite because timing results depend on the machine and JVM state.
+
+```powershell
+mvn -Pbenchmarks test
+```
+
+Run only the acceleration benchmark class:
+
+```powershell
+mvn -Pbenchmarks -Dtest=AccelerationBenchmark test
+```
+
 > The first Maven run may download dependencies and plugins into your local Maven cache.
 
 ---
@@ -270,7 +284,7 @@ scene.geometries.setAcceleration(AccelerationType.GRID);   // Force Regular Grid
 scene.geometries.setAcceleration(AccelerationType.LINEAR); // Force direct traversal
 ```
 
-This is intended for benchmarking and debugging. `AUTO` keeps acceleration transparent for normal rendering and currently chooses BVH for sufficiently large bounded geometry collections. `BVH`, `GRID`, and `LINEAR` make it easy to compare traversal strategies without changing the scene.
+This is intended for benchmarking and debugging. `AUTO` keeps acceleration transparent for normal rendering and currently chooses BVH for sufficiently large bounded geometry collections. `GRID` is not part of `AUTO` yet; use the benchmark profile to gather timing data before changing automatic selection. `BVH`, `GRID`, and `LINEAR` make it easy to compare traversal strategies without changing the scene.
 
 ### Lights
 
