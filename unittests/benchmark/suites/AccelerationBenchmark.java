@@ -21,7 +21,7 @@ class AccelerationBenchmark {
     /**
      * Benchmark image resolution kept modest because this benchmark produces real PNG files.
      */
-    private static final int IMAGE_RESOLUTION = 160;
+    private static final int IMAGE_RESOLUTION = 720;
 
     /**
      * Runs the acceleration profile batch.

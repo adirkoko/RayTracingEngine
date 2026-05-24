@@ -82,4 +82,31 @@ public final class SceneCatalog {
     public static BenchmarkScene shadowHeavy() {
         return new ShadowHeavyScene();
     }
+
+    /**
+     * Gets an image-quality scene for grounded objects and sampled soft shadows.
+     *
+     * @return benchmark scene
+     */
+    public static BenchmarkScene groundedSoftShadow() {
+        return new GroundedSoftShadowScene();
+    }
+
+    /**
+     * Gets an image-quality scene for anti-aliasing, adaptive sampling, and depth of field.
+     *
+     * @return benchmark scene
+     */
+    public static BenchmarkScene samplingAndFocus() {
+        return new SamplingAndFocusScene();
+    }
+
+    /**
+     * Gets an image-quality scene for reflection, glossy reflection, transparency, and diffused glass.
+     *
+     * @return benchmark scene
+     */
+    public static BenchmarkScene globalMaterials() {
+        return new GlobalMaterialsScene();
+    }
 }

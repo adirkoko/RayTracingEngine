@@ -108,7 +108,7 @@ mvn -Pbenchmarks -Dtest=AccelerationBenchmark test
 
 ### Run Render Profile Batches
 
-Render profile batches are also kept under the `benchmarks` profile. They create a fixed scene, render it with several named configurations, write one PNG per profile, and persist progress metrics plus a JSON manifest for later comparison.
+Render profile batches are also kept under the `benchmarks` profile. They render representative image-quality scenes with one named quality-profile set, write one PNG per profile, and persist progress metrics plus a JSON manifest for later comparison.
 
 ```powershell
 mvn -Pbenchmarks -Dtest=RenderBatchBenchmark test
@@ -127,6 +127,8 @@ render-history/benchmark/<suite>/<scene>/<batch-id>/
 |-- manifest.json
 `-- progress.sqlite
 ```
+
+The image-quality suite keeps thread count fixed at `4` for all quality profiles. It compares visual settings such as baseline rendering, uniform supersampling, adaptive sampling, and depth of field over `grounded-soft-shadow`, `sampling-focus`, and `global-materials`; thread scaling belongs in a separate performance suite.
 
 > The first Maven run may download dependencies and plugins into your local Maven cache.
 

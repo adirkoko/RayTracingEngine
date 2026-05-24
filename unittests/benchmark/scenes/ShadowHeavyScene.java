@@ -6,21 +6,18 @@ import geometries.Sphere;
 import geometries.Triangle;
 import geometries.acceleration.AccelerationType;
 import lighting.AmbientLight;
-import lighting.LightSample;
-import lighting.LightSource;
 import primitives.Color;
 import primitives.Material;
 import primitives.Point;
 import primitives.Vector;
 import scene.Scene;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Shadow-heavy bounded scene with sampled area lights and many occluders.
  * <p>
- * This scene multiplies local-lighting work through multiple {@link LightSample}
+ * This scene multiplies local-lighting work through multiple sampled-light
  * values per light source. It mixes opaque and partially transparent blockers so
  * shadow rays exercise both hard occlusion and transparency-aware attenuation.
  */
@@ -96,7 +93,7 @@ final class ShadowHeavyScene implements BenchmarkScene {
                 .setAmbientLight(new AmbientLight(new Color(24, 24, 28), 0.16))
                 .setGeometries(geometries)
                 .setLights(List.of(
-                        new AreaLight(
+                        new SampledAreaLight(
                                 new Color(620, 450, 300),
                                 new Point(-42, 46, -36),
                                 new Vector(1, 0, 0),
@@ -106,7 +103,7 @@ final class ShadowHeavyScene implements BenchmarkScene {
                                 3,
                                 0.00045,
                                 0.000025),
-                        new AreaLight(
+                        new SampledAreaLight(
                                 new Color(170, 220, 330),
                                 new Point(46, 28, -72),
                                 new Vector(1, 0, 0),
@@ -145,123 +142,4 @@ final class ShadowHeavyScene implements BenchmarkScene {
         }
     }
 
-    /**
-     * Benchmark-only sampled area light.
-     */
-    private static final class AreaLight implements LightSource {
-
-        /**
-         * Light intensity.
-         */
-        private final Color intensity;
-
-        /**
-         * Sample positions on the area light.
-         */
-        private final List<Point> samples;
-
-        /**
-         * Linear attenuation factor.
-         */
-        private final double kL;
-
-        /**
-         * Quadratic attenuation factor.
-         */
-        private final double kQ;
-
-        /**
-         * Creates a sampled rectangular area light.
-         *
-         * @param intensity  light intensity
-         * @param center     area center
-         * @param right      area right direction
-         * @param up         area up direction
-         * @param width      area width
-         * @param height     area height
-         * @param sampleSize number of samples along each side
-         * @param kL         linear attenuation factor
-         * @param kQ         quadratic attenuation factor
-         */
-        private AreaLight(
-                Color intensity,
-                Point center,
-                Vector right,
-                Vector up,
-                double width,
-                double height,
-                int sampleSize,
-                double kL,
-                double kQ) {
-            this.intensity = intensity;
-            this.samples = createSamples(center, right.normalize(), up.normalize(), width, height, sampleSize);
-            this.kL = kL;
-            this.kQ = kQ;
-        }
-
-        @Override
-        public Color getIntensity(Point point) {
-            double distance = getDistance(point);
-            return intensity.scale(1 / (1 + kL * distance + kQ * distance * distance));
-        }
-
-        @Override
-        public Vector getL(Point point) {
-            return point.subtract(samples.getFirst()).normalize();
-        }
-
-        @Override
-        public double getDistance(Point point) {
-            return samples.getFirst().distance(point);
-        }
-
-        @Override
-        public List<LightSample> getSamples(Point point) {
-            List<LightSample> lightSamples = new ArrayList<>();
-            for (Point sample : samples) {
-                double distance = sample.distance(point);
-                lightSamples.add(new LightSample(
-                        intensity.scale(1 / (1 + kL * distance + kQ * distance * distance)),
-                        point.subtract(sample).normalize(),
-                        distance));
-            }
-            return lightSamples;
-        }
-
-        /**
-         * Creates deterministic sample positions over a rectangular area.
-         *
-         * @param center     area center
-         * @param right      normalized right axis
-         * @param up         normalized up axis
-         * @param width      area width
-         * @param height     area height
-         * @param sampleSize sample count per side
-         * @return sample positions
-         */
-        private static List<Point> createSamples(
-                Point center,
-                Vector right,
-                Vector up,
-                double width,
-                double height,
-                int sampleSize) {
-            List<Point> samples = new ArrayList<>();
-            double cellWidth = width / sampleSize;
-            double cellHeight = height / sampleSize;
-
-            for (int y = 0; y < sampleSize; y++) {
-                for (int x = 0; x < sampleSize; x++) {
-                    double rightOffset = (x - (sampleSize - 1) / 2.0) * cellWidth;
-                    double upOffset = (y - (sampleSize - 1) / 2.0) * cellHeight;
-                    Point sample = center;
-                    if (rightOffset != 0) sample = sample.add(right.scale(rightOffset));
-                    if (upOffset != 0) sample = sample.add(up.scale(upOffset));
-                    samples.add(sample);
-                }
-            }
-
-            return samples;
-        }
-    }
 }
