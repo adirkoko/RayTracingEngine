@@ -94,7 +94,7 @@ mvn -Pvisual-tests -Dtest=RenderTests#renderTwoColorTest test
 
 ### Run Acceleration Benchmarks
 
-Acceleration benchmarks compare `AUTO`, `LINEAR`, `BVH`, and `GRID` as render profiles over benchmark scenes such as `small-overhead`, `uniform-bounded`, `clustered-bounded`, `mixed-scale-bounded`, `unbounded-fallback`, `reflection-transparency`, and `profile-comparison`. They write images, progress metrics, and a manifest, and are excluded from the default test suite because timing results depend on the machine and JVM state.
+Acceleration benchmarks compare `AUTO`, `LINEAR`, `BVH`, and `GRID` as render profiles over benchmark scenes such as `small-overhead`, `uniform-bounded`, `clustered-bounded`, `mixed-scale-bounded`, `unbounded-fallback`, `reflection-transparency`, `shadow-heavy`, and `profile-comparison`. They write images, progress metrics, and a manifest, and are excluded from the default test suite because timing results depend on the machine and JVM state.
 
 ```powershell
 mvn -Pbenchmarks test

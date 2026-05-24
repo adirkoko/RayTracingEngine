@@ -35,6 +35,7 @@ class AccelerationBenchmark {
                 SceneCatalog.mixedScaleBounded(),
                 SceneCatalog.unboundedFallback(),
                 SceneCatalog.reflectionTransparency(),
+                SceneCatalog.shadowHeavy(),
                 SceneCatalog.profileComparison())) {
             renderScene(scene);
         }

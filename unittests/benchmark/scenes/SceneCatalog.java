@@ -74,10 +74,12 @@ public final class SceneCatalog {
         return new ReflectionTransparencyScene();
     }
 
-    /*
-     * TODO: Add shadow-heavy light-sampling scene.
-     * Purpose: multiple occluders and lights that can return several LightSample values.
-     * Expected use: measure shadow ray behavior, soft-shadow sampling cost, and acceleration
-     * impact on transparency-aware shadow checks.
+    /**
+     * Gets a shadow-heavy scene with sampled lights and transparent blockers.
+     *
+     * @return benchmark scene
      */
+    public static BenchmarkScene shadowHeavy() {
+        return new ShadowHeavyScene();
+    }
 }
