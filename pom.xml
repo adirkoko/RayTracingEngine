@@ -56,6 +56,7 @@
                         <include>**/renderer/CameraTest.java</include>
                         <include>**/renderer/ImageWriterTest.java</include>
                         <include>**/renderer/IntegrationTests.java</include>
+                        <include>**/renderer/SimpleRayTracerTest.java</include>
                     </includes>
                 </configuration>
             </plugin>

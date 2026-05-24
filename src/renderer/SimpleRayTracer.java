@@ -164,30 +164,60 @@ public class SimpleRayTracer extends RayTracerBase {
         Color color = gp.geometry.getEmission(); // Base emission color of the geometry
         Material material = gp.geometry.getMaterial(); // Material properties of the geometry
 
-        for (LightSource lightSource : scene.lights) {
-            List<LightSample> lightSamples = lightSource.getSamples(gp.point);
-            if (lightSamples.isEmpty()) continue;
-            Color lightColor = Color.BLACK;
-
-            for (LightSample lightSample : lightSamples) {
-                Vector l = lightSample.direction(); // Direction vector from light sample to point
-                double ln = alignZero(l.dotProduct(n));
-                if (ln * vn > 0) { // Check if the light sample is on the same side of the surface as the view direction
-                    Double3 ktr = transparency(gp, lightSample, l, n);
-                    if (!ktr.product(k).lowerThan(MIN_CALC_COLOR_K)) {
-                        Color iL = lightSample.intensity().scale(ktr); // Intensity of the light sample at the point
-                        // Add diffuse and specular lighting effects
-                        lightColor = lightColor.add(
-                                iL.scale(calcDiffuse(material, ln)), // Diffuse component
-                                iL.scale(calcSpecular(material, n, l, ln, v)) // Specular component
-                        );
-                    }
-                }
-            }
-            color = color.add(lightColor.reduce(lightSamples.size()));
-        }
+        for (LightSource lightSource : scene.lights)
+            color = color.add(calcLightContribution(gp, v, n, vn, k, material, lightSource));
 
         return color; // Return the final color with local lighting effects
+    }
+
+    /**
+     * Calculates the averaged contribution of all samples returned by a light source.
+     *
+     * @param gp          The geo point.
+     * @param v           The incoming ray direction.
+     * @param n           The normal vector at gp.
+     * @param vn          v dot-product n.
+     * @param k           The accumulated attenuation factor.
+     * @param material    The material of the geometry.
+     * @param lightSource The sampled light source.
+     * @return The light contribution after per-sample shadow checks.
+     */
+    private Color calcLightContribution(
+            GeoPoint gp, Vector v, Vector n, double vn, Double3 k, Material material, LightSource lightSource) {
+        List<LightSample> lightSamples = lightSource.getSamples(gp.point);
+        if (lightSamples.isEmpty()) return Color.BLACK;
+
+        Color color = Color.BLACK;
+        for (LightSample lightSample : lightSamples)
+            color = color.add(calcLightSampleContribution(gp, v, n, vn, k, material, lightSample));
+
+        return color.reduce(lightSamples.size());
+    }
+
+    /**
+     * Calculates one light sample contribution, including transparency along its shadow ray.
+     *
+     * @param gp          The geo point.
+     * @param v           The incoming ray direction.
+     * @param n           The normal vector at gp.
+     * @param vn          v dot-product n.
+     * @param k           The accumulated attenuation factor.
+     * @param material    The material of the geometry.
+     * @param lightSample The sampled light contribution.
+     * @return The sample contribution, or black when blocked or irrelevant.
+     */
+    private Color calcLightSampleContribution(
+            GeoPoint gp, Vector v, Vector n, double vn, Double3 k, Material material, LightSample lightSample) {
+        Vector l = lightSample.direction();
+        double ln = alignZero(l.dotProduct(n));
+        if (ln * vn <= 0) return Color.BLACK;
+
+        Double3 ktr = transparency(gp, lightSample, l, n);
+        if (ktr.product(k).lowerThan(MIN_CALC_COLOR_K)) return Color.BLACK;
+
+        Color iL = lightSample.intensity().scale(ktr);
+        return iL.scale(calcDiffuse(material, ln))
+                .add(iL.scale(calcSpecular(material, n, l, ln, v)));
     }
 
     /**
@@ -238,32 +268,5 @@ public class SimpleRayTracer extends RayTracerBase {
     private Double3 calcSpecular(Material mat, Vector n, Vector l, double nl, Vector v) {
         double vr = v.dotProduct(l.subtract(n.scale(nl * 2))); // Calculate the reflection vector
         return (alignZero(vr) > 0) ? Double3.ZERO : mat.kS.scale(Math.pow(-vr, mat.nShininess)); // Calculate the specular component
-    }
-
-
-    /**
-     * Checks if a point is unshaded from a given light source.
-     *
-     * @param gp          The geo point to check.
-     * @param lightSource The light source.
-     * @param l           The light direction vector.
-     * @param n           The normal vector at the point.
-     * @return true if the point is unshaded, false otherwise.
-     */
-    @SuppressWarnings("unused")
-    @Deprecated(forRemoval = true)
-    private boolean unshaded(GeoPoint gp, LightSource lightSource, Vector l, Vector n) {
-        double lightDistance = lightSource.getDistance(gp.point); // Distance to the light source
-
-        // Find intersections between the light ray and the geometries within the light distance
-        List<GeoPoint> intersections = scene.geometries.findGeoIntersections(new Ray(gp.point, l.scale(-1), n), lightDistance);
-        if (intersections == null) return true; // No intersections, point is unshaded
-
-        for (GeoPoint intersection : intersections) {
-            // If an intersection is found within the light distance and the transparency coefficient is less than 1
-            if (intersection.point.distance(gp.point) <= lightDistance && intersection.geometry.getMaterial().kT.equals(Double3.ZERO))
-                return false; // Point is shaded
-        }
-        return true; // Point is unshaded
     }
 }

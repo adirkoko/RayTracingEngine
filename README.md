@@ -112,7 +112,7 @@ mvn -Pvisual-tests -Dtest=RenderTests#renderTwoColorTest test
 - Per-geometry emission color
 - Scene-level ambient lighting
 - Recursive reflection via `kR` and transparency/refraction via `kT`
-- Transparency-aware shadow handling for partially transparent blockers
+- Transparency-aware soft shadow handling across light samples
 
 ### Lighting
 
