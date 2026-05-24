@@ -94,7 +94,7 @@ mvn -Pvisual-tests -Dtest=RenderTests#renderTwoColorTest test
 
 ### Run Acceleration Benchmarks
 
-Acceleration benchmarks compare `LINEAR`, `BVH`, and `GRID` on deterministic intersection-query and small render workloads. They print timing data and are excluded from the default test suite because timing results depend on the machine and JVM state.
+Acceleration benchmarks compare `AUTO`, `LINEAR`, `BVH`, and `GRID` as render profiles over the same benchmark scene. They write images, progress metrics, and a manifest, and are excluded from the default test suite because timing results depend on the machine and JVM state.
 
 ```powershell
 mvn -Pbenchmarks test
@@ -104,6 +104,28 @@ Run only the acceleration benchmark class:
 
 ```powershell
 mvn -Pbenchmarks -Dtest=AccelerationBenchmark test
+```
+
+### Run Render Profile Batches
+
+Render profile batches are also kept under the `benchmarks` profile. They create a fixed scene, render it with several named configurations, write one PNG per profile, and persist progress metrics plus a JSON manifest for later comparison.
+
+```powershell
+mvn -Pbenchmarks -Dtest=RenderBatchBenchmark test
+```
+
+Batch images are written under:
+
+```text
+images/benchmark/<suite>/<scene>/<batch-id>/<profile>.png
+```
+
+Batch history is written under:
+
+```text
+render-history/benchmark/<suite>/<scene>/<batch-id>/
+|-- manifest.json
+`-- progress.sqlite
 ```
 
 > The first Maven run may download dependencies and plugins into your local Maven cache.
@@ -182,10 +204,22 @@ unittests/
 |-- sampling/        # Unit tests for sample generation
 |-- geometries/      # Geometry and intersection tests
 |-- lighting/        # Lighting render tests
-`-- renderer/        # Camera tests and visual rendering tests
+|-- renderer/        # Camera tests and visual rendering tests
+`-- benchmark/       # Opt-in benchmark runners, scenes, profiles, and suites
 
 images/              # Generated PNG output folder, ignored by Git
+render-history/      # Generated benchmark metrics and manifests, ignored by Git
 target/              # Maven build output, ignored by Git
+```
+
+Benchmark code is intentionally kept outside the engine core:
+
+```text
+unittests/benchmark/
+|-- core/     # Generic batch runner, output layout, render profiles, and result records
+|-- scenes/   # Benchmark scene catalog and scene factories
+|-- profiles/ # Named profile sets for acceleration, quality, threads, and sampling comparisons
+`-- suites/   # Thin JUnit entry points that compose SceneCatalog + ProfileCatalog + RenderBatchRunner
 ```
 
 ---

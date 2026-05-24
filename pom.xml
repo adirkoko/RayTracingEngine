@@ -107,7 +107,7 @@
                         <configuration>
                             <useModulePath>false</useModulePath>
                             <includes>
-                                <include>**/benchmark/*Benchmark.java</include>
+                                <include>**/benchmark/**/*Benchmark.java</include>
                             </includes>
                         </configuration>
                     </plugin>

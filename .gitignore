@@ -6,6 +6,7 @@ doc/
 
 ### Render output ###
 images/
+render-history/
 
 ### IDE and editor files ###
 .idea/
