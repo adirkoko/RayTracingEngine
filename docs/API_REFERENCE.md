@@ -2,13 +2,47 @@
 
 This document describes the public API used to build scenes, configure rendering, produce images, and collect render progress data. It is written for users who want to use the engine seriously, not only run the quick-start example.
 
+## Who Should Read This
+
+If you only want to render the demo scene, start with the project `README.md`. If you want to build custom scenes, tune image quality, collect metrics, compare render runs, or extend the renderer, this document is for you.
+
 The main workflow is:
 
 ```text
 primitives -> geometries/materials/lights -> scene -> camera -> ray tracer -> image/progress/manifest
 ```
 
-Most applications only need the public APIs in `primitives`, `geometries`, `lighting`, `scene`, `renderer`, and optionally `metrics`. Internal acceleration and sampling helpers are covered briefly near the end.
+## Requirements
+
+- JDK 21 or newer
+- Maven 3.9 or newer
+
+## Public API Boundary
+
+Most applications should use classes from `primitives`, `geometries`, `lighting`, `scene`, `renderer`, and optionally `metrics`. Classes under acceleration internals and renderer internals are documented only for extension, debugging, and architecture understanding.
+
+## Contents
+
+- [Requirements](#requirements)
+- [Public API Boundary](#public-api-boundary)
+- [Minimal Render Workflow](#minimal-render-workflow)
+- [Package Map](#package-map)
+- [Core Primitives](#core-primitives)
+- [Materials And Global Effects](#materials-and-global-effects)
+- [Geometry API](#geometry-api)
+- [Geometry Collections And Acceleration](#geometry-collections-and-acceleration)
+- [Scene API](#scene-api)
+- [Lighting API](#lighting-api)
+- [Camera And Rendering API](#camera-and-rendering-api)
+- [Progress, Metrics, And Manifests](#progress-metrics-and-manifests)
+- [XML Scene Loading](#xml-scene-loading)
+- [Sampling Utilities](#sampling-utilities)
+- [Error Handling](#error-handling)
+- [Common Recipes](#common-recipes)
+- [Best Practices](#best-practices)
+- [Advanced And Internal APIs](#advanced-and-internal-apis)
+- [Build And Test Commands](#build-and-test-commands)
+- [Output Summary](#output-summary)
 
 ---
 
@@ -248,7 +282,7 @@ Validation:
 - `Double3` coefficients cannot be null and cannot contain negative components.
 - `reflectionBlur` and `transparencyBlur` cannot be negative.
 - `globalSamples` must be positive and cannot exceed `Material.MAX_GLOBAL_SAMPLES`.
-- `Material.MAX_GLOBAL_SAMPLES` is currently `16`.
+- `Material.MAX_GLOBAL_SAMPLES` exposes the current implementation cap for blurred global-effect samples. Treat the exact value as an implementation limit, not a rendering-quality target.
 
 ### Reflection, Transparency, Glossy Reflection, Diffused Glass
 
@@ -280,9 +314,11 @@ Best practices:
 
 Runtime guards in `SimpleRayTracer` prevent uncontrolled recursion:
 
-- Maximum color recursion level is internal and currently `10`.
+- Recursive color calculation is capped by the current implementation.
 - Contributions below the internal minimum attenuation threshold are skipped.
 - Cone-sampled global effects expand only for a limited recursive depth.
+
+These guards are implementation limits rather than stable public API contracts.
 
 ---
 
@@ -660,7 +696,7 @@ Validation:
 
 Best practices:
 
-- Keep light sample counts reasonable. The ray tracer caps consumed samples per light internally.
+- Keep light sample counts reasonable. The current ray tracer has an internal per-light sample guard to prevent accidental render explosions.
 - Use multiple samples only for lights that need soft shadows.
 - Use acceleration when many shadow rays are expected.
 
@@ -1190,6 +1226,180 @@ Validation:
 
 ---
 
+## Error Handling
+
+Most invalid configuration is rejected early by constructors, setters, or `Camera.Builder#build()`.
+
+Common failure behavior:
+
+| Area | Behavior |
+|---|---|
+| Primitive construction | Invalid values such as zero vectors or negative color components throw `IllegalArgumentException` |
+| Material configuration | Negative coefficients, null `Double3` coefficients, and excessive `globalSamples` throw `IllegalArgumentException` |
+| Camera builder | Missing required render data throws `MissingResourceException`; invalid settings throw `IllegalArgumentException` or `IllegalStateException` |
+| Rendering | Render failures are propagated to the caller |
+| Render manifests | If enabled, a failed render attempts to write a `FAILED` manifest before rethrowing the original exception |
+| Progress listeners | Listener failures are fail-fast by default |
+| Resilient progress listeners | `RenderProgressListener.resilient(...)` suppresses listener failures and optionally reports them to a handler |
+| Metrics writers | CSV and SQLite failures are thrown unless wrapped with a resilient listener |
+
+Best practice:
+
+```java
+.setProgressListener(RenderProgressListener.resilient(
+        RenderProgressWriters.sqliteForImage("production-render"),
+        failure -> System.err.println(failure.getMessage())))
+```
+
+Use fail-fast progress listeners while developing metrics code. Use resilient listeners when metrics should not fail a successful image render.
+
+---
+
+## Common Recipes
+
+These snippets assume you already have a `Scene scene` and a standard `Camera.Builder` setup with location, direction, view-plane size, `ImageWriter`, and `SimpleRayTracer`.
+
+### Render From A `main` Method
+
+Use a normal Java entry point when using the engine as a library:
+
+```java
+package app;
+
+public class MyRender {
+    public static void main(String[] args) {
+        Scene scene = new Scene("My Scene");
+        // add geometries, materials, and lights...
+
+        Camera.getBuilder()
+                // regular camera configuration...
+                .setImageWriter(new ImageWriter("my-scene", 800, 800))
+                .setRayTracer(new SimpleRayTracer(scene))
+                .build()
+                .renderImage()
+                .writeToImage();
+    }
+}
+```
+
+Compile and run:
+
+```powershell
+mvn compile
+java -cp target/classes app.MyRender
+```
+
+### Render With Anti-Aliasing
+
+```java
+.setSampleSize(3)
+```
+
+This traces a `3 x 3` jittered sample grid per pixel.
+
+### Render With Adaptive Sampling
+
+```java
+.setAdaptiveSampling(true)
+.setMaxDepth(3)
+```
+
+Use adaptive sampling when large areas of the image are smooth and only edges/details need extra rays.
+
+### Render With Depth Of Field
+
+```java
+.setApertureRadius(2.0)
+.setFocalDistance(120)
+.setApertureSampleSize(3)
+```
+
+Use a positive aperture radius to blur objects away from the focal plane.
+
+### Render With Automatic Acceleration
+
+```java
+scene.geometries.setAcceleration(AccelerationType.AUTO);
+```
+
+Record the resolved mode when comparing performance:
+
+```java
+AccelerationType resolved = scene.geometries.getResolvedAccelerationType();
+```
+
+### Force BVH Or Grid For Benchmarks
+
+```java
+scene.geometries.setAcceleration(AccelerationType.BVH);
+scene.geometries.setAcceleration(AccelerationType.GRID);
+scene.geometries.setAcceleration(AccelerationType.LINEAR);
+```
+
+Use explicit modes to compare traversal strategies without changing scene content.
+
+### Enable Glossy Reflection
+
+```java
+new Material()
+        .setKr(0.6)
+        .setReflectionBlur(0.15)
+        .setGlobalSamples(8);
+```
+
+### Enable Diffused Glass
+
+```java
+new Material()
+        .setKt(0.5)
+        .setTransparencyBlur(0.1)
+        .setGlobalSamples(8);
+```
+
+### Persist Progress To SQLite
+
+```java
+import metrics.RenderProgressWriters;
+
+.setProgressListener(RenderProgressWriters.sqliteForImage("my-scene"))
+```
+
+For long or important renders, wrap metrics as best-effort:
+
+```java
+.setProgressListener(RenderProgressListener.resilient(
+        RenderProgressWriters.sqliteForImage("my-scene"),
+        failure -> System.err.println(failure.getMessage())))
+```
+
+### Write A Render Manifest
+
+```java
+.setRenderManifestForImage()
+```
+
+This writes:
+
+```text
+images/<image-name>-manifest.json
+```
+
+Use an explicit path when an external runner owns output layout:
+
+```java
+.setRenderManifestPath(Path.of("render-history", "my-scene.json"))
+```
+
+### Silence Console Progress
+
+```java
+.setProgressListener(RenderProgressListener.NONE)
+```
+
+This is useful for tests, benchmarks, and external progress handling.
+
+---
+
 ## Best Practices
 
 ### Build Scenes Programmatically For Advanced Renders
@@ -1351,4 +1561,3 @@ mvn -Pbenchmarks test
 | SQLite progress | `RenderProgressWriters.sqliteForImage(image)` | `images/<image>-progress.sqlite` |
 | JSON manifest | `setRenderManifestForImage()` | `images/<image>-manifest.json` |
 | Explicit manifest | `setRenderManifestPath(Path)` | User-provided path |
-
