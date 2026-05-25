@@ -70,6 +70,15 @@ public class Geometries extends Intersectable {
     }
 
     /**
+     * Gets the number of direct geometries in this collection.
+     *
+     * @return geometry count
+     */
+    public int size() {
+        return geometries.size();
+    }
+
+    /**
      * Sets the internal acceleration mode.
      * Intended for performance benchmarking and debugging.
      *

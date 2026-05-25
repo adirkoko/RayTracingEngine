@@ -4,7 +4,7 @@ import primitives.*;
 import sampling.DiskSampler;
 import sampling.JitteredSampler;
 import sampling.Sample2D;
-
+import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.MissingResourceException;
@@ -145,6 +145,26 @@ public class Camera implements Cloneable {
      * Current render run start timestamp.
      */
     private long renderStartedMillis;
+
+    /**
+     * Pixel rendering elapsed time for the current run.
+     */
+    private long renderPixelsElapsedMillis;
+
+    /**
+     * Image writing elapsed time for the current run.
+     */
+    private long writeImageElapsedMillis;
+
+    /**
+     * Explicit render manifest output path. Null disables manifest writing unless image-local manifest is enabled.
+     */
+    private Path renderManifestPath;
+
+    /**
+     * Whether to write the render manifest next to the image output.
+     */
+    private boolean renderManifestForImage;
 
     /**
      * Private constructor to prevent direct instantiation.
@@ -488,11 +508,15 @@ public class Camera implements Cloneable {
         reportProgress(RenderStage.WRITE_IMAGE, 0, 1, stageStartedMillis);
         try {
             imageWriter.writeToImage();
+            writeImageElapsedMillis = System.currentTimeMillis() - stageStartedMillis;
+            reportProgress(RenderStage.WRITE_IMAGE, 1, 1, stageStartedMillis);
+            writeRenderManifest(RenderStage.DONE, null);
         } catch (RuntimeException e) {
+            writeImageElapsedMillis = System.currentTimeMillis() - stageStartedMillis;
+            writeFailureManifest(e);
             reportFailureProgress(e, stageStartedMillis);
             throw e;
         }
-        reportProgress(RenderStage.WRITE_IMAGE, 1, 1, stageStartedMillis);
         reportTerminalProgress(RenderStage.DONE, 1, 1, renderStartedMillis);
         return this;
     }
@@ -540,6 +564,7 @@ public class Camera implements Cloneable {
         final int nY = imageWriter.getNy();
 
         beginRenderRun();
+        long stageStartedMillis = System.currentTimeMillis();
 
         // Initialize pixel manager with progress reporting interval
         pixelManager = new PixelManager(
@@ -548,7 +573,7 @@ public class Camera implements Cloneable {
                 progressIntervalPercent,
                 renderId,
                 renderStartedMillis,
-                System.currentTimeMillis(),
+                stageStartedMillis,
                 progressListener);
         adaptivePixelSampler = new AdaptivePixelSampler(right, up, this::traceViewPlanePoint, ADAPTIVE_COLOR_TOLERANCE);
 
@@ -578,7 +603,10 @@ public class Camera implements Cloneable {
                 }
             }
             pixelManager.finish();
+            renderPixelsElapsedMillis = System.currentTimeMillis() - stageStartedMillis;
         } catch (RuntimeException e) {
+            renderPixelsElapsedMillis = System.currentTimeMillis() - stageStartedMillis;
+            writeFailureManifest(e);
             reportFailureProgress(e, renderStartedMillis);
             throw e;
         }
@@ -594,6 +622,8 @@ public class Camera implements Cloneable {
         if (renderId == null || renderId.isBlank())
             throw new IllegalStateException("Render id cannot be null or blank");
         renderStartedMillis = System.currentTimeMillis();
+        renderPixelsElapsedMillis = 0;
+        writeImageElapsedMillis = 0;
     }
 
     /**
@@ -652,6 +682,86 @@ public class Camera implements Cloneable {
         } catch (RuntimeException progressFailure) {
             failure.addSuppressed(progressFailure);
         }
+    }
+
+    /**
+     * Writes a failed render manifest without hiding the original failure.
+     *
+     * @param failure original render failure
+     */
+    private void writeFailureManifest(RuntimeException failure) {
+        try {
+            writeRenderManifest(RenderStage.FAILED, failure.getMessage());
+        } catch (RuntimeException manifestFailure) {
+            failure.addSuppressed(manifestFailure);
+        }
+    }
+
+    /**
+     * Writes the optional render manifest for the current run.
+     *
+     * @param status render status
+     * @param error  error message, or null on success
+     */
+    private void writeRenderManifest(RenderStage status, String error) {
+        Path manifestPath = renderManifestPath();
+        if (manifestPath == null) return;
+
+        RenderManifestWriter.write(manifestPath, renderManifestSnapshot(status, error));
+    }
+
+    /**
+     * Gets the configured manifest path, or null when manifest writing is disabled.
+     *
+     * @return render manifest path, or null
+     */
+    private Path renderManifestPath() {
+        if (renderManifestPath != null) return renderManifestPath;
+        return renderManifestForImage
+                ? ImageWriter.getOutputDirectory().resolve(imageWriter.getImageName() + "-manifest.json")
+                : null;
+    }
+
+    /**
+     * Builds a render-run snapshot for optional manifest serialization.
+     *
+     * @param status render status
+     * @param error  error message, or null on success
+     * @return render manifest snapshot
+     */
+    private RenderManifestWriter.Snapshot renderManifestSnapshot(RenderStage status, String error) {
+        var scene = rayTracer.scene;
+        return new RenderManifestWriter.Snapshot(
+                renderId,
+                status,
+                error,
+                imageWriter.getImagePath().toString(),
+                imageWriter.getNx(),
+                imageWriter.getNy(),
+                renderStartedMillis,
+                System.currentTimeMillis(),
+                renderPixelsElapsedMillis,
+                writeImageElapsedMillis,
+                position,
+                toward,
+                up,
+                viewPlaneDistance,
+                viewPlaneWidth,
+                viewPlaneHeight,
+                threadsCount,
+                sampleSize,
+                adaptiveSampling,
+                maxAdaptiveDepth,
+                apertureRadius,
+                focalDistance,
+                apertureSampleSize,
+                lensSampleSize(),
+                progressIntervalPercent,
+                scene.geometries.getAccelerationType(),
+                scene.geometries.getResolvedAccelerationType(),
+                scene.name,
+                scene.geometries.size(),
+                scene.lights.size());
     }
 
 
@@ -845,6 +955,33 @@ public class Camera implements Cloneable {
             if (progressIntervalPercent < 0)
                 throw new IllegalArgumentException("Progress interval cannot be negative");
             camera.progressIntervalPercent = progressIntervalPercent;
+            return this;
+        }
+
+        /**
+         * Sets an explicit output path for a JSON manifest describing this render run.
+         * Manifest writing is opt-in; if this method is not called, no manifest is written.
+         *
+         * @param renderManifestPath manifest output path
+         * @return the Builder instance
+         */
+        public Builder setRenderManifestPath(Path renderManifestPath) {
+            if (renderManifestPath == null)
+                throw new IllegalArgumentException("Render manifest path cannot be null");
+            camera.renderManifestPath = renderManifestPath;
+            camera.renderManifestForImage = false;
+            return this;
+        }
+
+        /**
+         * Enables writing a JSON manifest next to the rendered image.
+         * The manifest is written as {@code images/<image-name>-manifest.json}.
+         *
+         * @return the Builder instance
+         */
+        public Builder setRenderManifestForImage() {
+            camera.renderManifestPath = null;
+            camera.renderManifestForImage = true;
             return this;
         }
 

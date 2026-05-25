@@ -290,6 +290,8 @@ Camera camera = Camera.getBuilder()
         .setProgressListener(listener)      // Optional structured render progress callback
         .setProgressIntervalPercent(double) // Optional progress callback interval
         .setRenderIdSupplier(supplier)      // Optional custom render id generation
+        .setRenderManifestForImage()        // Optional JSON manifest beside image output
+        .setRenderManifestPath(Path)        // Optional explicit JSON manifest path
         .build();
 ```
 
@@ -396,7 +398,34 @@ import java.nio.file.Path;
 .setProgressListener(RenderProgressWriters.sqlite(Path.of("render-history", "renders.sqlite")))
 ```
 
-Future render-history data can be added beside this event stream, such as camera settings, anti-aliasing, adaptive sampling, depth of field, acceleration mode, material sampling limits, thread count, and scene identifiers.
+### Render Manifest
+
+Render manifests are opt-in JSON summaries for a single image render. They are separate from progress metrics: progress listeners record lifecycle events, while the manifest records the final run configuration and result summary.
+
+Write a manifest beside the PNG:
+
+```java
+Camera camera = Camera.getBuilder()
+        // regular camera configuration...
+        .setRenderManifestForImage()
+        .build();
+```
+
+For an image named `quick-start`, this writes:
+
+```text
+images/quick-start-manifest.json
+```
+
+Use an explicit path when a render-history or benchmark tool owns the output layout:
+
+```java
+import java.nio.file.Path;
+
+.setRenderManifestPath(Path.of("render-history", "quick-start.json"))
+```
+
+The manifest includes render id, status, image path and resolution, timing, camera geometry, sampling and depth-of-field settings, requested and resolved acceleration mode, scene name, geometry count, and light count. If `AUTO` acceleration is used, the manifest records both the requested `AUTO` value and the resolved `LINEAR`, `BVH`, or `GRID` value.
 
 ### Materials
 
@@ -508,7 +537,13 @@ Optional render progress files are also written under `images/` when using `Rend
 <project-root>/images/*-progress.sqlite
 ```
 
-The `images/` directory is ignored by Git and created automatically when image or progress output is written.
+Optional per-image manifests are written under `images/` when using `setRenderManifestForImage()`.
+
+```text
+<project-root>/images/*-manifest.json
+```
+
+The `images/` directory is ignored by Git and created automatically when image, progress, or manifest output is written.
 
 ---
 

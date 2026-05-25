@@ -93,6 +93,24 @@ public class ImageWriter {
         return FOLDER_PATH;
     }
 
+    /**
+     * Gets the configured image name without extension.
+     *
+     * @return image name
+     */
+    public String getImageName() {
+        return imageName;
+    }
+
+    /**
+     * Gets the full PNG output path.
+     *
+     * @return image output path
+     */
+    public Path getImagePath() {
+        return FOLDER_PATH.resolve(imageName + ".png");
+    }
+
     // ***************** Operations ******************** //
 
     /**
@@ -100,7 +118,7 @@ public class ImageWriter {
      */
     public void writeToImage() {
         try {
-            File file = FOLDER_PATH.resolve(imageName + ".png").toFile();
+            File file = getImagePath().toFile();
             File parent = file.getParentFile();
             if (parent != null && !parent.exists() && !parent.mkdirs()) {
                 throw new IOException("Could not create output directory " + parent);

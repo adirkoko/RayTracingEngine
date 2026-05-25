@@ -2,6 +2,7 @@ package renderer;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import geometries.acceleration.AccelerationType;
 import metrics.RenderProgressWriters;
 import org.junit.jupiter.api.Test;
 import primitives.*;
@@ -138,6 +139,10 @@ class CameraTest {
         assertThrows(IllegalArgumentException.class,
                 () -> Camera.getBuilder().setThreadsCount(-1),
                 "Builder should reject a negative thread count");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> Camera.getBuilder().setRenderManifestPath(null),
+                "Builder should reject a null render manifest path");
 
         assertDoesNotThrow(() -> createCompleteBuilder().setProgressListener(RenderProgressListener.NONE).build(),
                 "Builder should allow replacing default progress printing with a silent listener");
@@ -348,6 +353,41 @@ class CameraTest {
 
         assertDoesNotThrow(sqliteWriter::close, "SQLite writer close should be safe after terminal events");
         assertDoesNotThrow(sqliteWriter::close, "SQLite writer close should be idempotent");
+    }
+
+    /**
+     * Test optional JSON render manifest output.
+     *
+     * @throws Exception if temporary file or render output handling fails
+     */
+    @Test
+    void testRenderManifestOutput() throws Exception {
+        Path manifestPath = Files.createTempDirectory("render-manifest").resolve("manifest.json");
+
+        createCompleteBuilder()
+                .setImageWriter(new ImageWriter("render-manifest-test", 2, 2))
+                .setRenderIdSupplier(() -> "manifest-render-id")
+                .setRenderManifestPath(manifestPath)
+                .setProgressListener(RenderProgressListener.NONE)
+                .build()
+                .renderImage()
+                .writeToImage();
+
+        String manifest = Files.readString(manifestPath);
+        assertTrue(manifest.contains("\"renderId\": \"manifest-render-id\""),
+                "Manifest should include the render id");
+        assertTrue(manifest.contains("\"status\": \"DONE\""),
+                "Manifest should include successful status");
+        assertTrue(manifest.contains("\"image\""),
+                "Manifest should include image output data");
+        assertTrue(manifest.contains("\"renderSettings\""),
+                "Manifest should include render settings");
+        assertTrue(manifest.contains("\"requested\": \"AUTO\""),
+                "Manifest should include requested acceleration");
+        assertTrue(manifest.contains("\"resolved\": \"" + AccelerationType.LINEAR.name() + "\""),
+                "Manifest should include resolved acceleration");
+        assertTrue(manifest.contains("\"sceneSummary\""),
+                "Manifest should include scene summary");
     }
 
     /**
