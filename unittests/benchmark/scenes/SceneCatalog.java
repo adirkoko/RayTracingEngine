@@ -84,6 +84,24 @@ public final class SceneCatalog {
     }
 
     /**
+     * Gets a dense standalone teapot mesh scene.
+     *
+     * @return benchmark scene
+     */
+    public static BenchmarkScene teapotMesh() {
+        return new TeapotMeshScene();
+    }
+
+    /**
+     * Gets a complex bounded teapot scene with surrounding objects and global effects.
+     *
+     * @return benchmark scene
+     */
+    public static BenchmarkScene teapotComplex() {
+        return new TeapotComplexScene();
+    }
+
+    /**
      * Gets an image-quality scene for grounded objects and sampled soft shadows.
      *
      * @return benchmark scene
