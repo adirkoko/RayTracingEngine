@@ -68,10 +68,10 @@ class GeometryIndexesTest {
     }
 
     /**
-     * AUTO should avoid GRID for modest scenes dominated by large receiver surfaces.
+     * AUTO should avoid GRID, but still accelerate, for scenes dominated by large receiver surfaces.
      */
     @Test
-    void autoUsesLinearForLargeReceiverSurfaces() {
+    void autoUsesBvhForLargeReceiverSurfaces() {
         List<Intersectable> geometries = new ArrayList<>(List.of(
                 new Triangle(new Point(-120, -28, -35), new Point(120, -28, -35), new Point(120, -28, -260)),
                 new Triangle(new Point(-120, -28, -35), new Point(120, -28, -260), new Point(-120, -28, -260)),
@@ -83,7 +83,26 @@ class GeometryIndexesTest {
                 geometries.add(new Sphere(new Point(column * 14, -22 + row * 3, -185 - row * 18), 4.2));
         }
 
-        assertEquals("LinearGeometryIndex", autoIndexName(geometries));
+        assertEquals("BvhGeometryIndex", autoIndexName(geometries));
+    }
+
+    /**
+     * AUTO should use BVH when one unbounded fallback geometry is mixed with enough bounded geometry.
+     */
+    @Test
+    void autoUsesBvhForBoundedSceneWithUnboundedFallback() {
+        List<Intersectable> geometries = new ArrayList<>();
+
+        for (int z = 0; z < 3; z++) {
+            for (int y = -2; y <= 2; y++) {
+                for (int x = -2; x <= 2; x++)
+                    geometries.add(new Sphere(new Point(x * 16, y * 14, -70 - z * 24), 3.8));
+            }
+        }
+
+        geometries.add(new Plane(new Point(0, -18, 0), new Vector(0, 1, 0)));
+
+        assertEquals("BvhGeometryIndex", autoIndexName(geometries));
     }
 
     /**

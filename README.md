@@ -437,7 +437,7 @@ scene.geometries.setAcceleration(AccelerationType.GRID);   // Force Regular Grid
 scene.geometries.setAcceleration(AccelerationType.LINEAR); // Force direct traversal
 ```
 
-`AUTO` is the normal rendering default and keeps acceleration transparent. It uses a conservative scene-shape heuristic: small or receiver-heavy scenes can stay linear, uniformly distributed bounded scenes can use Regular Grid, and dense or clustered bounded scenes usually use BVH. Explicit `BVH`, `GRID`, and `LINEAR` modes are mainly useful for benchmarking and debugging comparisons without changing the scene.
+`AUTO` is the normal rendering default and keeps acceleration transparent. It uses a conservative scene-shape heuristic: very small scenes can stay linear, uniformly distributed fully bounded scenes can use Regular Grid, and fallback-heavy, receiver-heavy, dense, or clustered scenes usually use BVH. Explicit `BVH`, `GRID`, and `LINEAR` modes are mainly useful for benchmarking and debugging comparisons without changing the scene.
 
 When `AUTO` is used, `scene.geometries.getResolvedAccelerationType()` reports the concrete strategy chosen for the current geometry collection. If the geometry index has not been built yet, the call builds it lazily and returns the resolved `LINEAR`, `BVH`, or `GRID` value.
 

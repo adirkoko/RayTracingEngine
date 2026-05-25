@@ -515,11 +515,10 @@ scene.geometries.setAcceleration(AccelerationType.GRID);
 
 `AUTO` is conservative:
 
-- Small scenes may stay linear.
-- Receiver-heavy scenes may stay linear.
-- Uniform bounded distributions may use `GRID`.
-- Dense or clustered bounded scenes usually use `BVH`.
-- Unbounded geometries are handled through fallback traversal.
+- Very small scenes may stay linear.
+- Uniform fully bounded distributions may use `GRID`.
+- Fallback-heavy, receiver-heavy, dense, or clustered scenes usually use `BVH`.
+- Unbounded geometries are handled through fallback traversal and do not force full linear traversal once enough bounded geometry exists.
 
 To record what `AUTO` actually chose:
 

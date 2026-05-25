@@ -18,3 +18,7 @@ render-history/
 
 ### OS files ###
 .DS_Store
+
+### App Generated Files ###
+src/app/*
+*.class

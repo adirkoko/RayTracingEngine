@@ -26,11 +26,6 @@ public final class GeometryIndexes {
     private static final int SMALL_ACCELERATION_LIMIT = 8;
 
     /**
-     * Maximum bounded count where large receiver surfaces usually favor linear traversal.
-     */
-    private static final int LARGE_SURFACE_LINEAR_LIMIT = 64;
-
-    /**
      * Large object span threshold relative to the full scene bounds.
      */
     private static final double LARGE_SPAN_RATIO = 0.45;
@@ -41,14 +36,14 @@ public final class GeometryIndexes {
     private static final double THIN_SPAN_RATIO = 0.03;
 
     /**
-     * Minimum large-span object ratio for treating a modest scene as receiver-heavy.
+     * Minimum large-span object ratio for treating a scene as receiver-heavy.
      */
-    private static final double LARGE_SURFACE_LINEAR_RATIO = 0.08;
+    private static final double RECEIVER_HEAVY_RATIO = 0.08;
 
     /**
-     * Minimum large-span object count for treating a modest scene as receiver-heavy.
+     * Minimum large-span object count for treating a scene as receiver-heavy.
      */
-    private static final int LARGE_SURFACE_LINEAR_COUNT = 2;
+    private static final int RECEIVER_HEAVY_COUNT = 2;
 
     /**
      * Maximum large-span object ratio for choosing GRID automatically.
@@ -79,9 +74,9 @@ public final class GeometryIndexes {
     /**
      * Builds a geometry index according to the requested acceleration mode.
      * Explicit modes force the selected traversal strategy. AUTO mode uses a
-     * conservative scene-shape heuristic: small or receiver-heavy scenes stay
-     * linear, uniformly distributed bounded scenes use GRID, and dense or
-     * clustered bounded scenes use BVH.
+     * conservative scene-shape heuristic: very small scenes stay linear,
+     * uniformly distributed fully bounded scenes use GRID, and fallback-heavy,
+     * receiver-heavy, dense, or clustered scenes use BVH.
      *
      * @param geometries     geometries to index
      * @param type           requested acceleration mode
@@ -168,13 +163,10 @@ public final class GeometryIndexes {
         if (boundedCount == 0) return AccelerationType.LINEAR;
         if (boundedCount < bvhThreshold) return AccelerationType.LINEAR;
         if (boundedCount <= Math.max(bvhThreshold, SMALL_ACCELERATION_LIMIT)) return AccelerationType.BVH;
-        if (!unbounded.isEmpty() && boundedCount <= LARGE_SURFACE_LINEAR_LIMIT) return AccelerationType.LINEAR;
+        if (!unbounded.isEmpty()) return AccelerationType.BVH;
 
         AutoStats stats = AutoStats.from(bounded);
-        if (isReceiverHeavy(stats) && boundedCount <= LARGE_SURFACE_LINEAR_LIMIT)
-            return AccelerationType.LINEAR;
-
-        return isGridFriendly(stats) ? AccelerationType.GRID : AccelerationType.BVH;
+        return isGridFriendly(stats) && !isReceiverHeavy(stats) ? AccelerationType.GRID : AccelerationType.BVH;
     }
 
     /**
@@ -193,16 +185,16 @@ public final class GeometryIndexes {
     }
 
     /**
-     * Checks whether a modest bounded scene is dominated by large receiver-like objects.
+     * Checks whether a bounded scene is dominated by large receiver-like objects.
      * A single large object is not enough; the scene needs both a meaningful count
-     * and ratio of large-span boxes before AUTO falls back to LINEAR.
+     * and ratio of large-span boxes before AUTO avoids GRID and uses BVH.
      *
      * @param stats automatic-selection statistics
-     * @return true when large receiver-like boxes dominate enough to prefer LINEAR
+     * @return true when large receiver-like boxes dominate enough to prefer BVH over GRID
      */
     private static boolean isReceiverHeavy(AutoStats stats) {
-        return stats.largeFlatSpanCount() >= LARGE_SURFACE_LINEAR_COUNT
-                && stats.largeFlatSpanRatio() >= LARGE_SURFACE_LINEAR_RATIO;
+        return stats.largeFlatSpanCount() >= RECEIVER_HEAVY_COUNT
+                && stats.largeFlatSpanRatio() >= RECEIVER_HEAVY_RATIO;
     }
 
     /**
