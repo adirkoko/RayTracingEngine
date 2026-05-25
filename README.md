@@ -16,6 +16,8 @@ This project can:
 - Apply supersampling and adaptive anti-aliasing.
 - Write rendered images to the local `images/` directory.
 
+For a detailed user-facing API guide, including rendering workflow, defaults, advanced quality settings, progress metrics, manifests, and best practices, see [API_REFERENCE.md](docs/API_REFERENCE.md).
+
 ---
 
 ## Build And Tooling
@@ -92,27 +94,31 @@ Run a single visual test method:
 mvn -Pvisual-tests -Dtest=RenderTests#renderTwoColorTest test
 ```
 
-### Run Acceleration Benchmarks
+### Run Benchmark Suites
 
-Acceleration benchmarks compare `AUTO`, `LINEAR`, `BVH`, and `GRID` as render profiles over benchmark scenes such as `small-overhead`, `uniform-bounded`, `clustered-bounded`, `mixed-scale-bounded`, `unbounded-fallback`, `reflection-transparency`, `shadow-heavy`, `teapot-mesh`, `teapot-complex`, and `profile-comparison`. They write images, progress metrics, and a manifest, and are excluded from the default test suite because timing results depend on the machine and JVM state.
+Benchmark suites are kept under the `benchmarks` profile and are excluded from the default test suite because timing results depend on the machine and JVM state.
+
+Run all benchmark suites:
 
 ```powershell
 mvn -Pbenchmarks test
 ```
 
-Run only the acceleration benchmark class:
+Run only the acceleration suite:
 
 ```powershell
 mvn -Pbenchmarks -Dtest=AccelerationBenchmark test
 ```
 
-### Run Render Profile Batches
+Acceleration benchmarks compare `AUTO`, `LINEAR`, `BVH`, and `GRID` as render profiles over benchmark scenes such as `small-overhead`, `uniform-bounded`, `clustered-bounded`, `mixed-scale-bounded`, `unbounded-fallback`, `reflection-transparency`, `shadow-heavy`, `teapot-mesh`, `teapot-complex`, and `profile-comparison`.
 
-Render profile batches are also kept under the `benchmarks` profile. They render representative image-quality scenes with one named quality-profile set, write one PNG per profile, and persist progress metrics plus a JSON manifest for later comparison.
+Run only the image-quality render batch suite:
 
 ```powershell
 mvn -Pbenchmarks -Dtest=RenderBatchBenchmark test
 ```
+
+Render profile batches render representative image-quality scenes with one named quality-profile set, write one PNG per profile, and persist progress metrics plus a JSON manifest for later comparison.
 
 Batch images are written under:
 
@@ -185,7 +191,7 @@ The image-quality suite keeps thread count fixed at `4` for all quality profiles
 
 - Default JUnit 5 tests cover primitives, sampling, geometries, lighting infrastructure, camera behavior, image writing, and lightweight renderer behavior
 - Visual rendering classes include `RenderTests`, `ShadowTests`, `ReflectionRefractionTests`, `LightsTests`, `CustomImageTest`, `BlackBall`, and `TeapotTest`
-- Visual rendering tests run only through `-Pvisual-tests`; acceleration benchmarks run only through `-Pbenchmarks`
+- Visual rendering tests run only through `-Pvisual-tests`; benchmark suites run only through `-Pbenchmarks`
 
 ---
 
@@ -269,6 +275,8 @@ This produces `images/quick-start.png`. The output directory is created automati
 
 ## Common Configuration
 
+This section covers the most common runtime knobs. For full defaults, validation rules, and extension APIs, see [API_REFERENCE.md](docs/API_REFERENCE.md).
+
 ### Camera
 
 ```java
@@ -312,9 +320,9 @@ Camera camera = Camera.getBuilder()
         .build();
 ```
 
-### Render Progress
+### Render Progress And Metrics
 
-The renderer emits structured progress events without depending on UI, database, or logging code. `Camera` reports through a `RenderProgressListener`; the default listener keeps the existing console percentage output, and custom listeners can collect metrics, update UI, persist render history, or feed benchmark tooling outside the renderer layer.
+The renderer emits structured progress events through `RenderProgressListener` without depending on UI, database, or logging code. Use `RenderProgressListener.NONE` for silent renders, or attach custom listeners for UI, metrics, render history, and benchmark tooling.
 
 ```java
 Camera camera = Camera.getBuilder()
@@ -328,75 +336,37 @@ Camera camera = Camera.getBuilder()
         .build();
 ```
 
-Each `RenderProgress` event includes a `renderId`, `RenderStage`, completed and total work units, percentage, total elapsed time, stage elapsed time, and timestamp. Use `setProgressListener(RenderProgressListener.NONE)` to disable the default console output for silent tests, benchmarks, or external progress handling.
-
-Progress events are emitted by stage and configured interval, not once per pixel. This keeps progress collection lightweight even when the renderer traces many rays per pixel.
-
-Progress persistence is opt-in. `RenderProgressWriters` provides ready-made listeners for CSV and SQLite:
+Progress events are emitted by stage and configured interval, not once per pixel. Optional persistence is provided through `RenderProgressWriters`:
 
 ```java
 import metrics.RenderProgressWriters;
 
 Camera camera = Camera.getBuilder()
         // regular camera configuration...
-        .setProgressListener(RenderProgressWriters.csvForImage("quick-start"))
+        .setProgressListener(RenderProgressListener.resilient(
+                RenderProgressListener.combine(
+                        RenderProgressListener.CONSOLE,
+                        RenderProgressWriters.sqliteForImage("quick-start"))))
         .build();
 ```
 
-This writes progress events to:
+The image-local helpers write beside generated images:
 
 ```text
 images/quick-start-progress.csv
-```
-
-Use SQLite in the same way:
-
-```java
-import metrics.RenderProgressWriters;
-
-Camera camera = Camera.getBuilder()
-        // regular camera configuration...
-        .setProgressListener(RenderProgressWriters.sqliteForImage("quick-start"))
-        .build();
-```
-
-This writes:
-
-```text
 images/quick-start-progress.sqlite
 ```
 
-The SQLite database contains `render_runs` for one-row-per-render summaries and `render_progress_events` for the detailed event stream. To keep console progress and persist metrics at the same time, combine listeners:
-
-```java
-.setProgressListener(RenderProgressListener.combine(
-        RenderProgressListener.CONSOLE,
-        RenderProgressWriters.sqliteForImage("quick-start")))
-```
-
-Progress listener failures are fail-fast by default so broken metrics do not disappear silently. For best-effort metrics that should not fail a successful render, wrap the listener with `RenderProgressListener.resilient(...)` and route failures to your own warning/logging handler:
-
-```java
-.setProgressListener(RenderProgressListener.resilient(
-        RenderProgressWriters.sqliteForImage("quick-start"),
-        failure -> System.err.println(failure.getMessage())))
-```
-
-CSV writers create a fresh file when the listener is created. SQLite writers keep appending render runs into the same database, keyed by the per-render `renderId`. By default, render ids are UUIDs. Use `setRenderIdSupplier(...)` when an external benchmark or render-history system needs to provide its own ids:
-
-```java
-.setRenderIdSupplier(() -> "benchmark-run-001")
-```
-
-The CSV and SQLite writers synchronize their event writes. The CSV writer buffers rows, and the SQLite writer reuses one connection with prepared statements and batched transactions so persistence does not commit on every progress event. Writers close their resources automatically on `DONE` or `FAILED`; `close()` is safe to call more than once. If a render is intentionally stopped after `renderImage()` without `writeToImage()`, close the listener manually.
-
-The `csvForImage(...)` and `sqliteForImage(...)` helpers keep files next to generated images. For render history or benchmark folders, use the `Path` overloads:
+SQLite stores `render_runs` and `render_progress_events`. For benchmark or history systems, prefer explicit paths and stable render IDs:
 
 ```java
 import java.nio.file.Path;
 
+.setRenderIdSupplier(() -> "benchmark-run-001")
 .setProgressListener(RenderProgressWriters.sqlite(Path.of("render-history", "renders.sqlite")))
 ```
+
+Writers buffer their output, synchronize writes, and close automatically on terminal render events.
 
 ### Render Manifest
 
@@ -467,7 +437,7 @@ scene.geometries.setAcceleration(AccelerationType.GRID);   // Force Regular Grid
 scene.geometries.setAcceleration(AccelerationType.LINEAR); // Force direct traversal
 ```
 
-This is intended for benchmarking and debugging. `AUTO` keeps acceleration transparent for normal rendering and uses a conservative scene-shape heuristic: small or receiver-heavy scenes can stay linear, uniformly distributed bounded scenes can use Regular Grid, and dense or clustered bounded scenes usually use BVH. `BVH`, `GRID`, and `LINEAR` make it easy to compare traversal strategies without changing the scene.
+`AUTO` is the normal rendering default and keeps acceleration transparent. It uses a conservative scene-shape heuristic: small or receiver-heavy scenes can stay linear, uniformly distributed bounded scenes can use Regular Grid, and dense or clustered bounded scenes usually use BVH. Explicit `BVH`, `GRID`, and `LINEAR` modes are mainly useful for benchmarking and debugging comparisons without changing the scene.
 
 When `AUTO` is used, `scene.geometries.getResolvedAccelerationType()` reports the concrete strategy chosen for the current geometry collection. If the geometry index has not been built yet, the call builds it lazily and returns the resolved `LINEAR`, `BVH`, or `GRID` value.
 
