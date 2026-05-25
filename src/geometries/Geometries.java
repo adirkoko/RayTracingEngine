@@ -34,9 +34,14 @@ public class Geometries extends Intersectable {
     private GeometryIndex index;
 
     /**
-     * Geometry acceleration mode.
+     * Requested geometry acceleration mode.
      */
     private AccelerationType accelerationType = AccelerationType.AUTO;
+
+    /**
+     * Acceleration type selected by the last lazy index rebuild.
+     */
+    private AccelerationType resolvedAccelerationType;
 
     /**
      * Default constructor (empty).
@@ -61,6 +66,7 @@ public class Geometries extends Intersectable {
     public void add(Intersectable... geometries) {
         this.geometries.addAll(List.of(geometries));
         index = null;
+        resolvedAccelerationType = null;
     }
 
     /**
@@ -75,7 +81,31 @@ public class Geometries extends Intersectable {
             throw new IllegalArgumentException("Acceleration type cannot be null");
         this.accelerationType = accelerationType;
         index = null;
+        resolvedAccelerationType = null;
         return this;
+    }
+
+    /**
+     * Gets the requested acceleration mode.
+     *
+     * @return requested acceleration mode
+     */
+    public AccelerationType getAccelerationType() {
+        return accelerationType;
+    }
+
+    /**
+     * Gets the acceleration type selected by the active geometry index.
+     * In explicit modes this is the requested mode. In AUTO mode this is the
+     * concrete strategy selected by the automatic heuristic. If the index has
+     * not been built yet, this method builds it lazily, so the return value is
+     * always defined for the current geometry collection.
+     *
+     * @return resolved acceleration type
+     */
+    public AccelerationType getResolvedAccelerationType() {
+        getIndex();
+        return resolvedAccelerationType;
     }
 
     @Override
@@ -132,13 +162,19 @@ public class Geometries extends Intersectable {
 
     /**
      * Builds the best internal index for the current geometry set.
-     * In AUTO mode, small or mostly unbounded collections stay linear to avoid
-     * BVH build overhead; larger bounded collections use BVH. Explicit modes are
-     * used for benchmarking and debugging comparisons.
+     * In AUTO mode the concrete index is selected by the acceleration factory's
+     * scene-shape heuristic. Explicit modes are used for benchmarking and
+     * debugging comparisons.
      *
      * @return newly built geometry index
      */
     private GeometryIndex buildIndex() {
-        return GeometryIndexes.build(geometries, accelerationType, BVH_THRESHOLD, geometry -> geometry.getBoundingBox());
+        GeometryIndexes.Selection selection = GeometryIndexes.buildResolved(
+                geometries,
+                accelerationType,
+                BVH_THRESHOLD,
+                geometry -> geometry.getBoundingBox());
+        resolvedAccelerationType = selection.accelerationType();
+        return selection.index();
     }
 }

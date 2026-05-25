@@ -128,6 +128,8 @@ render-history/benchmark/<suite>/<scene>/<batch-id>/
 `-- progress.sqlite
 ```
 
+Each manifest records the requested profile configuration and the completed run results. For `AUTO` acceleration runs, each run entry also includes `resolvedAccelerationType`, showing whether the geometry index actually used `LINEAR`, `BVH`, or `GRID`.
+
 The image-quality suite keeps thread count fixed at `4` for all quality profiles. It compares visual settings such as baseline rendering, uniform supersampling, adaptive sampling, and depth of field over `grounded-soft-shadow`, `sampling-focus`, and `global-materials`; thread scaling belongs in a separate performance suite.
 
 > The first Maven run may download dependencies and plugins into your local Maven cache.
@@ -436,7 +438,9 @@ scene.geometries.setAcceleration(AccelerationType.GRID);   // Force Regular Grid
 scene.geometries.setAcceleration(AccelerationType.LINEAR); // Force direct traversal
 ```
 
-This is intended for benchmarking and debugging. `AUTO` keeps acceleration transparent for normal rendering and currently chooses BVH for sufficiently large bounded geometry collections. `GRID` is not part of `AUTO` yet; use the benchmark profile to gather timing data before changing automatic selection. `BVH`, `GRID`, and `LINEAR` make it easy to compare traversal strategies without changing the scene.
+This is intended for benchmarking and debugging. `AUTO` keeps acceleration transparent for normal rendering and uses a conservative scene-shape heuristic: small or receiver-heavy scenes can stay linear, uniformly distributed bounded scenes can use Regular Grid, and dense or clustered bounded scenes usually use BVH. `BVH`, `GRID`, and `LINEAR` make it easy to compare traversal strategies without changing the scene.
+
+When `AUTO` is used, `scene.geometries.getResolvedAccelerationType()` reports the concrete strategy chosen for the current geometry collection. If the geometry index has not been built yet, the call builds it lazily and returns the resolved `LINEAR`, `BVH`, or `GRID` value.
 
 ### Lights
 
@@ -510,7 +514,7 @@ The `images/` directory is ignored by Git and created automatically when image o
 
 ## Known Limitations
 
-- Regular Grid uses a basic automatic voxel resolution and is intended for explicit benchmark/debug runs, not as the default acceleration strategy
+- Regular Grid uses a basic automatic voxel resolution; AUTO selects it only for scenes that look grid-friendly according to bounding-box statistics
 - BVH construction currently uses a basic median split rather than a surface-area heuristic
 - XML loading is intentionally limited and does not cover full scene or render configuration
 - Visual rendering tests can be CPU-intensive, especially with high sample counts and large output resolutions

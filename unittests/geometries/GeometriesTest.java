@@ -203,6 +203,46 @@ class GeometriesTest {
     }
 
     /**
+     * Test resolved acceleration mode reporting.
+     */
+    @Test
+    void getResolvedAccelerationType() {
+        Geometries empty = new Geometries();
+        assertEquals(AccelerationType.AUTO, empty.getAccelerationType(),
+                "Default requested acceleration mode should be AUTO");
+        assertEquals(AccelerationType.LINEAR, empty.getResolvedAccelerationType(),
+                "Empty AUTO collection should resolve to LINEAR");
+
+        Geometries geometries = createUniformBoundedCollection();
+        assertEquals(AccelerationType.GRID, geometries.getResolvedAccelerationType(),
+                "Uniform bounded AUTO collection should resolve to GRID");
+
+        geometries.setAcceleration(AccelerationType.BVH);
+        assertEquals(AccelerationType.BVH, geometries.getResolvedAccelerationType(),
+                "Explicit BVH should resolve to BVH");
+
+        geometries.setAcceleration(AccelerationType.LINEAR);
+        assertEquals(AccelerationType.LINEAR, geometries.getResolvedAccelerationType(),
+                "Explicit LINEAR should resolve to LINEAR");
+
+        geometries.setAcceleration(AccelerationType.AUTO);
+        assertEquals(AccelerationType.GRID, geometries.getResolvedAccelerationType(),
+                "AUTO should resolve before any render or intersection query");
+
+        Geometries changing = new Geometries();
+        assertEquals(AccelerationType.LINEAR, changing.getResolvedAccelerationType(),
+                "Empty AUTO collection should resolve before any render or intersection query");
+
+        changing.add(
+                new Sphere(new Point(0, 0, 3), 1),
+                new Sphere(new Point(0, 0, 7), 1),
+                new Sphere(new Point(0, 0, 11), 1),
+                new Sphere(new Point(0, 0, 15), 1));
+        assertEquals(AccelerationType.BVH, changing.getResolvedAccelerationType(),
+                "Resolved acceleration should be recomputed after geometry changes");
+    }
+
+    /**
      * Test all acceleration modes against LINEAR on a small mixed scene.
      */
     @Test
@@ -243,6 +283,22 @@ class GeometriesTest {
                 new Sphere(new Point(0, 0, 11), 1),
                 new Sphere(new Point(0, 0, 15), 1),
                 new Sphere(new Point(4, 0, 3), 1));
+    }
+
+    /**
+     * Creates a uniform bounded geometry collection that should be grid-friendly.
+     */
+    private Geometries createUniformBoundedCollection() {
+        Geometries geometries = new Geometries();
+
+        for (int z = 0; z < 4; z++) {
+            for (int y = -2; y <= 2; y++) {
+                for (int x = -2; x <= 2; x++)
+                    geometries.add(new Sphere(new Point(x * 16, y * 16, -70 - z * 26), 3.6));
+            }
+        }
+
+        return geometries;
     }
 
     /**

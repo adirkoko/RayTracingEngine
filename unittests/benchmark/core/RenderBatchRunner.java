@@ -110,6 +110,7 @@ public final class RenderBatchRunner {
                 imageName + ".png",
                 metricsPath.toString(),
                 "DONE",
+                scene.geometries.getResolvedAccelerationType(),
                 elapsedMillis(started),
                 null);
     }
@@ -138,6 +139,7 @@ public final class RenderBatchRunner {
                 imageName(batch, batchId, profile) + ".png",
                 metricsPath.toString(),
                 "FAILED",
+                null,
                 elapsedMillis,
                 failure.getMessage());
     }
@@ -256,6 +258,8 @@ public final class RenderBatchRunner {
             appendField(json, 3, "image", run.imageName(), true);
             appendField(json, 3, "metricsDatabase", run.metricsPath(), true);
             appendField(json, 3, "status", run.status(), true);
+            if (run.resolvedAccelerationType() != null)
+                appendField(json, 3, "resolvedAccelerationType", run.resolvedAccelerationType().name(), true);
             appendField(json, 3, "elapsedMillis", run.elapsedMillis(), run.error() != null);
             if (run.error() != null) appendField(json, 3, "error", run.error(), false);
             indent(json, 2).append("}");
