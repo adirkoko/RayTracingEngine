@@ -42,4 +42,15 @@ class DiskSamplerTest {
         assertThrows(IllegalArgumentException.class, () -> new DiskSampler(1, -1),
                 "Expected IllegalArgumentException for negative radius");
     }
+
+    /**
+     * Test sample generation is deterministic for benchmark reproducibility.
+     */
+    @Test
+    void testDeterministicSamples() {
+        assertEquals(
+                new DiskSampler(4, 2.0).getSamples(),
+                new DiskSampler(4, 2.0).getSamples(),
+                "Disk sampling should be reproducible for identical configuration");
+    }
 }

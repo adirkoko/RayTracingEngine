@@ -4,6 +4,7 @@ import primitives.Vector;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 
 import static primitives.Util.isZero;
 
@@ -11,6 +12,11 @@ import static primitives.Util.isZero;
  * Generates random direction samples inside a cone around a center direction.
  */
 public class ConeSampler {
+
+    /**
+     * Stable seed for reproducible cone sampling.
+     */
+    private static final long RANDOM_SEED = 0x434F4E4553414D50L;
 
     /**
      * Direction samples inside the cone.
@@ -95,10 +101,11 @@ public class ConeSampler {
     private void initializeSamples() {
         Vector right = createPerpendicular(direction).normalize();
         Vector up = direction.crossProduct(right).normalize();
+        Random random = new Random(RANDOM_SEED);
 
         for (int i = 0; i < sampleCount; i++) {
-            double distance = radius * Math.sqrt(Math.random());
-            double angle = Math.random() * 2 * Math.PI;
+            double distance = radius * Math.sqrt(random.nextDouble());
+            double angle = random.nextDouble() * 2 * Math.PI;
             samples.add(direction
                     .add(right.scale(distance * Math.cos(angle)))
                     .add(up.scale(distance * Math.sin(angle)))

@@ -40,4 +40,15 @@ class ConeSamplerTest {
         assertThrows(IllegalArgumentException.class, () -> new ConeSampler(new Vector(0, 0, 1), 0.25, 0),
                 "Expected IllegalArgumentException for sample count of 0");
     }
+
+    /**
+     * Test sample generation is deterministic for benchmark reproducibility.
+     */
+    @Test
+    void testDeterministicSamples() {
+        assertEquals(
+                new ConeSampler(new Vector(0, 0, 1), 0.25, 8).getSamples(),
+                new ConeSampler(new Vector(0, 0, 1), 0.25, 8).getSamples(),
+                "Cone sampling should be reproducible for identical configuration");
+    }
 }

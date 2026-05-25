@@ -2,11 +2,17 @@ package sampling;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Generates two-dimensional sample offsets inside a disk.
  */
 public class DiskSampler {
+
+    /**
+     * Stable seed for reproducible disk sampling.
+     */
+    private static final long RANDOM_SEED = 0x4449534B53414D50L;
 
     /**
      * List of sample offsets inside the disk.
@@ -72,10 +78,11 @@ public class DiskSampler {
      */
     private void initializeSamples() {
         samples.clear();
+        Random random = new Random(RANDOM_SEED);
 
         for (int i = 0; i < sampleSize * sampleSize; i++) {
-            double distance = radius * Math.sqrt(Math.random());
-            double angle = Math.random() * 2 * Math.PI;
+            double distance = radius * Math.sqrt(random.nextDouble());
+            double angle = random.nextDouble() * 2 * Math.PI;
             samples.add(new Sample2D(distance * Math.cos(angle), distance * Math.sin(angle)));
         }
     }

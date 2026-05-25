@@ -135,6 +135,10 @@ class CameraTest {
                 () -> Camera.getBuilder().setRenderIdSupplier(null),
                 "Builder should reject a null render id supplier");
 
+        assertThrows(IllegalArgumentException.class,
+                () -> Camera.getBuilder().setThreadsCount(-1),
+                "Builder should reject a negative thread count");
+
         assertDoesNotThrow(() -> createCompleteBuilder().setProgressListener(RenderProgressListener.NONE).build(),
                 "Builder should allow replacing default progress printing with a silent listener");
     }
@@ -365,12 +369,41 @@ class CameraTest {
                 () -> Camera.getBuilder().setFocalDistance(0),
                 "Builder should reject a non-positive focal distance");
 
+        assertThrows(IllegalArgumentException.class,
+                () -> Camera.getBuilder().setApertureSampleSize(0),
+                "Builder should reject a non-positive aperture sample size");
+
         assertThrows(MissingResourceException.class,
                 () -> createCompleteBuilder().setApertureRadius(1).build(),
                 "Depth of field should require a focal distance");
 
-        assertDoesNotThrow(() -> createCompleteBuilder().setApertureRadius(1).setFocalDistance(20).build(),
+        assertDoesNotThrow(() -> createCompleteBuilder()
+                        .setApertureRadius(1)
+                        .setFocalDistance(20)
+                        .setApertureSampleSize(3)
+                        .build(),
                 "Depth of field should accept a positive aperture radius and focal distance");
+    }
+
+    /**
+     * Test aperture sampling can be controlled independently from anti-aliasing sampling.
+     */
+    @Test
+    void testApertureSamplingIndependentFromAntiAliasing() {
+        CountingRayTracer rayTracer = new CountingRayTracer();
+
+        createCompleteBuilder()
+                .setImageWriter(new ImageWriter("aperture-sample-size-test", 1, 1))
+                .setRayTracer(rayTracer)
+                .setProgressListener(RenderProgressListener.NONE)
+                .setApertureRadius(1)
+                .setFocalDistance(20)
+                .setApertureSampleSize(2)
+                .build()
+                .renderImage();
+
+        assertEquals(4, rayTracer.count(),
+                "A 2x2 aperture sample grid should trace four lens rays even when AA is disabled");
     }
 
     /**
@@ -386,6 +419,39 @@ class CameraTest {
         assertEquals(defaultCamera.constructRay(5, 5, 2, 2),
                 zeroApertureCamera.constructRay(5, 5, 2, 2),
                 "Zero aperture should preserve default pinhole ray construction");
+    }
+
+    /**
+     * Counts traced rays for camera sampling tests.
+     */
+    private static class CountingRayTracer extends RayTracerBase {
+
+        /**
+         * Number of traced rays.
+         */
+        private final AtomicInteger count = new AtomicInteger();
+
+        /**
+         * Creates a counter ray tracer.
+         */
+        private CountingRayTracer() {
+            super(new Scene("Counting ray tracer"));
+        }
+
+        @Override
+        public Color traceRay(Ray ray) {
+            count.incrementAndGet();
+            return Color.BLACK;
+        }
+
+        /**
+         * Gets the traced ray count.
+         *
+         * @return ray count
+         */
+        private int count() {
+            return count.get();
+        }
     }
 
 }

@@ -2,11 +2,17 @@ package sampling;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Generates jittered two-dimensional sample offsets within a pixel.
  */
 public class JitteredSampler {
+
+    /**
+     * Stable seed for reproducible jittered sampling.
+     */
+    private static final long RANDOM_SEED = 0x4A49545445524544L;
 
     /**
      * List of jittered sample offsets within the pixel.
@@ -58,14 +64,15 @@ public class JitteredSampler {
      */
     private void initializeSamples(double pixelWidth, double pixelHeight) {
         samples.clear();
+        Random random = new Random(RANDOM_SEED);
 
         double jitterAmount = 1.0 / sampleSize;
 
         for (int p = 0; p < sampleSize; p++) {
             for (int q = 0; q < sampleSize; q++) {
                 samples.add(new Sample2D(
-                        (((p + 0.5) * jitterAmount) + (Math.random() - 0.5) * jitterAmount) * pixelWidth - pixelWidth / 2,
-                        (((q + 0.5) * jitterAmount) + (Math.random() - 0.5) * jitterAmount) * pixelHeight - pixelHeight / 2));
+                        (((p + 0.5) * jitterAmount) + (random.nextDouble() - 0.5) * jitterAmount) * pixelWidth - pixelWidth / 2,
+                        (((q + 0.5) * jitterAmount) + (random.nextDouble() - 0.5) * jitterAmount) * pixelHeight - pixelHeight / 2));
             }
         }
     }

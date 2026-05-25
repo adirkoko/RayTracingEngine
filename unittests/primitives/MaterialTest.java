@@ -61,4 +61,26 @@ class MaterialTest {
                 () -> new Material().setGlobalSamples(Material.MAX_GLOBAL_SAMPLES + 1),
                 "Global samples should reject values above the configured cap");
     }
+
+    /**
+     * Test validation for material coefficients.
+     */
+    @Test
+    void testCoefficientValidation() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new Material().setKd(-1),
+                "Diffuse coefficient should reject negative values");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new Material().setKs(new Double3(0.1, -0.1, 0.1)),
+                "Specular coefficient should reject negative channel values");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new Material().setKt(null),
+                "Transparency coefficient should reject null values");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new Material().setKr(-0.1),
+                "Reflection coefficient should reject negative values");
+    }
 }

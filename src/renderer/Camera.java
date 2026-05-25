@@ -106,6 +106,12 @@ public class Camera implements Cloneable {
     private double apertureRadius = 0;
 
     /**
+     * Number of aperture samples along each logical lens axis.
+     * A zero value inherits the pixel sample size to keep existing behavior.
+     */
+    private int apertureSampleSize = 0;
+
+    /**
      * Distance from the camera to the focal plane along the forward axis.
      */
     private double focalDistance = 0;
@@ -312,7 +318,7 @@ public class Camera implements Cloneable {
      */
     private List<Ray> constructRaysFromSamples(Point pixelCenter, List<Sample2D> samples) {
         List<Ray> rays = new LinkedList<>();
-        List<Sample2D> lensSamples = isDepthOfFieldEnabled() ? getLensSamples(sampleSize) : List.of();
+        List<Sample2D> lensSamples = isDepthOfFieldEnabled() ? getLensSamples() : List.of();
         int lensIndex = 0;
 
         for (Sample2D sample : samples) {
@@ -321,7 +327,7 @@ public class Camera implements Cloneable {
             if (!isZero(sample.y())) samplePoint = samplePoint.add(up.scale(sample.y()));
             rays.add(constructRayThroughViewPlanePoint(
                     samplePoint,
-                    lensSamples.isEmpty() ? null : lensSamples.get(lensIndex++)));
+                    lensSamples.isEmpty() ? null : lensSamples.get(lensIndex++ % lensSamples.size())));
         }
 
         return rays;
@@ -337,7 +343,7 @@ public class Camera implements Cloneable {
         if (!isDepthOfFieldEnabled()) return List.of(constructRayThroughViewPlanePoint(point, null));
 
         List<Ray> rays = new LinkedList<>();
-        for (Sample2D lensSample : getLensSamples(sampleSize))
+        for (Sample2D lensSample : getLensSamples())
             rays.add(constructRayThroughViewPlanePoint(point, lensSample));
         return rays;
     }
@@ -386,15 +392,24 @@ public class Camera implements Cloneable {
     /**
      * Gets cached aperture samples for the current camera configuration.
      *
-     * @param sampleSize number of samples along each logical sampling axis
      * @return aperture samples
      */
-    private List<Sample2D> getLensSamples(int sampleSize) {
+    private List<Sample2D> getLensSamples() {
+        int lensSampleSize = lensSampleSize();
         if (diskSampler == null
-                || diskSampler.getSampleSize() != sampleSize
+                || diskSampler.getSampleSize() != lensSampleSize
                 || !isZero(diskSampler.getRadius() - apertureRadius))
-            diskSampler = new DiskSampler(sampleSize, apertureRadius);
+            diskSampler = new DiskSampler(lensSampleSize, apertureRadius);
         return diskSampler.getSamples();
+    }
+
+    /**
+     * Gets the effective aperture sample size.
+     *
+     * @return configured aperture sample size, or pixel sample size for backward compatibility
+     */
+    private int lensSampleSize() {
+        return apertureSampleSize > 0 ? apertureSampleSize : sampleSize;
     }
 
     /**
@@ -939,6 +954,20 @@ public class Camera implements Cloneable {
         }
 
         /**
+         * Sets the number of aperture samples along each lens axis.
+         * If this is not set, depth of field inherits the pixel sample size to preserve existing behavior.
+         *
+         * @param apertureSampleSize number of samples along each lens axis
+         * @return the Builder instance
+         */
+        public Builder setApertureSampleSize(int apertureSampleSize) {
+            if (apertureSampleSize <= 0)
+                throw new IllegalArgumentException("Aperture sample size must be positive");
+            camera.apertureSampleSize = apertureSampleSize;
+            return this;
+        }
+
+        /**
          * Sets the distance from the camera to the focal plane.
          *
          * @param focalDistance focal plane distance along the camera forward axis
@@ -958,6 +987,8 @@ public class Camera implements Cloneable {
          * @return The current Builder instance.
          */
         public Builder setThreadsCount(int threadsCount) {
+            if (threadsCount < 0)
+                throw new IllegalArgumentException("Thread count cannot be negative");
             camera.threadsCount = threadsCount;
             return this;
         }

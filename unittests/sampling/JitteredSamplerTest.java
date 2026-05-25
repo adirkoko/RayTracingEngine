@@ -74,4 +74,15 @@ class JitteredSamplerTest {
                 new JitteredSampler(4, 1.0, 1.0).getSamples().size(),
                 "There should be 16 jittered samples");
     }
+
+    /**
+     * Test sample generation is deterministic for benchmark reproducibility.
+     */
+    @Test
+    void testDeterministicSamples() {
+        assertEquals(
+                new JitteredSampler(4, 1.0, 1.0).getSamples(),
+                new JitteredSampler(4, 1.0, 1.0).getSamples(),
+                "Jittered sampling should be reproducible for identical configuration");
+    }
 }

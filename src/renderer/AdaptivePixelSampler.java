@@ -4,6 +4,8 @@ import primitives.Color;
 import primitives.Point;
 import primitives.Vector;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
 import static primitives.Util.isZero;
@@ -58,14 +60,28 @@ class AdaptivePixelSampler {
      * @return the averaged region color
      */
     Color sample(Point center, double width, double height, int depth) {
+        return sample(center, width, height, depth, new HashMap<>());
+    }
+
+    /**
+     * Recursively samples a rectangular region on the view plane using a render-local color cache.
+     *
+     * @param center center of the sampled region
+     * @param width  region width
+     * @param height region height
+     * @param depth  remaining subdivision depth
+     * @param cache  traced view-plane colors by exact sampled point
+     * @return the averaged region color
+     */
+    private Color sample(Point center, double width, double height, int depth, Map<SamplePoint, Color> cache) {
         double halfWidth = width / 2;
         double halfHeight = height / 2;
 
-        Color centerColor = trace(center);
-        Color topLeft = trace(moveOnViewPlane(center, -halfWidth, halfHeight));
-        Color topRight = trace(moveOnViewPlane(center, halfWidth, halfHeight));
-        Color bottomLeft = trace(moveOnViewPlane(center, -halfWidth, -halfHeight));
-        Color bottomRight = trace(moveOnViewPlane(center, halfWidth, -halfHeight));
+        Color centerColor = trace(center, cache);
+        Color topLeft = trace(moveOnViewPlane(center, -halfWidth, halfHeight), cache);
+        Color topRight = trace(moveOnViewPlane(center, halfWidth, halfHeight), cache);
+        Color bottomLeft = trace(moveOnViewPlane(center, -halfWidth, -halfHeight), cache);
+        Color bottomRight = trace(moveOnViewPlane(center, halfWidth, -halfHeight), cache);
 
         if (depth == 0
                 || centerColor.isSimilar(topLeft, colorTolerance)
@@ -78,10 +94,10 @@ class AdaptivePixelSampler {
         double quarterWidth = width / 4;
         double quarterHeight = height / 4;
         return averageColors(
-                sample(moveOnViewPlane(center, -quarterWidth, quarterHeight), halfWidth, halfHeight, depth - 1),
-                sample(moveOnViewPlane(center, quarterWidth, quarterHeight), halfWidth, halfHeight, depth - 1),
-                sample(moveOnViewPlane(center, -quarterWidth, -quarterHeight), halfWidth, halfHeight, depth - 1),
-                sample(moveOnViewPlane(center, quarterWidth, -quarterHeight), halfWidth, halfHeight, depth - 1)
+                sample(moveOnViewPlane(center, -quarterWidth, quarterHeight), halfWidth, halfHeight, depth - 1, cache),
+                sample(moveOnViewPlane(center, quarterWidth, quarterHeight), halfWidth, halfHeight, depth - 1, cache),
+                sample(moveOnViewPlane(center, -quarterWidth, -quarterHeight), halfWidth, halfHeight, depth - 1, cache),
+                sample(moveOnViewPlane(center, quarterWidth, -quarterHeight), halfWidth, halfHeight, depth - 1, cache)
         );
     }
 
@@ -93,6 +109,17 @@ class AdaptivePixelSampler {
      */
     private Color trace(Point point) {
         return viewPlaneTracer.apply(point);
+    }
+
+    /**
+     * Traces or reuses a sampled view-plane point.
+     *
+     * @param point sampled point
+     * @param cache traced colors by sampled point
+     * @return traced color
+     */
+    private Color trace(Point point, Map<SamplePoint, Color> cache) {
+        return cache.computeIfAbsent(new SamplePoint(point), ignored -> trace(point));
     }
 
     /**
@@ -120,5 +147,24 @@ class AdaptivePixelSampler {
         Color sum = Color.BLACK;
         for (Color color : colors) sum = sum.add(color);
         return sum.reduce(colors.length);
+    }
+
+    /**
+     * Exact sampled view-plane point key for adaptive-sampling cache.
+     *
+     * @param x point X coordinate
+     * @param y point Y coordinate
+     * @param z point Z coordinate
+     */
+    private record SamplePoint(double x, double y, double z) {
+
+        /**
+         * Creates a sample key from a point.
+         *
+         * @param point sampled point
+         */
+        private SamplePoint(Point point) {
+            this(point.getX(), point.getY(), point.getZ());
+        }
     }
 }

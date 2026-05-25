@@ -254,7 +254,10 @@ public class SimpleRayTracer extends RayTracerBase {
         List<Ray> reflectedRays = new LinkedList<>();
         for (Vector direction : new ConeSampler(
                 reflectedDirection, material.reflectionBlur, sampleCount).getSamples())
-            reflectedRays.add(new Ray(gp.point, direction, n));
+            if (sameHemisphere(direction, reflectedDirection, n))
+                reflectedRays.add(new Ray(gp.point, direction, n));
+        if (reflectedRays.isEmpty())
+            reflectedRays.add(new Ray(gp.point, reflectedDirection, n));
         return reflectedRays;
     }
 
@@ -272,8 +275,23 @@ public class SimpleRayTracer extends RayTracerBase {
         List<Ray> refractedRays = new LinkedList<>();
         for (Vector direction : new ConeSampler(
                 v, material.transparencyBlur, sampleCount).getSamples())
-            refractedRays.add(new Ray(gp.point, direction, n));
+            if (sameHemisphere(direction, v, n))
+                refractedRays.add(new Ray(gp.point, direction, n));
+        if (refractedRays.isEmpty())
+            refractedRays.add(new Ray(gp.point, v, n));
         return refractedRays;
+    }
+
+    /**
+     * Checks that a sampled direction stays on the same side of the surface as a reference direction.
+     *
+     * @param direction sampled direction
+     * @param reference reference direction
+     * @param normal    surface normal
+     * @return true if both directions are in the same hemisphere relative to the normal
+     */
+    private boolean sameHemisphere(Vector direction, Vector reference, Vector normal) {
+        return alignZero(direction.dotProduct(normal) * reference.dotProduct(normal)) > 0;
     }
 
     /**

@@ -284,6 +284,7 @@ Camera camera = Camera.getBuilder()
         .setMaxDepth(int)                   // Adaptive only; call after enabling adaptive sampling
         .setApertureRadius(double)          // Optional; 0 keeps pinhole-camera behavior
         .setFocalDistance(double)           // Required when aperture radius is positive
+        .setApertureSampleSize(int)         // Optional lens sample grid side length
         .setProgressListener(listener)      // Optional structured render progress callback
         .setProgressIntervalPercent(double) // Optional progress callback interval
         .setRenderIdSupplier(supplier)      // Optional custom render id generation
@@ -294,7 +295,7 @@ If no anti-aliasing boundary is configured, the renderer uses one ray per pixel.
 
 Depth of field is disabled by default. Set a positive aperture radius and focal distance to sample rays across the lens aperture; an aperture radius of `0` preserves the existing pinhole-camera behavior.
 
-When depth of field and anti-aliasing are both enabled, camera sampling pairs pixel samples with lens samples rather than taking their full Cartesian product.
+Depth-of-field sampling can be controlled independently with `setApertureSampleSize(...)`. If no aperture sample size is configured, the lens sampler inherits the pixel sample size for backward compatibility. When depth of field and anti-aliasing are both enabled, camera sampling pairs pixel samples with lens samples rather than taking their full Cartesian product.
 
 Enable depth of field:
 
@@ -303,6 +304,7 @@ Camera camera = Camera.getBuilder()
         // regular camera configuration...
         .setApertureRadius(2.0)
         .setFocalDistance(120)
+        .setApertureSampleSize(3)
         .build();
 ```
 

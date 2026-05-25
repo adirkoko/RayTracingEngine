@@ -53,6 +53,7 @@ public record RenderProfile(
         if (apertureRadius > 0) {
             builder.setApertureRadius(apertureRadius);
             builder.setFocalDistance(focalDistance);
+            builder.setApertureSampleSize(sampleSize);
         }
     }
 }

@@ -64,6 +64,7 @@ public class Material {
      * @return the Material object itself for chaining
      */
     public Material setKd(Double3 kD) {
+        validateCoefficient(kD, "Diffuse coefficient");
         this.kD = kD;
         return this;
     }
@@ -75,6 +76,7 @@ public class Material {
      * @return the Material object itself for chaining
      */
     public Material setKd(double kD) {
+        validateCoefficient(kD, "Diffuse coefficient");
         this.kD = new Double3(kD);
         return this;
     }
@@ -86,6 +88,7 @@ public class Material {
      * @return the Material object itself for chaining
      */
     public Material setKs(Double3 kS) {
+        validateCoefficient(kS, "Specular coefficient");
         this.kS = kS;
         return this;
     }
@@ -97,6 +100,7 @@ public class Material {
      * @return the Material object itself for chaining
      */
     public Material setKs(double kS) {
+        validateCoefficient(kS, "Specular coefficient");
         this.kS = new Double3(kS);
         return this;
     }
@@ -160,6 +164,7 @@ public class Material {
      * @return the current material
      */
     public Material setKt(Double3 kT) {
+        validateCoefficient(kT, "Transparency coefficient");
         this.kT = kT;
         return this;
     }
@@ -171,6 +176,7 @@ public class Material {
      * @return the current material
      */
     public Material setKt(double kT) {
+        validateCoefficient(kT, "Transparency coefficient");
         this.kT = new Double3(kT);
         return this;
     }
@@ -182,6 +188,7 @@ public class Material {
      * @return the current material
      */
     public Material setKr(Double3 kR) {
+        validateCoefficient(kR, "Reflection coefficient");
         this.kR = kR;
         return this;
     }
@@ -193,8 +200,33 @@ public class Material {
      * @return the current material
      */
     public Material setKr(double kR) {
+        validateCoefficient(kR, "Reflection coefficient");
         this.kR = new Double3(kR);
         return this;
+    }
+
+    /**
+     * Validates scalar material coefficients.
+     *
+     * @param coefficient coefficient value
+     * @param name        coefficient name for error messages
+     */
+    private static void validateCoefficient(double coefficient, String name) {
+        if (coefficient < 0)
+            throw new IllegalArgumentException(name + " cannot be negative");
+    }
+
+    /**
+     * Validates per-channel material coefficients.
+     *
+     * @param coefficient coefficient value
+     * @param name        coefficient name for error messages
+     */
+    private static void validateCoefficient(Double3 coefficient, String name) {
+        if (coefficient == null)
+            throw new IllegalArgumentException(name + " cannot be null");
+        if (coefficient.d1 < 0 || coefficient.d2 < 0 || coefficient.d3 < 0)
+            throw new IllegalArgumentException(name + " cannot contain negative components");
     }
 
 }
